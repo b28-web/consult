@@ -20,6 +20,10 @@ The goal is fast delivery of business value with strong bus-factor resilience.
 ├── sites/                # Astro static sites (one subdirectory per client)
 ├── workers/              # Cloudflare Workers (intake endpoints, webhooks)
 ├── packages/             # Shared code/types across apps
+├── docs/                 # Task tracking and knowledge base
+│   ├── active/           # Current work
+│   ├── archive/          # Completed work (cold storage)
+│   └── knowledge/        # Patterns and playbooks
 ├── scripts/              # Utility scripts for dev/deploy
 ├── .github/workflows/    # CI/CD pipelines
 └── pyproject.toml        # Python project config (uv, ruff, mypy, pytest)
@@ -152,8 +156,63 @@ Key patterns:
 - Factory classes for test data (never fixtures)
 - Test multi-tenancy: user A cannot see user B's data
 
+## Task Tracking (docs/)
+
+Work is organized into **Enhancement Proposals (EPs)** and **Tickets**.
+
+### Structure
+
+```
+docs/
+├── active/
+│   ├── ROADMAP.md                        # Current priorities
+│   ├── enhancement_proposals/
+│   │   └── EP-NNN-slug.md                # Sprint = group of tickets
+│   └── tickets/
+│       └── NNN-X-slug.md                 # Single work item
+├── archive/                              # Completed EPs and tickets
+└── knowledge/
+    ├── patterns/                         # Crystallized decisions (multi-tenancy.md, etc.)
+    └── playbook/                         # Copy-paste prompts for common workflows
+```
+
+### Naming Convention
+
+| Type | Pattern | Example |
+|------|---------|---------|
+| EP (sprint) | `EP-NNN-slug` | EP-001-backend-foundation |
+| Ticket | `NNN-X-slug` | 001-A-django-bootstrap |
+
+- **NNN**: Zero-padded 3 digits, EP number
+- **X**: Letter A-Z, sequential within EP
+- Tickets always belong to an EP (matched by number)
+
+### Workflow
+
+1. **Start session**: Read `docs/active/ROADMAP.md` to see priorities
+2. **Pick work**: Find an in-progress EP or start a new one
+3. **Do work**: Follow the ticket's acceptance criteria
+4. **Track progress**: Update the ticket's Progress section
+5. **Complete**: When all tickets done, archive the EP
+
+### Key Files to Read
+
+- `docs/active/ROADMAP.md` - What to work on
+- `docs/active/enhancement_proposals/EP-NNN-*.md` - Sprint context
+- `docs/active/tickets/NNN-*.md` - Specific work items
+- `docs/knowledge/playbook/*.md` - Prompts for common tasks
+
+### Rules
+
+- **Never create a ticket without an EP** - tickets belong to sprints
+- **Keep IDs matched** - ticket 001-A belongs to EP-001
+- **Update progress logs** - maintain context across sessions
+- **Archive when done** - move to `docs/archive/` not delete
+
 ## Getting Help
 
 - Check `ARCHITECTURE.md` for system design questions
+- Check `docs/knowledge/patterns/` for how things work
+- Check `docs/knowledge/playbook/` for copy-paste prompts
 - Check `pyproject.toml` for available scripts and dependencies
 - Check `.github/workflows/` for CI configuration

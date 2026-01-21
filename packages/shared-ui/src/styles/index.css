@@ -1,0 +1,80 @@
+/*
+ * Consult Shared Styles
+ *
+ * Usage in client sites:
+ *   @import "@consult/shared-ui/styles";
+ */
+
+@import "./tailwind-preset.css";
+
+/* ==========================================================================
+ * Base Styles
+ * ========================================================================== */
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-family-sans);
+    color: var(--color-neutral-900);
+    background-color: var(--color-neutral-50);
+    line-height: 1.6;
+  }
+
+  /* Improved focus styles */
+  :focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+  }
+
+  /* Selection color */
+  ::selection {
+    background-color: var(--color-primary-100);
+    color: var(--color-primary-900);
+  }
+}
+
+/* ==========================================================================
+ * Utility Classes
+ * ========================================================================== */
+
+@layer utilities {
+  /* Container with responsive padding */
+  .container-padding {
+    padding-inline: clamp(1rem, 5vw, 2rem);
+  }
+
+  /* Section spacing */
+  .section-padding {
+    padding-block: clamp(3rem, 8vw, 6rem);
+  }
+
+  /* Prose improvements for content */
+  .prose-custom {
+    max-width: 65ch;
+  }
+
+  .prose-custom :where(h2, h3, h4) {
+    margin-block-start: 1.5em;
+  }
+
+  .prose-custom :where(p, ul, ol) {
+    margin-block: 1em;
+  }
+
+  /* Skip link for accessibility */
+  .skip-link {
+    position: absolute;
+    transform: translateY(-100%);
+    background: var(--color-primary-600);
+    color: white;
+    padding: 0.5rem 1rem;
+    z-index: 100;
+  }
+
+  .skip-link:focus {
+    transform: translateY(0);
+  }
+}

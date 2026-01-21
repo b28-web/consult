@@ -1,0 +1,129 @@
+/*
+ * Consult Tailwind v4 Preset
+ *
+ * This defines the design system tokens for all client sites.
+ * Sites override colors via CSS custom properties, not by forking this config.
+ *
+ * Usage in client sites:
+ *   @import "@consult/shared-ui/tailwind-preset";
+ *   @import "tailwindcss";
+ */
+
+@theme {
+  /* ==========================================================================
+   * Color Palette - Override these per-client via CSS custom properties
+   * ========================================================================== */
+
+  /* Primary brand color - clients override --color-primary-* */
+  --color-primary-50: var(--client-primary-50, oklch(0.97 0.02 250));
+  --color-primary-100: var(--client-primary-100, oklch(0.93 0.04 250));
+  --color-primary-200: var(--client-primary-200, oklch(0.86 0.08 250));
+  --color-primary-300: var(--client-primary-300, oklch(0.76 0.12 250));
+  --color-primary-400: var(--client-primary-400, oklch(0.64 0.16 250));
+  --color-primary-500: var(--client-primary-500, oklch(0.53 0.19 250));
+  --color-primary-600: var(--client-primary-600, oklch(0.45 0.18 250));
+  --color-primary-700: var(--client-primary-700, oklch(0.39 0.15 250));
+  --color-primary-800: var(--client-primary-800, oklch(0.33 0.12 250));
+  --color-primary-900: var(--client-primary-900, oklch(0.28 0.09 250));
+  --color-primary-950: var(--client-primary-950, oklch(0.20 0.06 250));
+
+  /* Neutral/gray scale */
+  --color-neutral-50: oklch(0.98 0 0);
+  --color-neutral-100: oklch(0.96 0 0);
+  --color-neutral-200: oklch(0.92 0 0);
+  --color-neutral-300: oklch(0.87 0 0);
+  --color-neutral-400: oklch(0.70 0 0);
+  --color-neutral-500: oklch(0.55 0 0);
+  --color-neutral-600: oklch(0.44 0 0);
+  --color-neutral-700: oklch(0.37 0 0);
+  --color-neutral-800: oklch(0.27 0 0);
+  --color-neutral-900: oklch(0.20 0 0);
+  --color-neutral-950: oklch(0.13 0 0);
+
+  /* Semantic colors */
+  --color-success: oklch(0.65 0.19 145);
+  --color-warning: oklch(0.75 0.18 85);
+  --color-error: oklch(0.60 0.22 25);
+  --color-info: oklch(0.65 0.15 230);
+
+  /* ==========================================================================
+   * Typography Scale
+   * ========================================================================== */
+
+  --font-family-sans: var(--client-font-sans, ui-sans-serif, system-ui, sans-serif);
+  --font-family-serif: var(--client-font-serif, ui-serif, Georgia, serif);
+  --font-family-mono: ui-monospace, monospace;
+
+  /* Font sizes - using fluid type scale */
+  --font-size-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.8125rem);
+  --font-size-sm: clamp(0.875rem, 0.8rem + 0.375vw, 0.9375rem);
+  --font-size-base: clamp(1rem, 0.925rem + 0.375vw, 1.0625rem);
+  --font-size-lg: clamp(1.125rem, 1rem + 0.625vw, 1.25rem);
+  --font-size-xl: clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem);
+  --font-size-2xl: clamp(1.5rem, 1.25rem + 1.25vw, 2rem);
+  --font-size-3xl: clamp(1.875rem, 1.5rem + 1.875vw, 2.5rem);
+  --font-size-4xl: clamp(2.25rem, 1.75rem + 2.5vw, 3rem);
+  --font-size-5xl: clamp(3rem, 2.25rem + 3.75vw, 4rem);
+
+  /* ==========================================================================
+   * Spacing Scale
+   * ========================================================================== */
+
+  --spacing-px: 1px;
+  --spacing-0: 0;
+  --spacing-0\.5: 0.125rem;
+  --spacing-1: 0.25rem;
+  --spacing-1\.5: 0.375rem;
+  --spacing-2: 0.5rem;
+  --spacing-2\.5: 0.625rem;
+  --spacing-3: 0.75rem;
+  --spacing-3\.5: 0.875rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-7: 1.75rem;
+  --spacing-8: 2rem;
+  --spacing-9: 2.25rem;
+  --spacing-10: 2.5rem;
+  --spacing-11: 2.75rem;
+  --spacing-12: 3rem;
+  --spacing-14: 3.5rem;
+  --spacing-16: 4rem;
+  --spacing-20: 5rem;
+  --spacing-24: 6rem;
+  --spacing-28: 7rem;
+  --spacing-32: 8rem;
+
+  /* ==========================================================================
+   * Border Radius
+   * ========================================================================== */
+
+  --radius-none: 0;
+  --radius-sm: 0.25rem;
+  --radius-default: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* ==========================================================================
+   * Shadows
+   * ========================================================================== */
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-default: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* ==========================================================================
+   * Container
+   * ========================================================================== */
+
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+  --container-2xl: 1536px;
+}

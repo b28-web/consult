@@ -1,0 +1,16 @@
+/* Import Tailwind */
+@import "tailwindcss";
+
+/* Import shared preset */
+@import "@consult/shared-ui/styles";
+
+/*
+ * Site-specific theme overrides
+ *
+ * Override CSS custom properties here for brand colors:
+ *
+ * :root {
+ *   --client-primary-500: oklch(0.45 0.12 30);
+ *   --client-font-sans: "Your Font", sans-serif;
+ * }
+ */

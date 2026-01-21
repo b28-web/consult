@@ -1,0 +1,25 @@
+{
+  "name": "consult",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Multi-tenant web agency platform",
+  "scripts": {
+    "dev": "pnpm --filter './sites/*' dev",
+    "dev:workers": "pnpm --filter './workers/*' dev",
+    "build": "pnpm --filter './sites/*' build",
+    "build:workers": "pnpm --filter './workers/*' build",
+    "preview": "pnpm --filter './sites/*' preview",
+    "deploy:sites": "pnpm --filter './sites/*' deploy",
+    "deploy:workers": "pnpm --filter './workers/*' deploy",
+    "lint": "pnpm -r lint",
+    "format": "pnpm -r format",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "keywords": ["astro", "agency", "multi-tenant"],
+  "author": "",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@10.12.3",
+  "engines": {
+    "node": ">=22"
+  }
+}

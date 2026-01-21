@@ -209,6 +209,214 @@ Client (tenant)
 - Requires approval
 - Uses production Doppler config
 
+## Interface Contracts
+
+This section defines the API boundaries between system components.
+
+### 1. Astro Sites → Workers (Form Submission)
+
+Sites POST form data to intake workers.
+
+```
+POST /intake/{client_slug}/form
+Content-Type: application/json
+
+{
+  "name": "string",
+  "email": "string",
+  "phone": "string?",
+  "service": "string?",
+  "message": "string",
+  "source_url": "string",
+  "utm_source": "string?",
+  "utm_medium": "string?",
+  "utm_campaign": "string?"
+}
+
+Response: 202 Accepted
+{
+  "submission_id": "uuid",
+  "message": "Thank you, we'll be in touch soon."
+}
+```
+
+### 2. Workers → Database (Submission Insert)
+
+Workers write raw submissions to Postgres via Neon HTTP API.
+
+```sql
+INSERT INTO submissions (
+  id, client_id, channel, payload, source_url,
+  created_at, processed_at
+) VALUES (
+  $1, $2, 'form', $3::jsonb, $4, NOW(), NULL
+);
+```
+
+### 3. Django Dashboard → HTMX Partials
+
+Dashboard uses HTMX for interactivity. Endpoints return HTML fragments.
+
+```
+# Inbox message list (with filters)
+GET /dashboard/inbox/
+GET /dashboard/inbox/?status=unread&urgency=high
+
+# Single message detail
+GET /dashboard/inbox/{message_id}/
+
+# Reply to message
+POST /dashboard/inbox/{message_id}/reply/
+Content-Type: application/x-www-form-urlencoded
+body=...&channel=email
+
+# Mark message read/archived
+POST /dashboard/inbox/{message_id}/mark/
+status=read|archived
+
+# Contact list with search
+GET /dashboard/contacts/?q=search
+
+# Contact detail
+GET /dashboard/contacts/{contact_id}/
+```
+
+### 4. External Webhooks → Workers
+
+Twilio and integration webhooks hit workers.
+
+```
+# Twilio SMS
+POST /intake/{client_slug}/sms
+Content-Type: application/x-www-form-urlencoded
+(Twilio standard webhook format)
+
+# Twilio Voice (voicemail)
+POST /intake/{client_slug}/voice
+(Twilio standard webhook format)
+
+# Cal.com booking
+POST /webhooks/calcom
+(Cal.com webhook payload)
+
+# Jobber sync
+POST /webhooks/jobber
+(Jobber webhook payload)
+```
+
+### 5. Django → AI Classification (BAML)
+
+Django calls BAML for message classification.
+
+```python
+# Input
+class MessageInput:
+    content: str
+    channel: Literal["form", "sms", "voicemail", "email"]
+    contact_history: list[str]  # Previous messages for context
+
+# Output
+class MessageClassification:
+    category: MessageCategory  # inquiry, booking, complaint, spam, etc.
+    intent: MessageIntent      # get_quote, schedule, feedback, etc.
+    urgency: Literal["low", "medium", "high", "urgent"]
+    suggested_action: SuggestedAction
+    confidence: float
+```
+
+### 6. Site Configuration Interface
+
+Each site reads config from a standard structure:
+
+```typescript
+// sites/{client}/src/config.ts
+export const siteConfig = {
+  client: {
+    slug: "coffee-shop",
+    name: "The Daily Grind",
+    phone: "(555) 123-4567",
+    email: "hello@dailygrind.com",
+    address: "123 Main St, Austin, TX 78701",
+  },
+  intake: {
+    formUrl: "https://intake.consult.io/coffee-shop/form",
+  },
+  services: [
+    { name: "Coffee Bar", slug: "coffee", description: "..." },
+    { name: "Catering", slug: "catering", description: "..." },
+  ],
+  social: {
+    instagram: "https://instagram.com/...",
+    facebook: "https://facebook.com/...",
+  },
+  theme: {
+    // CSS custom properties override defaults
+    "--client-primary-500": "oklch(0.45 0.12 30)", // Coffee brown
+  },
+};
+```
+
+## Directory Structure (Detailed)
+
+```
+/
+├── apps/
+│   └── web/                      # Django application
+│       ├── config/               # Django settings, URLs, WSGI
+│       │   ├── settings.py
+│       │   ├── urls.py
+│       │   └── wsgi.py
+│       ├── core/                 # Multi-tenancy foundation
+│       │   ├── models.py         # Client, User, ClientScopedModel
+│       │   ├── middleware.py     # ClientMiddleware
+│       │   └── managers.py       # ClientScopedManager
+│       ├── inbox/                # Message handling
+│       │   ├── models.py         # Contact, Message, Submission
+│       │   ├── views.py          # HTMX views for inbox
+│       │   ├── tasks.py          # Submission processing
+│       │   └── templates/inbox/  # HTMX partials
+│       ├── crm/                  # CRM features
+│       │   ├── models.py         # Job, Note, Tag
+│       │   └── views.py
+│       └── manage.py
+│
+├── sites/                        # Astro static sites
+│   ├── _template/                # Base template for new sites
+│   │   ├── astro.config.mjs
+│   │   ├── package.json
+│   │   ├── tailwind.config.ts
+│   │   └── src/
+│   │       ├── config.ts         # Site-specific config
+│   │       ├── layouts/
+│   │       ├── pages/
+│   │       └── components/
+│   ├── coffee-shop/
+│   ├── hauler/                   # Has Cal.com embed
+│   ├── cleaning/
+│   ├── landscaper/
+│   ├── barber/
+│   ├── data-analytics/
+│   ├── web-dev/
+│   └── local-agency/
+│
+├── workers/                      # Cloudflare Workers
+│   ├── intake/                   # Form/SMS/voice intake
+│   │   ├── src/index.ts
+│   │   ├── wrangler.toml
+│   │   └── package.json
+│   └── webhooks/                 # External integrations
+│       ├── src/index.ts
+│       └── wrangler.toml
+│
+├── packages/
+│   ├── schemas/                  # Shared Pydantic/TS schemas
+│   └── shared-ui/                # Tailwind preset, base styles
+│
+├── baml_src/                     # AI classification schemas
+└── scripts/                      # Dev utilities
+    └── new-site.sh               # Scaffold new client site
+```
+
 ## Future Considerations
 
 - **Horizontal scaling**: Django behind load balancer, Celery workers

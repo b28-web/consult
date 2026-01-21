@@ -1,0 +1,58 @@
+---
+/**
+ * BaseLayout - Foundation layout with HTMX loaded
+ *
+ * Provides:
+ * - HTML document structure
+ * - HTMX script injection
+ * - Meta tags and SEO basics
+ * - Skip link for accessibility
+ *
+ * Props:
+ * - title: Page title
+ * - description: Meta description
+ * - canonicalUrl: Optional canonical URL
+ */
+
+interface Props {
+  title: string;
+  description: string;
+  canonicalUrl?: string;
+}
+
+const { title, description, canonicalUrl } = Astro.props;
+const siteUrl = Astro.site?.toString() ?? '';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+
+    <!-- Preconnect to CDN -->
+    <link rel="preconnect" href="https://unpkg.com" crossorigin />
+
+    <!-- HTMX - core interactivity -->
+    <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+
+    <!-- HTMX extensions -->
+    <script src="https://unpkg.com/htmx-ext-response-targets@2.0.2/response-targets.js" defer></script>
+
+    <!-- Slot for additional head content -->
+    <slot name="head" />
+  </head>
+  <body hx-ext="response-targets">
+    <!-- Skip link for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <slot />
+
+    <!-- Slot for scripts at end of body -->
+    <slot name="scripts" />
+  </body>
+</html>
