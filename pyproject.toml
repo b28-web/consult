@@ -1,0 +1,156 @@
+[project]
+name = "consult"
+version = "0.1.0"
+description = "Multi-tenant Django web agency platform"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    # Web framework
+    # "django>=5.1",
+    # "django-environ>=0.11",
+    # "gunicorn>=23",
+    # Database
+    # "psycopg[binary]>=3.2",
+    # Will be added as we scaffold Django
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "pytest>=8.3",
+    "pytest-django>=4.9",
+    "factory-boy>=3.3",
+    "pre-commit>=4.0",
+    # Type stubs
+    "django-stubs>=5.1",
+    "types-requests>=2.32",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# =============================================================================
+# Ruff - Linter and Formatter
+# =============================================================================
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+src = ["apps", "packages"]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "ARG",    # flake8-unused-arguments
+    "SIM",    # flake8-simplify
+    "TCH",    # flake8-type-checking
+    "PTH",    # flake8-use-pathlib
+    "ERA",    # eradicate (commented code)
+    "PL",     # pylint
+    "RUF",    # ruff-specific
+]
+ignore = [
+    "PLR0913",  # too many arguments - Django views often need many
+    "PLR2004",  # magic value comparison - sometimes clearer inline
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config"]
+section-order = ["future", "standard-library", "django", "third-party", "first-party", "local-folder"]
+
+[tool.ruff.lint.isort.sections]
+django = ["django"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/migrations/*.py" = ["E501", "ERA"]  # migrations can have long lines
+"**/tests/*.py" = ["ARG", "PLR2004"]    # tests often have unused args and magic values
+
+# =============================================================================
+# Mypy - Type Checker
+# =============================================================================
+[tool.mypy]
+python_version = "3.13"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_configs = true
+show_error_codes = true
+show_column_numbers = true
+
+# Django plugin
+plugins = ["mypy_django_plugin.main"]
+
+[[tool.mypy.overrides]]
+module = [
+    "*.migrations.*",
+]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+    "factory.*",
+    "pytest_django.*",
+]
+ignore_missing_imports = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings"
+
+# =============================================================================
+# Pytest - Testing
+# =============================================================================
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+testpaths = ["apps"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-ra",  # show summary of all except passed
+    "-v",   # verbose
+]
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+]
+
+# =============================================================================
+# Coverage (optional, for later)
+# =============================================================================
+[tool.coverage.run]
+source = ["apps"]
+branch = true
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]

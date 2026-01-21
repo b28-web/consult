@@ -1,0 +1,91 @@
+# Flox Environment Manifest
+# Documentation: https://flox.dev/docs/concepts/manifest
+version = 1
+
+## Required Packages
+## These are the ONLY tools available in the dev environment.
+## If a tool isn't here, add it - don't use workarounds.
+[install]
+# Python ecosystem
+python313.pkg-path = "python313"
+uv.pkg-path = "uv"
+
+# Node.js for Astro sites
+nodejs_22.pkg-path = "nodejs_22"
+
+# Database
+postgresql_16.pkg-path = "postgresql_16"
+
+# Secrets management
+doppler.pkg-path = "doppler"
+
+# Git (usually available but explicit is better)
+git.pkg-path = "git"
+
+# Build tools
+gnumake.pkg-path = "gnumake"
+just.pkg-path = "just"
+
+# Common utilities (explicit, not fallbacks)
+curl.pkg-path = "curl"
+jq.pkg-path = "jq"
+
+## Environment Variables
+## Available in activated environment and all scripts below
+[vars]
+PYTHONDONTWRITEBYTECODE = "1"
+PYTHONUNBUFFERED = "1"
+# Django will look for settings in apps/web
+DJANGO_SETTINGS_MODULE = "config.settings"
+
+## Activation Hook
+## Runs in bash when 'flox activate' is called
+[hook]
+on-activate = '''
+  # Ensure we're using the flox-provided Python
+  export PYTHON=$(which python3)
+
+  # Create uv virtual environment if it doesn't exist
+  if [ ! -d ".venv" ]; then
+    echo "Creating Python virtual environment..."
+    uv venv .venv
+  fi
+
+  # Check if Doppler is configured
+  if ! doppler configure --check 2>/dev/null; then
+    echo ""
+    echo "WARNING: Doppler not configured for this project."
+    echo "Run: doppler setup"
+    echo ""
+  fi
+'''
+
+## Profile Script
+## Sourced by your shell when 'flox activate' is called
+[profile]
+common = '''
+  # Activate the Python virtual environment
+  source .venv/bin/activate 2>/dev/null || true
+
+  # Show environment status
+  echo "Consult Dev Environment"
+  echo "  Python: $(python3 --version 2>/dev/null || echo 'not found')"
+  echo "  Node:   $(node --version 2>/dev/null || echo 'not found')"
+  echo "  uv:     $(uv --version 2>/dev/null || echo 'not found')"
+  echo ""
+'''
+
+## Services
+## Background services for local development
+[services]
+# PostgreSQL for local development
+# postgres.command = "postgres -D $FLOX_ENV_CACHE/pgdata"
+
+## Platform Support
+[options]
+systems = [
+  "aarch64-darwin",
+  "aarch64-linux",
+  "x86_64-darwin",
+  "x86_64-linux",
+]

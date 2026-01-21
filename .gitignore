@@ -1,0 +1,127 @@
+# =============================================================================
+# Python
+# =============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# uv
+.uv/
+
+# Ruff
+.ruff_cache/
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+
+# Testing
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.pytest_cache/
+coverage.xml
+*.cover
+*.py,cover
+
+# =============================================================================
+# Django
+# =============================================================================
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# =============================================================================
+# Node.js (Astro sites, Workers)
+# =============================================================================
+node_modules/
+.npm
+.pnpm-store/
+*.tsbuildinfo
+.turbo/
+
+# Astro
+dist/
+.astro/
+
+# Wrangler (Cloudflare Workers)
+.wrangler/
+.dev.vars
+
+# =============================================================================
+# Environment & Secrets (should never exist, but just in case)
+# =============================================================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# =============================================================================
+# IDE & Editors
+# =============================================================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+*.sublime-*
+
+# =============================================================================
+# OS
+# =============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# =============================================================================
+# Flox
+# =============================================================================
+# Keep .flox/env/ but ignore runtime/cache
+.flox/run/
+.flox/cache/
+.flox/log/
+.flox/env/manifest.lock
+
+# =============================================================================
+# Misc
+# =============================================================================
+*.bak
+*.tmp
+*.temp

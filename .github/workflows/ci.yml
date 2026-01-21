@@ -1,0 +1,160 @@
+# Continuous Integration
+# Runs on every PR and push to main
+# All jobs must pass before merging
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.13"
+  UV_CACHE_DIR: /tmp/.uv-cache
+
+jobs:
+  # ==========================================================================
+  # Lint - Fast feedback on code quality
+  # ==========================================================================
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Ruff check
+        run: uv run ruff check .
+
+      - name: Ruff format check
+        run: uv run ruff format --check .
+
+  # ==========================================================================
+  # Type Check - Catch type errors
+  # ==========================================================================
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Mypy
+        run: uv run mypy apps
+
+  # ==========================================================================
+  # Test - Run the test suite
+  # ==========================================================================
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: consult
+          POSTGRES_PASSWORD: consult
+          POSTGRES_DB: consult_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      # Test database configuration
+      DATABASE_URL: postgres://consult:consult@localhost:5432/consult_test
+      # Django settings
+      DJANGO_SETTINGS_MODULE: config.settings
+      SECRET_KEY: test-secret-key-not-for-production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Run migrations
+        run: uv run python apps/web/manage.py migrate --no-input
+        continue-on-error: true  # Will fail until Django is scaffolded
+
+      - name: Run tests
+        run: uv run pytest --tb=short
+        continue-on-error: true  # Will fail until Django is scaffolded
+
+  # ==========================================================================
+  # Pre-commit - Run all pre-commit hooks
+  # ==========================================================================
+  pre-commit:
+    name: Pre-commit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - uses: pre-commit/action@v3.0.1
+
+  # ==========================================================================
+  # Build Check - Verify the project builds
+  # ==========================================================================
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Build package
+        run: uv build

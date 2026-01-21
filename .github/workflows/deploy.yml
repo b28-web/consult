@@ -1,0 +1,67 @@
+# Deployment Pipeline
+# Triggered by push to main (after CI passes) or manual dispatch
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false  # Don't cancel ongoing deploys
+
+jobs:
+  # ==========================================================================
+  # Deploy to Staging (automatic on main push)
+  # ==========================================================================
+  staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+    if: github.event_name == 'push' || github.event.inputs.environment == 'staging'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
+      - name: Deploy to VPS
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN_STAGING }}
+        run: |
+          echo "Staging deployment placeholder"
+          echo "Will be configured when VPS is provisioned"
+          # doppler run -- ./scripts/deploy.sh staging
+
+  # ==========================================================================
+  # Deploy to Production (manual only)
+  # ==========================================================================
+  production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+    if: github.event.inputs.environment == 'production'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
+      - name: Deploy to VPS
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN_PRODUCTION }}
+        run: |
+          echo "Production deployment placeholder"
+          echo "Will be configured when VPS is provisioned"
+          # doppler run -- ./scripts/deploy.sh production
