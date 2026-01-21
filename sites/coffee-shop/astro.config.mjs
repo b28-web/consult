@@ -7,6 +7,5 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
   },
-  // Site-specific: override in actual sites
-  site: "https://example.com",
+  site: "https://thedailygrind.coffee",
 });

@@ -1,7 +1,7 @@
 # 001-C: First Client Site (coffee-shop)
 
 **EP:** [EP-001-backend-foundation](../enhancement_proposals/EP-001-backend-foundation.md)
-**Status:** pending
+**Status:** in-progress
 
 ## Summary
 
@@ -9,11 +9,12 @@ Scaffold the first real client site from template, customize for a coffee shop, 
 
 ## Acceptance Criteria
 
-- [ ] sites/coffee-shop/ created from template
-- [ ] Config customized (name, colors, services)
-- [ ] DaisyUI theme uses warm brown palette
-- [ ] Contact form POSTs to intake worker
-- [ ] Site builds and deploys to Cloudflare Pages
+- [x] sites/coffee-shop/ created from template
+- [x] Config customized (name, colors, services)
+- [x] DaisyUI theme uses warm brown palette
+- [x] Contact form POSTs to intake worker (configured in config.ts)
+- [x] Site builds successfully
+- [ ] Site deploys to Cloudflare Pages
 - [ ] Form submission creates row in database
 
 ## Implementation Notes
@@ -33,4 +34,13 @@ Fictional business:
 
 ## Progress
 
-(Not started - depends on 001-A and 001-B)
+### 2026-01-21
+- Copied template to sites/coffee-shop/
+- Customized config.ts: "The Daily Grind" branding, 4 services (Coffee Bar, Pastries, Catering, Event Space)
+- Updated tailwind.config.ts with warm brown (#78350f) / cream (#fef3c7) DaisyUI theme
+- Updated wrangler.toml (project: consult-coffee-shop)
+- Updated astro.config.mjs (site: thedailygrind.coffee)
+- Added @consult/shared-ui workspace dependency
+- Fixed template bug: changed output from deprecated "hybrid" to "static"
+- Site builds successfully (2 pages: /, /contact)
+- **Blocked**: Deployment requires Doppler/Neon setup (same as 001-B)

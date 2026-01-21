@@ -14,7 +14,7 @@ Establish the core backend infrastructure: Django running with migrations, intak
 |----|-------|--------|
 | 001-A | Django backend bootstrap | completed |
 | 001-B | Intake worker deployment | in-progress |
-| 001-C | First client site (coffee-shop) | pending |
+| 001-C | First client site (coffee-shop) | in-progress |
 
 ## Design Decisions
 
@@ -56,6 +56,18 @@ Establish the core backend infrastructure: Django running with migrations, intak
   - TypeScript compiles, wrangler builds successfully
 - **Blocked**: Deployment requires Doppler project + Neon database setup
 - Next: Configure Doppler secrets and Neon database, then deploy
+
+### 2026-01-21 (session 4)
+- **001-C scaffolded**: Coffee-shop site created and building
+  - Copied template to sites/coffee-shop/
+  - Configured "The Daily Grind" branding (4 services)
+  - DaisyUI theme with warm brown (#78350f) / cream (#fef3c7)
+  - Site builds successfully with pnpm
+- **Template fixes applied**:
+  - Changed Astro output from deprecated "hybrid" to "static"
+  - Added @consult/shared-ui workspace dependency
+- **Blocked**: Both 001-B and 001-C deployment blocked on Doppler/Neon setup
+- Next: Configure Doppler and Neon to unblock deployments
 
 ## Retrospective
 

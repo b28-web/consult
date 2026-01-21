@@ -11,7 +11,7 @@ Get the full stack working end-to-end.
 |--------|-------|--------|
 | 001-A | Django backend bootstrap | completed |
 | 001-B | Intake worker deployment | in-progress |
-| 001-C | First client site (coffee-shop) | pending |
+| 001-C | First client site (coffee-shop) | in-progress |
 
 ## Planned Sprints
 
