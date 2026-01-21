@@ -1,0 +1,24 @@
+# Intake Worker - handles form submissions, SMS, voicemail webhooks
+# Writes directly to Neon Postgres via HTTP API
+
+name = "consult-intake"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+# Routes - one worker handles all client intake
+# Pattern: /intake/{client_slug}/{channel}
+# e.g., /intake/coffee-shop/form
+
+# Environment variables from Doppler:
+# - NEON_DATABASE_URL: Postgres connection string
+# - INTAKE_API_KEY: Shared secret for verification
+# - TWILIO_AUTH_TOKEN: For validating Twilio webhooks
+
+# Hyperdrive for Postgres connection pooling (optional)
+# [[hyperdrive]]
+# binding = "DB"
+# id = "xxx"
+
+# Preview environment
+[env.preview]
+name = "consult-intake-preview"

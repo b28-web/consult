@@ -13,7 +13,7 @@ Establish the core backend infrastructure: Django running with migrations, intak
 | ID | Title | Status |
 |----|-------|--------|
 | 001-A | Django backend bootstrap | completed |
-| 001-B | Intake worker deployment | pending |
+| 001-B | Intake worker deployment | in-progress |
 | 001-C | First client site (coffee-shop) | pending |
 
 ## Design Decisions
@@ -48,6 +48,14 @@ Establish the core backend infrastructure: Django running with migrations, intak
   - Initial migrations generated
   - All quality checks pass (ruff, mypy)
 - Next: Configure Doppler secrets, then 001-B (intake worker)
+
+### 2026-01-21 (session 3)
+- **001-B code complete**: Intake worker implementation done
+  - Added @neondatabase/serverless dependency
+  - Implemented writeSubmission() with actual Neon SQL INSERT
+  - TypeScript compiles, wrangler builds successfully
+- **Blocked**: Deployment requires Doppler project + Neon database setup
+- Next: Configure Doppler secrets and Neon database, then deploy
 
 ## Retrospective
 
