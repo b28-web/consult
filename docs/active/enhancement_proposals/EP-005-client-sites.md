@@ -17,7 +17,7 @@ Deploy all 8 planned client sites, establish tooling for rapid site creation, an
 | 005-D | Deploy cleaning site | complete |
 | 005-E | Deploy landscaper site | complete |
 | 005-F | Template hardening (mobile, CSS) | complete |
-| 005-G | Deploy barber site | pending |
+| 005-G | Deploy barber site | complete |
 | 005-H | Deploy data-analytics site | pending |
 | 005-I | Deploy web-dev site | pending |
 | 005-J | Deploy local-agency site | pending |
@@ -101,6 +101,11 @@ The `coffee-shop` site in this EP is a **simple cafe** (static menu page, hours 
 | local-agency | B2B Services | Meta/self-referential | |
 
 ## Progress Log
+
+### 2026-01-22 (barber site)
+- Deployed barber site with black/gold theme
+- Live at https://consult-barber-dev.pages.dev
+- Features: Services page with prices, Book Now with Cal.com
 
 ### 2026-01-22 (template hardening)
 - Completed 005-F: Template hardening for mobile responsiveness

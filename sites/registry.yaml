@@ -61,3 +61,9 @@ sites:
     dev: {}
     # prod:
     #   domain: landscaper.example.com
+
+  barber:
+    ready: true
+    dev: {}
+    # prod:
+    #   domain: barber.example.com

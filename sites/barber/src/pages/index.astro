@@ -1,0 +1,52 @@
+---
+/**
+ * Home Page
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+import { config } from "@/config";
+---
+
+<PageLayout title="Home">
+  <!-- Hero Section -->
+  <section class="hero min-h-[50vh] sm:min-h-[60vh] lg:min-h-[70vh] bg-primary">
+    <div class="hero-content text-center px-4">
+      <div class="max-w-2xl">
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary-content">{config.client.name}</h1>
+        <p class="py-4 sm:py-6 text-lg sm:text-xl text-primary-content/80">{config.client.tagline}</p>
+        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+          <a href="/book" class="btn btn-secondary">Book Appointment</a>
+          <a href="/services" class="btn btn-outline border-primary-content text-primary-content hover:bg-primary-content hover:text-primary">View Prices</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services Preview -->
+  <section class="py-12 sm:py-16 px-4">
+    <div class="max-w-6xl mx-auto">
+      <h2 class="text-2xl sm:text-3xl font-bold text-center mb-8 sm:mb-12">Our Services</h2>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {config.services.map((service) => (
+          <div class="card bg-base-100 shadow-xl border border-base-300">
+            <div class="card-body p-4 sm:p-6">
+              <h3 class="card-title text-lg sm:text-xl">{service.name}</h3>
+              <p class="text-sm sm:text-base text-base-content/70">{service.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div class="text-center mt-8">
+        <a href="/services" class="btn btn-primary">View Full Menu & Prices</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-12 sm:py-16 bg-secondary text-secondary-content">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Ready for a Fresh Cut?</h2>
+      <p class="text-base sm:text-lg mb-6 sm:mb-8">Book online or walk in. We're ready when you are.</p>
+      <a href="/book" class="btn btn-primary btn-md sm:btn-lg">Book Now</a>
+    </div>
+  </section>
+</PageLayout>
