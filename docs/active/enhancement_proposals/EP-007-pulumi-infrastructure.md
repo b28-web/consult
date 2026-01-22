@@ -78,7 +78,7 @@ Define all infrastructure as code using Pulumi. Enable reproducible, version-con
 
 | ID | Title | Status |
 |----|-------|--------|
-| 007-A | Pulumi project setup | pending |
+| 007-A | Pulumi project setup | completed |
 | 007-B | Cloudflare infrastructure | pending |
 | 007-C | Hetzner Django infrastructure | pending |
 | 007-D | Deployment orchestration | pending |
@@ -151,6 +151,15 @@ Production adds:
 - [ ] Domain configured in Cloudflare
 
 ## Progress Log
+
+### 2026-01-22
+- **007-A completed**: Pulumi project setup
+  - Added Pulumi to Flox environment
+  - Created infra/ with full project structure
+  - Hetzner modules: network, server, volume
+  - Cloudflare modules: dns, pages, workers
+  - Stack configs for dev/prod
+  - Justfile commands: infra-preview, infra-up, infra-init, infra-secrets
 
 ### 2026-01-21
 - EP created

@@ -26,12 +26,14 @@ Create agent-driven pre-deploy validation pipeline with Dagger.
 
 **Completed 2026-01-21**: Full Dagger pipeline with parallel execution, JSON output, and GitHub Actions integration.
 
+**Updated 2026-01-22**: Optimized integration tests from ~30s+ timeout to ~9s total execution. Replaced slow HTTP health checks with faster `manage.py check` validation.
+
 ### EP-007: Pulumi Infrastructure
 Infrastructure as code for Hetzner (Django) + Cloudflare (edge).
 
 | Ticket | Title | Status |
 |--------|-------|--------|
-| 007-A | Pulumi project setup | pending |
+| 007-A | Pulumi project setup | completed |
 | 007-B | Cloudflare infrastructure | pending |
 | 007-C | Hetzner Django infrastructure | pending |
 | 007-D | Deployment orchestration | pending |

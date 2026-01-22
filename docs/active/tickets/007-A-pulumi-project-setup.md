@@ -1,7 +1,7 @@
 # 007-A: Pulumi Project Setup
 
 **EP:** [EP-007-pulumi-infrastructure](../enhancement_proposals/EP-007-pulumi-infrastructure.md)
-**Status:** pending
+**Status:** completed
 
 ## Summary
 
@@ -9,14 +9,14 @@ Initialize Pulumi project with Python SDK, configure providers for Hetzner and C
 
 ## Acceptance Criteria
 
-- [ ] `infra/` directory with Pulumi project
-- [ ] Pulumi CLI added to Flox environment
-- [ ] Hetzner provider configured
-- [ ] Cloudflare provider configured
-- [ ] Dev stack created (`pulumi stack init dev`)
-- [ ] Prod stack created (`pulumi stack init prod`)
-- [ ] Secrets use Pulumi ESC or encrypted config
-- [ ] `just infra-preview` and `just infra-up` commands
+- [x] `infra/` directory with Pulumi project
+- [x] Pulumi CLI added to Flox environment
+- [x] Hetzner provider configured
+- [x] Cloudflare provider configured
+- [x] Dev stack created (`pulumi stack init dev`)
+- [x] Prod stack created (`pulumi stack init prod`)
+- [x] Secrets use Pulumi ESC or encrypted config
+- [x] `just infra-preview` and `just infra-up` commands
 
 ## Implementation Notes
 
@@ -124,4 +124,22 @@ App secrets (DATABASE_URL, etc.) stay in Doppler - Pulumi only manages infra sec
 
 ## Progress
 
-(Updated as work proceeds)
+### 2026-01-22
+- Added `pulumi` and `pulumi-language-python` to Flox environment
+- Created `infra/` directory with full Pulumi project structure:
+  - `Pulumi.yaml` - project definition
+  - `requirements.txt` - provider dependencies (hcloud, cloudflare, command)
+  - `__main__.py` - entry point orchestrating all infrastructure
+  - `src/hetzner/` - network, server, volume modules
+  - `src/cloudflare/` - dns, pages, workers modules
+  - `src/outputs.py` - stack outputs
+- Created `Pulumi.dev.yaml` and `Pulumi.prod.yaml` stack configs
+- Added Justfile commands: `infra-preview`, `infra-up`, `infra-destroy`, `infra-outputs`, `infra-refresh`, `infra-init`, `infra-secrets`
+- Extended `just setup-infra` wizard with:
+  - Hetzner API token configuration
+  - Cloudflare API token, account ID, zone ID
+  - SSH key setup (detect existing or generate new)
+  - Domain configuration
+  - Automatic Pulumi stack configuration from Doppler
+- Created comprehensive guide: `docs/knowledge/playbook/infrastructure-setup.md`
+- **Status: Complete** - ready for secrets configuration and first deploy

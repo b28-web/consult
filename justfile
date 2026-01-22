@@ -340,11 +340,255 @@ setup-infra:
     fi
 
     # =========================================================================
+    header "Step 5: Infrastructure Secrets (Pulumi)"
+    # =========================================================================
+
+    echo "These secrets are needed to deploy infrastructure with Pulumi."
+    echo "Skip this section if you only need local development."
+    echo ""
+
+    if ! prompt_yes_no "Configure infrastructure deployment secrets?" "n"; then
+        echo "Skipped infrastructure secrets."
+    else
+        # HETZNER_API_TOKEN
+        if ! check_secret "HETZNER_API_TOKEN"; then
+            echo ""
+            echo -e "${BOLD}HETZNER_API_TOKEN${NC} - Hetzner Cloud API token"
+            info "Used by Pulumi to provision servers and networks"
+            echo ""
+            echo -e "${BOLD}To get this:${NC}"
+            echo "  1. Go to: ${BLUE}https://console.hetzner.cloud${NC}"
+            echo "  2. Select your project (or create one)"
+            echo "  3. Go to: ${BOLD}Security → API Tokens → Generate API Token${NC}"
+            echo "  4. Name it: ${BOLD}consult-pulumi${NC}"
+            echo "  5. Select: ${BOLD}Read & Write${NC}"
+            echo ""
+            read -sp "Enter Hetzner API token (hidden): " HETZNER_TOKEN
+            echo ""
+            if [ -n "$HETZNER_TOKEN" ]; then
+                set_secret "HETZNER_API_TOKEN" "$HETZNER_TOKEN"
+            else
+                warn "Skipped. Set manually: doppler secrets set HETZNER_API_TOKEN=..."
+            fi
+        else
+            success "HETZNER_API_TOKEN already set"
+        fi
+
+        # CLOUDFLARE_API_TOKEN
+        if ! check_secret "CLOUDFLARE_API_TOKEN"; then
+            echo ""
+            echo -e "${BOLD}CLOUDFLARE_API_TOKEN${NC} - Cloudflare API token"
+            info "Used by Pulumi for DNS, Pages, and Workers"
+            echo ""
+            echo -e "${BOLD}To get this:${NC}"
+            echo "  1. Go to: ${BLUE}https://dash.cloudflare.com/profile/api-tokens${NC}"
+            echo "  2. Click: ${BOLD}Create Token${NC}"
+            echo "  3. Use template: ${BOLD}Edit zone DNS${NC} (then add more permissions)"
+            echo "  4. Add permissions:"
+            echo "     - Zone / DNS / Edit"
+            echo "     - Zone / Zone / Read"
+            echo "     - Account / Cloudflare Pages / Edit"
+            echo "     - Account / Workers Scripts / Edit"
+            echo "  5. Zone Resources: ${BOLD}Include / Specific zone / your-domain.com${NC}"
+            echo ""
+            read -sp "Enter Cloudflare API token (hidden): " CF_TOKEN
+            echo ""
+            if [ -n "$CF_TOKEN" ]; then
+                set_secret "CLOUDFLARE_API_TOKEN" "$CF_TOKEN"
+            else
+                warn "Skipped. Set manually: doppler secrets set CLOUDFLARE_API_TOKEN=..."
+            fi
+        else
+            success "CLOUDFLARE_API_TOKEN already set"
+        fi
+
+        # CLOUDFLARE_ACCOUNT_ID
+        if ! check_secret "CLOUDFLARE_ACCOUNT_ID"; then
+            echo ""
+            echo -e "${BOLD}CLOUDFLARE_ACCOUNT_ID${NC} - Your Cloudflare account ID"
+            info "Found in the URL or sidebar of your Cloudflare dashboard"
+            echo ""
+            echo -e "${BOLD}To find this:${NC}"
+            echo "  1. Go to: ${BLUE}https://dash.cloudflare.com${NC}"
+            echo "  2. Select your domain"
+            echo "  3. Look in the right sidebar under ${BOLD}API${NC}"
+            echo "  4. Copy ${BOLD}Account ID${NC}"
+            echo ""
+            read -p "Enter Cloudflare Account ID: " CF_ACCOUNT_ID
+            if [ -n "$CF_ACCOUNT_ID" ]; then
+                set_secret "CLOUDFLARE_ACCOUNT_ID" "$CF_ACCOUNT_ID"
+            else
+                warn "Skipped. Set manually: doppler secrets set CLOUDFLARE_ACCOUNT_ID=..."
+            fi
+        else
+            success "CLOUDFLARE_ACCOUNT_ID already set"
+        fi
+
+        # CLOUDFLARE_ZONE_ID
+        if ! check_secret "CLOUDFLARE_ZONE_ID"; then
+            echo ""
+            echo -e "${BOLD}CLOUDFLARE_ZONE_ID${NC} - Zone ID for your domain"
+            info "Each domain has a unique zone ID"
+            echo ""
+            echo -e "${BOLD}To find this:${NC}"
+            echo "  1. Go to: ${BLUE}https://dash.cloudflare.com${NC}"
+            echo "  2. Select your domain"
+            echo "  3. Look in the right sidebar under ${BOLD}API${NC}"
+            echo "  4. Copy ${BOLD}Zone ID${NC}"
+            echo ""
+            read -p "Enter Cloudflare Zone ID: " CF_ZONE_ID
+            if [ -n "$CF_ZONE_ID" ]; then
+                set_secret "CLOUDFLARE_ZONE_ID" "$CF_ZONE_ID"
+            else
+                warn "Skipped. Set manually: doppler secrets set CLOUDFLARE_ZONE_ID=..."
+            fi
+        else
+            success "CLOUDFLARE_ZONE_ID already set"
+        fi
+
+        # SSH_PUBLIC_KEY
+        if ! check_secret "SSH_PUBLIC_KEY"; then
+            echo ""
+            echo -e "${BOLD}SSH_PUBLIC_KEY${NC} - SSH public key for server access"
+            info "Will be added to provisioned servers for SSH access"
+            echo ""
+
+            # Check for existing SSH keys
+            if [ -f "$HOME/.ssh/id_ed25519.pub" ]; then
+                echo "Found existing key: ~/.ssh/id_ed25519.pub"
+                if prompt_yes_no "Use this key?"; then
+                    SSH_KEY=$(cat "$HOME/.ssh/id_ed25519.pub")
+                    set_secret "SSH_PUBLIC_KEY" "$SSH_KEY"
+                fi
+            elif [ -f "$HOME/.ssh/id_rsa.pub" ]; then
+                echo "Found existing key: ~/.ssh/id_rsa.pub"
+                if prompt_yes_no "Use this key?"; then
+                    SSH_KEY=$(cat "$HOME/.ssh/id_rsa.pub")
+                    set_secret "SSH_PUBLIC_KEY" "$SSH_KEY"
+                fi
+            else
+                echo "No SSH key found at ~/.ssh/id_ed25519.pub or ~/.ssh/id_rsa.pub"
+                echo ""
+                if prompt_yes_no "Generate a new SSH key?"; then
+                    ssh-keygen -t ed25519 -f "$HOME/.ssh/consult_deploy" -N "" -C "consult-deploy"
+                    SSH_KEY=$(cat "$HOME/.ssh/consult_deploy.pub")
+                    set_secret "SSH_PUBLIC_KEY" "$SSH_KEY"
+                    success "Generated new key: ~/.ssh/consult_deploy"
+                else
+                    echo "Paste your SSH public key (single line):"
+                    read -p "> " SSH_KEY
+                    if [ -n "$SSH_KEY" ]; then
+                        set_secret "SSH_PUBLIC_KEY" "$SSH_KEY"
+                    else
+                        warn "Skipped."
+                    fi
+                fi
+            fi
+        else
+            success "SSH_PUBLIC_KEY already set"
+        fi
+
+        # DOMAIN
+        if ! check_secret "DOMAIN"; then
+            echo ""
+            echo -e "${BOLD}DOMAIN${NC} - Primary domain for the platform"
+            info "e.g., consult.example.com or example.com"
+            echo ""
+            read -p "Enter your domain: " DOMAIN
+            if [ -n "$DOMAIN" ]; then
+                set_secret "DOMAIN" "$DOMAIN"
+            else
+                warn "Skipped. Set manually: doppler secrets set DOMAIN=..."
+            fi
+        else
+            success "DOMAIN already set"
+        fi
+    fi
+
+    # =========================================================================
+    header "Step 6: Pulumi Stack Configuration"
+    # =========================================================================
+
+    # Check if Pulumi is available
+    if ! command -v pulumi &> /dev/null; then
+        warn "Pulumi CLI not installed. Skipping stack configuration."
+        echo "Install Pulumi or run 'flox activate' to get it."
+    elif check_secret "HETZNER_API_TOKEN" && check_secret "CLOUDFLARE_API_TOKEN"; then
+        echo "Pulumi uses encrypted config for provider secrets."
+        echo "This syncs your Doppler secrets to Pulumi stacks."
+        echo ""
+
+        if prompt_yes_no "Configure Pulumi stacks with your secrets?" "n"; then
+            cd infra
+
+            # Initialize if needed
+            if [ ! -d ".venv" ]; then
+                echo "Initializing Pulumi environment..."
+                python3 -m venv .venv
+                .venv/bin/pip install -q -r requirements.txt
+            fi
+
+            # Get secrets from Doppler
+            HETZNER_TOKEN=$(doppler secrets get HETZNER_API_TOKEN --plain)
+            CF_TOKEN=$(doppler secrets get CLOUDFLARE_API_TOKEN --plain)
+            CF_ACCOUNT=$(doppler secrets get CLOUDFLARE_ACCOUNT_ID --plain 2>/dev/null || echo "")
+            CF_ZONE=$(doppler secrets get CLOUDFLARE_ZONE_ID --plain 2>/dev/null || echo "")
+            DOMAIN=$(doppler secrets get DOMAIN --plain 2>/dev/null || echo "")
+
+            # Configure dev stack
+            if pulumi stack ls 2>/dev/null | grep -q "dev"; then
+                echo "Configuring dev stack..."
+                pulumi config set --secret hcloud:token "$HETZNER_TOKEN" --stack dev
+                pulumi config set --secret cloudflare:apiToken "$CF_TOKEN" --stack dev
+                if [ -n "$CF_ACCOUNT" ]; then
+                    pulumi config set cloudflare_account_id "$CF_ACCOUNT" --stack dev
+                fi
+                if [ -n "$CF_ZONE" ]; then
+                    pulumi config set cloudflare_zone_id "$CF_ZONE" --stack dev
+                fi
+                if [ -n "$DOMAIN" ]; then
+                    pulumi config set domain "$DOMAIN" --stack dev
+                fi
+                success "Dev stack configured"
+            else
+                warn "Dev stack not found. Run 'just infra-init' first."
+            fi
+
+            # Configure prod stack
+            if pulumi stack ls 2>/dev/null | grep -q "prod"; then
+                if prompt_yes_no "Also configure prod stack with the same secrets?"; then
+                    echo "Configuring prod stack..."
+                    pulumi config set --secret hcloud:token "$HETZNER_TOKEN" --stack prod
+                    pulumi config set --secret cloudflare:apiToken "$CF_TOKEN" --stack prod
+                    if [ -n "$CF_ACCOUNT" ]; then
+                        pulumi config set cloudflare_account_id "$CF_ACCOUNT" --stack prod
+                    fi
+                    if [ -n "$CF_ZONE" ]; then
+                        pulumi config set cloudflare_zone_id "$CF_ZONE" --stack prod
+                    fi
+                    if [ -n "$DOMAIN" ]; then
+                        pulumi config set domain "$DOMAIN" --stack prod
+                    fi
+                    success "Prod stack configured"
+                fi
+            fi
+
+            cd ..
+        else
+            echo "Skipped Pulumi configuration."
+            echo "Run 'just infra-secrets' later to configure manually."
+        fi
+    else
+        info "Skipping Pulumi configuration (infrastructure secrets not set)"
+    fi
+
+    # =========================================================================
     header "Final Status"
     # =========================================================================
 
     STILL_MISSING=()
 
+    echo "Required (local development):"
     for secret in SECRET_KEY DEBUG ALLOWED_HOSTS DATABASE_URL NEON_DATABASE_URL INTAKE_API_KEY; do
         if check_secret "$secret"; then
             success "$secret"
@@ -355,13 +599,32 @@ setup-infra:
     done
 
     echo ""
+    echo "Infrastructure (deployment):"
+    for secret in HETZNER_API_TOKEN CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_ZONE_ID DOMAIN SSH_PUBLIC_KEY; do
+        if check_secret "$secret"; then
+            success "$secret"
+        else
+            warn "$secret (optional)"
+        fi
+    done
+
+    echo ""
     if [ ${#STILL_MISSING[@]} -eq 0 ]; then
         echo -e "${GREEN}${BOLD}All required secrets configured!${NC}"
         echo ""
-        echo "Next steps:"
-        echo "  ${BOLD}just migrate${NC}        # Run database migrations"
-        echo "  ${BOLD}just dev${NC}            # Start Django dev server"
-        echo "  ${BOLD}just deploy-worker${NC}  # Deploy intake worker"
+        echo "Local development:"
+        echo "  ${BOLD}just migrate${NC}         # Run database migrations"
+        echo "  ${BOLD}just dev${NC}             # Start Django dev server"
+        echo "  ${BOLD}just test-local${NC}      # Run integration tests"
+        echo ""
+        if check_secret "HETZNER_API_TOKEN" && check_secret "CLOUDFLARE_API_TOKEN"; then
+            echo "Infrastructure deployment:"
+            echo "  ${BOLD}just infra-preview${NC}   # Preview infrastructure changes"
+            echo "  ${BOLD}just infra-up${NC}        # Deploy infrastructure"
+        else
+            echo "For infrastructure deployment, re-run this wizard"
+            echo "and configure Hetzner/Cloudflare secrets."
+        fi
     else
         echo -e "${YELLOW}Still missing: ${STILL_MISSING[*]}${NC}"
         echo ""
@@ -758,6 +1021,104 @@ dagger-typecheck:
 
 dagger-test:
     cd dagger && dagger call test --source=..
+
+# =============================================================================
+# Infrastructure (Pulumi)
+# =============================================================================
+
+# Preview infrastructure changes
+infra-preview STACK="dev":
+    cd infra && pulumi preview --stack {{STACK}}
+
+# Apply infrastructure changes
+infra-up STACK="dev":
+    cd infra && pulumi up --stack {{STACK}}
+
+# Apply infrastructure changes (auto-approve, for CI)
+infra-up-yes STACK="dev":
+    cd infra && pulumi up --stack {{STACK}} --yes
+
+# Destroy infrastructure (careful!)
+infra-destroy STACK="dev":
+    cd infra && pulumi destroy --stack {{STACK}}
+
+# Show infrastructure outputs
+infra-outputs STACK="dev":
+    cd infra && pulumi stack output --stack {{STACK}} --json
+
+# Refresh infrastructure state
+infra-refresh STACK="dev":
+    cd infra && pulumi refresh --stack {{STACK}}
+
+# Initialize Pulumi infrastructure
+infra-init:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Initializing Pulumi infrastructure..."
+    cd infra
+
+    # Create virtual environment if needed
+    if [ ! -d ".venv" ]; then
+        echo "Creating Python virtual environment..."
+        python3 -m venv .venv
+    fi
+
+    # Install dependencies
+    echo "Installing Pulumi providers..."
+    .venv/bin/pip install -r requirements.txt
+
+    # Initialize stacks if they don't exist
+    echo "Checking stacks..."
+    if ! pulumi stack ls 2>/dev/null | grep -q "dev"; then
+        echo "Creating dev stack..."
+        pulumi stack init dev
+    fi
+    if ! pulumi stack ls 2>/dev/null | grep -q "prod"; then
+        echo "Creating prod stack..."
+        pulumi stack init prod
+    fi
+
+    echo ""
+    echo "Infrastructure initialized!"
+    echo ""
+    echo "Next steps:"
+    echo "  1. Configure provider secrets:"
+    echo "     pulumi config set --secret hcloud:token YOUR_HETZNER_TOKEN --stack dev"
+    echo "     pulumi config set --secret cloudflare:apiToken YOUR_CF_TOKEN --stack dev"
+    echo ""
+    echo "  2. Update stack config (infra/Pulumi.dev.yaml):"
+    echo "     - Set domain to your domain"
+    echo "     - Set cloudflare_account_id"
+    echo "     - Set cloudflare_zone_id"
+    echo ""
+    echo "  3. Preview changes:"
+    echo "     just infra-preview"
+
+# Configure infrastructure secrets interactively
+infra-secrets STACK="dev":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd infra
+
+    echo "Configuring secrets for stack: {{STACK}}"
+    echo ""
+
+    # Hetzner token
+    echo "Enter Hetzner API token (from https://console.hetzner.cloud):"
+    read -s HCLOUD_TOKEN
+    pulumi config set --secret hcloud:token "$HCLOUD_TOKEN" --stack {{STACK}}
+    echo "✓ Hetzner token set"
+
+    # Cloudflare token
+    echo ""
+    echo "Enter Cloudflare API token (from https://dash.cloudflare.com/profile/api-tokens):"
+    read -s CF_TOKEN
+    pulumi config set --secret cloudflare:apiToken "$CF_TOKEN" --stack {{STACK}}
+    echo "✓ Cloudflare token set"
+
+    echo ""
+    echo "Secrets configured for {{STACK}} stack."
+    echo "Now update infra/Pulumi.{{STACK}}.yaml with your domain and zone IDs."
 
 # =============================================================================
 # Production

@@ -25,6 +25,11 @@ git.pkg-path = "git"
 # Build tools
 gnumake.pkg-path = "gnumake"
 just.pkg-path = "just"
+dagger.pkg-path = "dagger"
+
+# Infrastructure
+pulumi.pkg-path = "pulumi"
+pulumiPackages.pulumi-language-python.pkg-path = "pulumiPackages.pulumi-language-python"
 
 # Common utilities (explicit, not fallbacks)
 curl.pkg-path = "curl"
@@ -36,7 +41,7 @@ jq.pkg-path = "jq"
 PYTHONDONTWRITEBYTECODE = "1"
 PYTHONUNBUFFERED = "1"
 # Django will look for settings in apps/web
-DJANGO_SETTINGS_MODULE = "config.settings"
+DJANGO_SETTINGS_MODULE = "apps.web.config.settings"
 
 ## Activation Hook
 ## Runs in bash when 'flox activate' is called

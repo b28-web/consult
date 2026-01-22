@@ -1,0 +1,7 @@
+name: consult-infra
+description: Consult infrastructure - Hetzner (Django) + Cloudflare (edge)
+runtime:
+  name: python
+  options:
+    toolchain: pip
+    virtualenv: .venv

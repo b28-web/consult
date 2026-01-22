@@ -1,0 +1,8 @@
+config:
+  consult-infra:environment: dev
+  consult-infra:domain: example.com
+  consult-infra:cloudflare_account_id:
+    secure: PLACEHOLDER_RUN_PULUMI_CONFIG_SET
+  consult-infra:cloudflare_zone_id:
+    secure: PLACEHOLDER_RUN_PULUMI_CONFIG_SET
+  consult-infra:ssh_key_name: consult-dev
