@@ -67,11 +67,21 @@ common = '''
   # Activate the Python virtual environment
   source .venv/bin/activate 2>/dev/null || true
 
+  # Load local secrets (not committed to git)
+  if [ -f ".secrets.local" ]; then
+    source .secrets.local
+  fi
+
   # Show environment status
   echo "Consult Dev Environment"
   echo "  Python: $(python3 --version 2>/dev/null || echo 'not found')"
   echo "  Node:   $(node --version 2>/dev/null || echo 'not found')"
   echo "  uv:     $(uv --version 2>/dev/null || echo 'not found')"
+  if [ -n "$DOPPLER_TOKEN" ]; then
+    echo "  Doppler: configured ✓"
+  else
+    echo "  Doppler: not configured (create .secrets.local)"
+  fi
   echo ""
 '''
 

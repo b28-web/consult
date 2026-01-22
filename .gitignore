@@ -84,6 +84,7 @@ dist/
 .env
 .env.*
 !.env.example
+.secrets.local
 *.pem
 *.key
 

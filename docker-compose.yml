@@ -1,0 +1,40 @@
+services:
+  # Django backend
+  django:
+    build:
+      context: .
+      dockerfile: docker/django.Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG:-True}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
+    volumes:
+      - ./apps:/app/apps:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/admin/login/"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # Intake worker (Cloudflare Workers local dev)
+  worker:
+    build:
+      context: .
+      dockerfile: docker/worker.Dockerfile
+    ports:
+      - "8787:8787"
+    environment:
+      - NEON_DATABASE_URL=${NEON_DATABASE_URL}
+      - INTAKE_API_KEY=${INTAKE_API_KEY}
+    volumes:
+      - ./workers/intake/src:/app/src:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8787/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 10s

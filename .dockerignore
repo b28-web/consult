@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.venv
+*.egg-info
+
+# Node
+node_modules
+.pnpm-store
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Build artifacts
+dist
+build
+*.log
+
+# Local config
+.env
+.env.*
+.secrets.local
+.doppler.yaml
+
+# Docker
+.dockerignore
+docker-compose*.yml
+
+# Docs (not needed in containers)
+docs
+
+# Sites (built separately)
+sites
+
+# Flox
+.flox

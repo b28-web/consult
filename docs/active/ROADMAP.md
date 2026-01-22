@@ -13,6 +13,25 @@ Get the full stack working end-to-end.
 | 001-B | Intake worker deployment | in-progress |
 | 001-C | First client site (coffee-shop) | in-progress |
 
+### EP-006: Automated Deploy Validation
+Create agent-driven pre-deploy validation pipeline with Dagger.
+
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 006-A | Dagger pipeline setup | pending |
+| 006-B | Pre-deploy validation flow | pending |
+| 006-C | GitHub Actions integration | pending |
+
+### EP-007: Pulumi Infrastructure
+Infrastructure as code for Hetzner (Django) + Cloudflare (edge).
+
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 007-A | Pulumi project setup | pending |
+| 007-B | Cloudflare infrastructure | pending |
+| 007-C | Hetzner Django infrastructure | pending |
+| 007-D | Deployment orchestration | pending |
+
 ## Planned Sprints
 
 ### EP-002: Submission Processing & Dashboard
