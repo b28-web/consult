@@ -10,7 +10,51 @@ from django.db.models import Case, IntegerField, Value, When
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
 
-from .models import Message
+from .models import Contact, Message
+from .services import EmailError, SMSError, send_email, send_sms
+
+
+def get_reply_channels(
+    message: Message, contact: Contact
+) -> list[dict[str, str | bool]]:
+    """
+    Return available reply channels with smart defaults.
+
+    Defaults:
+    - SMS/voicemail → SMS (if phone available)
+    - form/email → email (if email available)
+
+    Falls back to whatever channel is available if default isn't.
+    """
+    channels: list[dict[str, str | bool]] = []
+
+    # Determine default channel based on original message
+    if message.channel in (Message.Channel.SMS, Message.Channel.VOICEMAIL):
+        default_channel = "sms"
+    else:  # form, email
+        default_channel = "email"
+
+    # Add email option if contact has email
+    if contact.email:
+        channels.append({
+            "value": "email",
+            "label": f"Email ({contact.email})",
+            "default": default_channel == "email",
+        })
+
+    # Add SMS option if contact has phone
+    if contact.phone:
+        channels.append({
+            "value": "sms",
+            "label": f"SMS ({contact.phone})",
+            "default": default_channel == "sms",
+        })
+
+    # If no channel matches default, mark first available as default
+    if channels and not any(ch["default"] for ch in channels):
+        channels[0]["default"] = True
+
+    return channels
 
 # Urgency ordering: urgent=0, high=1, medium=2, low=3, empty=4
 URGENCY_ORDER = Case(
@@ -100,14 +144,23 @@ def message_detail(request: HttpRequest, message_id: int) -> HttpResponse:
         .order_by("-received_at")[:5]
     )
 
+    # Get available reply channels with smart defaults
+    reply_channels = get_reply_channels(message, message.contact)
+
     return render(
         request,
         "inbox/partials/message_detail.html",
         {
             "message": message,
             "contact_history": contact_history,
+            "reply_channels": reply_channels,
         },
     )
+
+
+def _reply_error(request: HttpRequest, error: str) -> HttpResponse:
+    """Render reply error partial."""
+    return render(request, "inbox/partials/reply_error.html", {"error": error})
 
 
 @login_required
@@ -129,21 +182,54 @@ def message_reply(request: HttpRequest, message_id: int) -> HttpResponse:
     channel = request.POST.get("channel", message.channel)
 
     if not body:
-        return render(
-            request,
-            "inbox/partials/reply_error.html",
-            {"error": "Reply body is required"},
-        )
+        return _reply_error(request, "Reply body is required")
 
-    # TODO: Actually send via Mailgun/Twilio
-    # For now, just create the outbound message record
+    client = request.client  # type: ignore[attr-defined]
+    external_id = ""
+    error: str | None = None
+
+    # Send via appropriate channel
+    if channel == Message.Channel.SMS:
+        if not message.contact.phone:
+            error = "Contact has no phone number for SMS"
+        else:
+            try:
+                external_id = send_sms(client, message.contact.phone, body)
+            except SMSError as e:
+                error = str(e)
+    elif channel == Message.Channel.EMAIL:
+        if not message.contact.email:
+            error = "Contact has no email address"
+        else:
+            # Build reply subject
+            original_subject = message.subject or "Your inquiry"
+            reply_subject = (
+                original_subject
+                if original_subject.lower().startswith("re:")
+                else f"Re: {original_subject}"
+            )
+            try:
+                external_id = send_email(
+                    client,
+                    message.contact.email,
+                    reply_subject,
+                    body,
+                )
+            except EmailError as e:
+                error = str(e)
+
+    if error:
+        return _reply_error(request, error)
+
+    # Create outbound message record
     _reply = Message.objects.create(
-        client=request.client,  # type: ignore[attr-defined]
+        client=client,
         contact=message.contact,
         channel=channel,
         direction=Message.Direction.OUTBOUND,
         status=Message.Status.READ,
         body=body,
+        external_id=external_id,
     )
 
     # Mark original as replied

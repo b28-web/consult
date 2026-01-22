@@ -133,6 +133,7 @@
 
     {# Reply form #}
     <div class="p-4 border-t bg-base-200/50">
+        {% if reply_channels %}
         <form hx-post="{% url 'inbox:reply' message.id %}"
               hx-target="#detail-panel"
               hx-swap="innerHTML"
@@ -143,20 +144,21 @@
                       placeholder="Type your reply..."></textarea>
             <div class="flex items-center justify-between">
                 <select name="channel" class="select select-sm select-bordered">
-                    <option value="{{ message.channel }}" selected>
-                        Reply via {{ message.get_channel_display }}
+                    {% for ch in reply_channels %}
+                    <option value="{{ ch.value }}" {% if ch.default %}selected{% endif %}>
+                        {{ ch.label }}
                     </option>
-                    {% if message.channel != 'sms' and message.contact.phone %}
-                    <option value="sms">Reply via SMS</option>
-                    {% endif %}
-                    {% if message.channel != 'email' and message.contact.email %}
-                    <option value="email">Reply via Email</option>
-                    {% endif %}
+                    {% endfor %}
                 </select>
                 <button type="submit" class="btn btn-primary btn-sm">
                     Send Reply
                 </button>
             </div>
         </form>
+        {% else %}
+        <p class="text-sm text-base-content/60 italic">
+            No contact method available for reply (no email or phone).
+        </p>
+        {% endif %}
     </div>
 </div>

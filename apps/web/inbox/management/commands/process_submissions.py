@@ -93,13 +93,33 @@ class Command(BaseCommand):
         except Client.DoesNotExist as e:
             raise ValueError(f"Unknown client slug: {submission.client_slug}") from e
 
-        # Extract fields from payload
+        # Extract fields from payload (channel-aware)
         payload = submission.payload
         name = payload.get("name", "").strip()
         email = payload.get("email", "").strip().lower()
-        phone = self._normalize_phone(payload.get("phone", ""))
-        body = payload.get("message", "") or payload.get("body", "")
         subject = payload.get("subject", "")
+
+        # Channel-specific field extraction
+        if submission.channel == "sms":
+            # SMS: phone from "from", body from "body"
+            phone = self._normalize_phone(payload.get("from", ""))
+            body = payload.get("body", "")
+        elif submission.channel == "voicemail":
+            # Voicemail: phone from "from", body from transcription
+            phone = self._normalize_phone(payload.get("from", ""))
+            transcription = payload.get("transcription_text", "")
+            recording_url = payload.get("recording_url", "")
+            if transcription:
+                body = transcription
+            elif recording_url:
+                # Transcription pending or failed - use placeholder
+                body = f"[Voicemail recording: {recording_url}]"
+            else:
+                body = "[Voicemail - no transcription available]"
+        else:
+            # Form/email: standard fields
+            phone = self._normalize_phone(payload.get("phone", ""))
+            body = payload.get("message", "") or payload.get("body", "")
 
         # Validate: need at least email or phone
         if not email and not phone:

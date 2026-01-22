@@ -95,6 +95,13 @@ class Message(ClientScopedModel):
     body = models.TextField()
     source_url = models.URLField(blank=True, help_text="Page form was submitted from")
 
+    # External provider ID (e.g., Twilio message SID)
+    external_id = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="External provider message ID (Twilio SID, etc.)",
+    )
+
     # AI classification (nullable until processed)
     category = models.CharField(max_length=50, blank=True)
     intent = models.CharField(max_length=50, blank=True)

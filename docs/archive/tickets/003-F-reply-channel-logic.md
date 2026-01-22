@@ -1,7 +1,7 @@
 # 003-F: Reply Channel Selection Logic
 
 **EP:** [EP-003-communications](../enhancement_proposals/EP-003-communications.md)
-**Status:** pending
+**Status:** completed
 
 ## Summary
 
@@ -9,12 +9,12 @@ Smart defaults for reply channel based on original message and contact info.
 
 ## Acceptance Criteria
 
-- [ ] Reply form pre-selects channel matching original message
-- [ ] If original was SMS → default to SMS (if phone available)
-- [ ] If original was form/email → default to email
-- [ ] If original was voicemail → default to SMS callback
-- [ ] Allow override if contact has both email and phone
-- [ ] Disable unavailable channels (no phone = no SMS option)
+- [x] Reply form pre-selects channel matching original message
+- [x] If original was SMS → default to SMS (if phone available)
+- [x] If original was form/email → default to email
+- [x] If original was voicemail → default to SMS callback
+- [x] Allow override if contact has both email and phone
+- [x] Disable unavailable channels (no phone = no SMS option)
 
 ## Implementation Notes
 
@@ -55,4 +55,11 @@ In template:
 
 ## Progress
 
-(Not started)
+### 2026-01-22
+- Created `get_reply_channels()` helper function in views.py
+- Smart defaults: SMS/voicemail → SMS, form/email → email
+- Falls back to available channel if default not available
+- Updated message_detail view to pass reply_channels to template
+- Updated template to use dynamic channel options
+- Shows message when no contact method available
+- 7 new tests, all 63 inbox tests pass

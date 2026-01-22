@@ -84,6 +84,13 @@ DATABASES = {
 # Custom user model
 AUTH_USER_MODEL = "core.User"
 
+# Twilio (for SMS)
+TWILIO_ACCOUNT_SID = env("TWILIO_ACCOUNT_SID", default="")
+TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN", default="")
+
+# Resend (for email)
+RESEND_API_KEY = env("RESEND_API_KEY", default="")
+
 # Password validation
 _V = "django.contrib.auth.password_validation"
 AUTH_PASSWORD_VALIDATORS = [

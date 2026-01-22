@@ -1,7 +1,7 @@
 # 003-B: Twilio Voicemail Handling
 
 **EP:** [EP-003-communications](../enhancement_proposals/EP-003-communications.md)
-**Status:** pending
+**Status:** completed
 
 ## Summary
 
@@ -9,11 +9,11 @@ Handle voice calls that go to voicemail, storing the recording and transcription
 
 ## Acceptance Criteria
 
-- [ ] Worker returns TwiML to prompt for voicemail
-- [ ] Recording callback stores audio URL in submission
-- [ ] Transcription (Twilio's) stored when available
-- [ ] Submission created with channel="voicemail"
-- [ ] Processing extracts transcription as message body
+- [x] Worker returns TwiML to prompt for voicemail
+- [x] Recording callback stores audio URL in submission
+- [x] Transcription (Twilio's) stored when available
+- [x] Submission created with channel="voicemail"
+- [x] Processing extracts transcription as message body
 
 ## Implementation Notes
 
@@ -47,4 +47,15 @@ May need two submissions or update pattern for transcription arriving later.
 
 ## Progress
 
-(Not started)
+### 2026-01-22
+- Implemented multi-phase voicemail webhook flow in worker:
+  - `/voice` - Returns TwiML with callbacks (no submission yet)
+  - `/voice-complete` - Creates submission with recording URL
+  - `/voice-transcription` - Updates submission payload with transcription
+- Added `VoicemailPayload` interface for structured data
+- Updated Django processing:
+  - Voicemail extracts phone from `from` field
+  - Uses `transcription_text` as body, falls back to recording URL placeholder
+- Transcription callback also updates already-processed messages
+- Added 3 new tests for voicemail processing
+- All 43 inbox tests pass

@@ -482,3 +482,162 @@ class TestMessageMarkView:
         )
 
         assert response.status_code == 404
+
+
+@pytest.mark.django_db
+class TestGetReplyChannels:
+    """Tests for reply channel selection logic."""
+
+    def test_sms_message_defaults_to_sms(self, client_tenant):
+        """SMS messages should default to SMS reply."""
+        from apps.web.inbox.views import get_reply_channels
+
+        contact = ContactFactory(
+            client=client_tenant,
+            email="test@example.com",
+            phone="+15551234567",
+        )
+        message = MessageFactory(
+            client=client_tenant,
+            contact=contact,
+            channel=Message.Channel.SMS,
+        )
+
+        channels = get_reply_channels(message, contact)
+
+        # Both channels should be available
+        assert len(channels) == 2
+        # SMS should be default
+        sms_channel = next(ch for ch in channels if ch["value"] == "sms")
+        email_channel = next(ch for ch in channels if ch["value"] == "email")
+        assert sms_channel["default"] is True
+        assert email_channel["default"] is False
+
+    def test_voicemail_defaults_to_sms(self, client_tenant):
+        """Voicemail messages should default to SMS reply (callback)."""
+        from apps.web.inbox.views import get_reply_channels
+
+        contact = ContactFactory(
+            client=client_tenant,
+            email="test@example.com",
+            phone="+15551234567",
+        )
+        message = MessageFactory(
+            client=client_tenant,
+            contact=contact,
+            channel=Message.Channel.VOICEMAIL,
+        )
+
+        channels = get_reply_channels(message, contact)
+
+        sms_channel = next(ch for ch in channels if ch["value"] == "sms")
+        assert sms_channel["default"] is True
+
+    def test_form_message_defaults_to_email(self, client_tenant):
+        """Form messages should default to email reply."""
+        from apps.web.inbox.views import get_reply_channels
+
+        contact = ContactFactory(
+            client=client_tenant,
+            email="test@example.com",
+            phone="+15551234567",
+        )
+        message = MessageFactory(
+            client=client_tenant,
+            contact=contact,
+            channel=Message.Channel.FORM,
+        )
+
+        channels = get_reply_channels(message, contact)
+
+        email_channel = next(ch for ch in channels if ch["value"] == "email")
+        sms_channel = next(ch for ch in channels if ch["value"] == "sms")
+        assert email_channel["default"] is True
+        assert sms_channel["default"] is False
+
+    def test_email_message_defaults_to_email(self, client_tenant):
+        """Email messages should default to email reply."""
+        from apps.web.inbox.views import get_reply_channels
+
+        contact = ContactFactory(
+            client=client_tenant,
+            email="test@example.com",
+            phone="+15551234567",
+        )
+        message = MessageFactory(
+            client=client_tenant,
+            contact=contact,
+            channel=Message.Channel.EMAIL,
+        )
+
+        channels = get_reply_channels(message, contact)
+
+        email_channel = next(ch for ch in channels if ch["value"] == "email")
+        assert email_channel["default"] is True
+
+    def test_only_email_when_no_phone(self, client_tenant):
+        """Should only show email option if contact has no phone."""
+        from apps.web.inbox.views import get_reply_channels
+
+        contact = ContactFactory(
+            client=client_tenant,
+            email="test@example.com",
+            phone="",
+        )
+        message = MessageFactory(
+            client=client_tenant,
+            contact=contact,
+            channel=Message.Channel.SMS,
+        )
+
+        channels = get_reply_channels(message, contact)
+
+        assert len(channels) == 1
+        assert channels[0]["value"] == "email"
+        # Falls back to email as default since SMS unavailable
+        assert channels[0]["default"] is True
+
+    def test_only_sms_when_no_email(self, client_tenant):
+        """Should only show SMS option if contact has no email."""
+        from apps.web.inbox.views import get_reply_channels
+
+        contact = ContactFactory(
+            client=client_tenant,
+            email="",
+            phone="+15551234567",
+        )
+        message = MessageFactory(
+            client=client_tenant,
+            contact=contact,
+            channel=Message.Channel.FORM,
+        )
+
+        channels = get_reply_channels(message, contact)
+
+        assert len(channels) == 1
+        assert channels[0]["value"] == "sms"
+        # Falls back to SMS as default since email unavailable
+        assert channels[0]["default"] is True
+
+    def test_channel_labels_include_contact_info(self, client_tenant):
+        """Channel labels should include contact email/phone."""
+        from apps.web.inbox.views import get_reply_channels
+
+        contact = ContactFactory(
+            client=client_tenant,
+            email="customer@example.com",
+            phone="+15559876543",
+        )
+        message = MessageFactory(
+            client=client_tenant,
+            contact=contact,
+            channel=Message.Channel.SMS,
+        )
+
+        channels = get_reply_channels(message, contact)
+
+        email_channel = next(ch for ch in channels if ch["value"] == "email")
+        sms_channel = next(ch for ch in channels if ch["value"] == "sms")
+
+        assert "customer@example.com" in email_channel["label"]
+        assert "+15559876543" in sms_channel["label"]

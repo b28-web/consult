@@ -268,6 +268,195 @@ class TestProcessSubmissions:
         existing_contact.refresh_from_db()
         assert existing_contact.name == "Now Has Name"
 
+    def test_processes_sms_submission_with_from_field(self) -> None:
+        """SMS submissions should extract phone from 'from' field."""
+        client = ClientFactory(slug="landscaper")
+        submission = SubmissionFactory(
+            client_slug="landscaper",
+            channel="sms",
+            payload={
+                "from": "+15551234567",
+                "to": "+15559876543",
+                "body": "I need a quote for lawn service",
+                "message_sid": "SM1234567890abcdef",
+                "media_urls": [],
+                "num_media": 0,
+            },
+        )
+
+        call_command("process_submissions", "--once", "--skip-classification")
+
+        # Verify submission processed
+        submission.refresh_from_db()
+        assert submission.processed_at is not None
+        assert submission.error == ""
+        assert submission.message is not None
+
+        # Verify contact created with phone from 'from' field
+        contact = submission.message.contact
+        assert contact.phone == "+15551234567"
+        assert contact.client == client
+
+        # Verify message
+        message = submission.message
+        assert message.channel == Message.Channel.SMS
+        assert message.body == "I need a quote for lawn service"
+
+    def test_processes_sms_submission_with_mms(self) -> None:
+        """SMS submissions with MMS media should store media URLs in payload."""
+        ClientFactory(slug="landscaper")
+        submission = SubmissionFactory(
+            client_slug="landscaper",
+            channel="sms",
+            payload={
+                "from": "+15551234567",
+                "to": "+15559876543",
+                "body": "Here's a photo of the yard",
+                "message_sid": "SM1234567890abcdef",
+                "media_urls": [
+                    "https://api.twilio.com/media/12345.jpg",
+                    "https://api.twilio.com/media/67890.jpg",
+                ],
+                "num_media": 2,
+            },
+        )
+
+        call_command("process_submissions", "--once", "--skip-classification")
+
+        submission.refresh_from_db()
+        assert submission.processed_at is not None
+        # Media URLs preserved in original submission payload
+        assert len(submission.payload["media_urls"]) == 2
+
+    def test_matches_existing_contact_by_sms_phone(self) -> None:
+        """SMS submission should match existing contact by phone."""
+        client = ClientFactory(slug="landscaper")
+        existing_contact = ContactFactory(
+            client=client,
+            email="",
+            phone="+15551234567",
+            name="SMS User",
+            message_count=3,
+        )
+
+        submission = SubmissionFactory(
+            client_slug="landscaper",
+            channel="sms",
+            payload={
+                "from": "+15551234567",
+                "body": "Follow-up question",
+                "message_sid": "SM9876543210",
+                "media_urls": [],
+                "num_media": 0,
+            },
+        )
+
+        call_command("process_submissions", "--once", "--skip-classification")
+
+        submission.refresh_from_db()
+        assert submission.message.contact == existing_contact
+
+        existing_contact.refresh_from_db()
+        assert existing_contact.message_count == 4
+
+    def test_processes_voicemail_with_transcription(self) -> None:
+        """Voicemail with transcription should use transcription as body."""
+        client = ClientFactory(slug="landscaper")
+        submission = SubmissionFactory(
+            client_slug="landscaper",
+            channel="voicemail",
+            payload={
+                "call_sid": "CA1234567890abcdef",
+                "from": "+15551234567",
+                "to": "+15559876543",
+                "recording_url": "https://api.twilio.com/recordings/RE123",
+                "recording_sid": "RE1234567890abcdef",
+                "recording_duration": 45,
+                "transcription_text": "Hi, I need someone to pick up a couch tomorrow",
+                "transcription_status": "completed",
+            },
+        )
+
+        call_command("process_submissions", "--once", "--skip-classification")
+
+        submission.refresh_from_db()
+        assert submission.processed_at is not None
+        assert submission.error == ""
+        assert submission.message is not None
+
+        # Verify contact created with phone from 'from' field
+        contact = submission.message.contact
+        assert contact.phone == "+15551234567"
+        assert contact.client == client
+
+        # Verify message uses transcription as body
+        message = submission.message
+        assert message.channel == Message.Channel.VOICEMAIL
+        assert message.body == "Hi, I need someone to pick up a couch tomorrow"
+
+    def test_processes_voicemail_without_transcription(self) -> None:
+        """Voicemail without transcription should use recording URL placeholder."""
+        ClientFactory(slug="landscaper")
+        submission = SubmissionFactory(
+            client_slug="landscaper",
+            channel="voicemail",
+            payload={
+                "call_sid": "CA1234567890abcdef",
+                "from": "+15551234567",
+                "to": "+15559876543",
+                "recording_url": "https://api.twilio.com/recordings/RE123",
+                "recording_sid": "RE1234567890abcdef",
+                "recording_duration": 45,
+                "transcription_text": "",
+                "transcription_status": "pending",
+            },
+        )
+
+        call_command("process_submissions", "--once", "--skip-classification")
+
+        submission.refresh_from_db()
+        assert submission.processed_at is not None
+        assert submission.message is not None
+
+        # Verify message uses placeholder with recording URL
+        message = submission.message
+        assert message.channel == Message.Channel.VOICEMAIL
+        assert "https://api.twilio.com/recordings/RE123" in message.body
+
+    def test_matches_existing_contact_by_voicemail_phone(self) -> None:
+        """Voicemail submission should match existing contact by phone."""
+        client = ClientFactory(slug="landscaper")
+        existing_contact = ContactFactory(
+            client=client,
+            email="",
+            phone="+15551234567",
+            name="Voicemail User",
+            message_count=2,
+        )
+
+        submission = SubmissionFactory(
+            client_slug="landscaper",
+            channel="voicemail",
+            payload={
+                "call_sid": "CA9876543210",
+                "from": "+15551234567",
+                "to": "+15559876543",
+                "recording_url": "https://api.twilio.com/recordings/RE456",
+                "recording_sid": "RE9876543210",
+                "recording_duration": 30,
+                "transcription_text": "Calling back about my appointment",
+                "transcription_status": "completed",
+            },
+        )
+
+        call_command("process_submissions", "--once", "--skip-classification")
+
+        submission.refresh_from_db()
+        assert submission.message.contact == existing_contact
+
+        existing_contact.refresh_from_db()
+        assert existing_contact.message_count == 3
+
 
 @pytest.mark.django_db
 class TestClassificationIntegration:

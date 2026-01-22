@@ -47,6 +47,13 @@ class Client(models.Model):
     site_url = models.URLField(blank=True, help_text="Astro site URL")
     intake_url = models.URLField(blank=True, help_text="Worker intake endpoint")
 
+    # Twilio configuration
+    twilio_phone = models.CharField(
+        max_length=20,
+        blank=True,
+        help_text="Twilio phone number for SMS (e.g., +15551234567)",
+    )
+
     # Status
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

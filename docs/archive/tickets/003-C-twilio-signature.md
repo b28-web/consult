@@ -1,7 +1,7 @@
 # 003-C: Twilio Signature Validation
 
 **EP:** [EP-003-communications](../enhancement_proposals/EP-003-communications.md)
-**Status:** pending
+**Status:** completed
 
 ## Summary
 
@@ -9,11 +9,11 @@ Validate Twilio webhook signatures to prevent spoofed requests.
 
 ## Acceptance Criteria
 
-- [ ] X-Twilio-Signature header validated on all Twilio webhooks
-- [ ] Invalid signatures rejected with 403
-- [ ] Auth token loaded from Doppler (TWILIO_AUTH_TOKEN)
-- [ ] Validation uses request URL + sorted params + auth token
-- [ ] Works for both SMS and voice webhooks
+- [x] X-Twilio-Signature header validated on all Twilio webhooks
+- [x] Invalid signatures rejected with 403
+- [x] Auth token loaded from Doppler (TWILIO_AUTH_TOKEN)
+- [x] Validation uses request URL + sorted params + auth token
+- [x] Works for both SMS and voice webhooks
 
 ## Implementation Notes
 
@@ -57,4 +57,10 @@ const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(data));
 
 ## Progress
 
-(Not started)
+### 2026-01-22
+- Implemented `validateTwilioSignature()` using Web Crypto API (HMAC-SHA1)
+- Added `requireTwilioSignature()` helper that returns 403 on failure
+- Integrated validation into main router for all Twilio channels (sms, voice, voice-complete, voice-transcription)
+- Refactored handlers to receive pre-parsed FormData (read once for validation and handler)
+- Graceful degradation: skips validation if TWILIO_AUTH_TOKEN not set (dev mode)
+- TypeScript compiles without errors

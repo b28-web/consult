@@ -1,7 +1,7 @@
 # 003-E: Outbound Email via Resend
 
 **EP:** [EP-003-communications](../enhancement_proposals/EP-003-communications.md)
-**Status:** pending
+**Status:** completed
 
 ## Summary
 
@@ -9,12 +9,12 @@ Send email replies from the dashboard using Resend API.
 
 ## Acceptance Criteria
 
-- [ ] Django service/utility for sending email
-- [ ] Uses client's email domain (e.g., reply@clientname.consult.io)
-- [ ] Recipient is contact's email address
-- [ ] Creates outbound Message record
-- [ ] Handles Resend API errors gracefully
-- [ ] Dashboard reply form triggers send when channel=email
+- [x] Django service/utility for sending email
+- [x] Uses client's email domain (e.g., reply@clientname.consult.io)
+- [x] Recipient is contact's email address
+- [x] Creates outbound Message record
+- [x] Handles Resend API errors gracefully
+- [x] Dashboard reply form triggers send when channel=email
 
 ## Implementation Notes
 
@@ -58,4 +58,10 @@ resend.Emails.send({
 
 ## Progress
 
-(Not started)
+### 2026-01-22
+- Added Resend SDK dependency
+- Created `send_email()` function in services.py with threading support
+- Added `RESEND_API_KEY` to Django settings
+- Updated `message_reply` view to handle email channel
+- Builds reply subject with "Re:" prefix
+- 7 new tests for email service, all 56 inbox tests pass

@@ -10,6 +10,25 @@ Current priorities and planned work for Consult.
 
 ## Completed Sprints
 
+### EP-003: Communications (Twilio + Resend) ✓
+Enable two-way messaging: SMS, voicemail, email.
+
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 003-A | Twilio SMS webhook handling | ✓ |
+| 003-B | Twilio voicemail handling | ✓ |
+| 003-C | Twilio signature validation | ✓ |
+| 003-D | Outbound SMS via Twilio | ✓ |
+| 003-E | Outbound email via Resend | ✓ |
+| 003-F | Reply channel selection logic | ✓ |
+
+**Completed 2026-01-22**: Full two-way communication with:
+- Inbound SMS/MMS webhook handling with signature validation
+- Voicemail recording with Twilio transcription
+- Outbound SMS via Twilio API
+- Outbound email via Resend API
+- Smart reply channel defaults based on original message
+
 ### EP-002: Submission Processing & Dashboard ✓
 Build the core inbox experience with AI classification.
 
@@ -109,18 +128,6 @@ Create agent-driven pre-deploy validation pipeline with Dagger.
 **Completed 2026-01-21**: Full Dagger pipeline with parallel execution, JSON output, and GitHub Actions integration.
 
 ## Planned Sprints
-
-### EP-003: Communications (Twilio + Resend)
-Enable two-way messaging: SMS, voicemail, email.
-
-| Ticket | Title | Status |
-|--------|-------|--------|
-| 003-A | Twilio SMS webhook handling | pending |
-| 003-B | Twilio voicemail handling | pending |
-| 003-C | Twilio signature validation | pending |
-| 003-D | Outbound SMS via Twilio | pending |
-| 003-E | Outbound email via Resend | pending |
-| 003-F | Reply channel selection logic | pending |
 
 ### EP-004: External Integrations (Cal.com + Jobber)
 Connect scheduling and CRM tools.

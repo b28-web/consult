@@ -1,7 +1,7 @@
 # 003-D: Outbound SMS via Twilio
 
 **EP:** [EP-003-communications](../enhancement_proposals/EP-003-communications.md)
-**Status:** pending
+**Status:** completed
 
 ## Summary
 
@@ -9,12 +9,12 @@ Send SMS replies from the dashboard using Twilio API.
 
 ## Acceptance Criteria
 
-- [ ] Django service/utility for sending SMS
-- [ ] Uses client's Twilio phone as sender
-- [ ] Recipient is contact's phone number
-- [ ] Creates outbound Message record
-- [ ] Handles Twilio API errors gracefully
-- [ ] Dashboard reply form triggers send when channel=sms
+- [x] Django service/utility for sending SMS
+- [x] Uses client's Twilio phone as sender
+- [x] Recipient is contact's phone number
+- [x] Creates outbound Message record
+- [x] Handles Twilio API errors gracefully
+- [x] Dashboard reply form triggers send when channel=sms
 
 ## Implementation Notes
 
@@ -56,4 +56,11 @@ def message_reply(request, message_id):
 
 ## Progress
 
-(Not started)
+### 2026-01-22
+- Added `twilio_phone` field to Client model (migration 0003)
+- Added `external_id` field to Message model for Twilio SID (migration 0003)
+- Created `apps/web/inbox/services.py` with `send_sms()` function
+- Added Twilio settings to Django settings (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`)
+- Updated `message_reply` view to send SMS when channel=sms
+- Added Twilio SDK dependency
+- 6 new tests for SMS service, all 49 inbox tests pass
