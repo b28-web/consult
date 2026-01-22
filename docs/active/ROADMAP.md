@@ -4,14 +4,16 @@ Current priorities and planned work for Consult.
 
 ## Active Sprints
 
-### EP-001: Backend Foundation
+### EP-001: Backend Foundation ✓
 Get the full stack working end-to-end.
 
 | Ticket | Title | Status |
 |--------|-------|--------|
 | 001-A | Django backend bootstrap | completed |
-| 001-B | Intake worker deployment | in-progress |
-| 001-C | First client site (coffee-shop) | in-progress |
+| 001-B | Intake worker deployment | completed |
+| 001-C | First client site (coffee-shop) | completed |
+
+**Completed 2026-01-22**: Full stack verified with `just test-local`. Production deploy deferred to EP-007.
 
 ### EP-006: Automated Deploy Validation
 Create agent-driven pre-deploy validation pipeline with Dagger.

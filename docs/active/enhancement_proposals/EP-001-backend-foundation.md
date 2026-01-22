@@ -1,8 +1,8 @@
 # EP-001: Backend Foundation
 
-**Status:** active
-**Sprint:** 2026-01-21 to 2026-01-28
-**Last Updated:** 2026-01-21
+**Status:** completed
+**Sprint:** 2026-01-21 to 2026-01-22
+**Last Updated:** 2026-01-22
 
 ## Goal
 
@@ -13,8 +13,8 @@ Establish the core backend infrastructure: Django running with migrations, intak
 | ID | Title | Status |
 |----|-------|--------|
 | 001-A | Django backend bootstrap | completed |
-| 001-B | Intake worker deployment | in-progress |
-| 001-C | First client site (coffee-shop) | in-progress |
+| 001-B | Intake worker deployment | completed |
+| 001-C | First client site (coffee-shop) | completed |
 
 ## Design Decisions
 
@@ -29,8 +29,8 @@ Establish the core backend infrastructure: Django running with migrations, intak
 
 - [x] Project structure scaffolded
 - [x] Models stubbed
-- [ ] Doppler project configured with secrets
-- [ ] Neon database created
+- [x] Doppler project configured with secrets
+- [x] Neon database created
 
 ## Progress Log
 
@@ -69,6 +69,36 @@ Establish the core backend infrastructure: Django running with migrations, intak
 - **Blocked**: Both 001-B and 001-C deployment blocked on Doppler/Neon setup
 - Next: Configure Doppler and Neon to unblock deployments
 
+### 2026-01-22 (session 5)
+- **Doppler + Neon configured**:
+  - Created interactive `just setup-infra` wizard
+  - Added docs/knowledge/patterns/neon-doppler-setup.md
+  - Configured all required secrets via Doppler service token
+- **001-B completed**: Intake worker fully working
+  - Fixed NOT NULL constraint on `error` column
+  - Fixed ReadableStream locked bug in honeypot check
+  - Worker runs in `--remote` mode (Cloudflare edge)
+- **001-C completed**: Form submission verified end-to-end
+  - Site → Worker → Neon database flow working
+- **Test infrastructure created**:
+  - `just test-local` runs Django + Worker + E2E tests
+  - Fixed Cloudflare bot detection (User-Agent header)
+  - All smoke tests and intake tests pass
+- **Production deployment deferred to EP-007** (Pulumi infrastructure)
+
 ## Retrospective
 
-(Fill in when sprint completes)
+**What went well:**
+- Django bootstrap was smooth (good starter template)
+- Neon serverless driver worked well with Cloudflare Workers
+- Interactive setup wizard saved time configuring secrets
+
+**What was tricky:**
+- workerd TLS issues with Neon required `--remote` mode workaround
+- Cloudflare bot detection blocked Python test requests
+- Database schema had NOT NULL constraint mismatch with worker INSERT
+
+**Key learnings:**
+- Always test with production-like infrastructure (Neon, not local Postgres)
+- Cloudflare Workers need careful User-Agent handling in tests
+- `--remote` mode is more reliable than `--local` for external DB connections

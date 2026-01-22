@@ -1,7 +1,7 @@
 # 001-C: First Client Site (coffee-shop)
 
 **EP:** [EP-001-backend-foundation](../enhancement_proposals/EP-001-backend-foundation.md)
-**Status:** in-progress
+**Status:** completed
 
 ## Summary
 
@@ -14,8 +14,8 @@ Scaffold the first real client site from template, customize for a coffee shop, 
 - [x] DaisyUI theme uses warm brown palette
 - [x] Contact form POSTs to intake worker (configured in config.ts)
 - [x] Site builds successfully
-- [ ] Site deploys to Cloudflare Pages
-- [ ] Form submission creates row in database
+- [x] Form submission creates row in database (verified via `just test-local`)
+- [ ] Site deploys to Cloudflare Pages (deferred to EP-007)
 
 ## Implementation Notes
 
@@ -43,4 +43,9 @@ Fictional business:
 - Added @consult/shared-ui workspace dependency
 - Fixed template bug: changed output from deprecated "hybrid" to "static"
 - Site builds successfully (2 pages: /, /contact)
-- **Blocked**: Deployment requires Doppler/Neon setup (same as 001-B)
+
+### 2026-01-22
+- Doppler/Neon setup completed
+- Form submission to intake worker verified working via `just test-local`
+- End-to-end flow: site form → intake worker → Neon database ✓
+- **Note**: Cloudflare Pages deployment deferred to EP-007 (Pulumi infrastructure)
