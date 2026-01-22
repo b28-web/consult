@@ -39,6 +39,13 @@ export interface SiteConfig {
   calcom?: {
     username: string;
     eventSlug: string;
+    /** Brand color (hex without #, e.g., "4f46e5") */
+    brandColor?: string;
+  };
+  // Branding (optional, for integrations)
+  branding?: {
+    /** Primary brand color (hex without #) */
+    primaryColor?: string;
   };
 }
 

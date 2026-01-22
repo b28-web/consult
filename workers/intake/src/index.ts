@@ -17,6 +17,8 @@ interface Env {
   NEON_DATABASE_URL: string;
   INTAKE_API_KEY: string;
   TWILIO_AUTH_TOKEN?: string;
+  CALCOM_WEBHOOK_SECRET?: string;
+  JOBBER_WEBHOOK_SECRET?: string;
 }
 
 interface FormSubmission {
@@ -49,6 +51,81 @@ interface VoicemailPayload {
   recording_duration: number;
   transcription_text: string;
   transcription_status: string;
+}
+
+interface CalcomAttendee {
+  email: string;
+  name: string;
+  timeZone?: string;
+}
+
+interface CalcomWebhookPayload {
+  triggerEvent: "BOOKING_CREATED" | "BOOKING_CANCELLED" | "BOOKING_RESCHEDULED";
+  payload: {
+    uid: string;
+    title: string;
+    startTime: string;
+    endTime: string;
+    attendees: CalcomAttendee[];
+    organizer: {
+      email: string;
+      name?: string;
+    };
+    status?: string;
+    cancellationReason?: string;
+  };
+}
+
+interface CalcomSubmissionPayload {
+  event_type: string;
+  booking_uid: string;
+  title: string;
+  start_time: string;
+  end_time: string;
+  attendee_name: string;
+  attendee_email: string;
+  attendee_timezone?: string;
+  organizer_email: string;
+  status?: string;
+  cancellation_reason?: string;
+}
+
+interface JobberWebhookPayload {
+  event: string;
+  data: {
+    id: string;
+    title?: string;
+    status?: string;
+    scheduled_at?: string;
+    client?: {
+      id: string;
+      name: string;
+      email?: string;
+      phone?: string;
+    };
+    address?: {
+      street?: string;
+      city?: string;
+      state?: string;
+      zip?: string;
+    };
+    // Additional fields for client events
+    name?: string;
+    email?: string;
+    phone?: string;
+  };
+}
+
+interface JobberSubmissionPayload {
+  event: string;
+  jobber_id: string;
+  title?: string;
+  status?: string;
+  scheduled_at?: string;
+  client_name?: string;
+  client_email?: string;
+  client_phone?: string;
+  address?: string;
 }
 
 /**
@@ -139,6 +216,42 @@ async function requireTwilioSignature(
   return null; // Signature valid
 }
 
+/**
+ * Validate Cal.com webhook signature using Web Crypto API.
+ *
+ * Cal.com signs webhooks with HMAC-SHA256:
+ * 1. HMAC-SHA256 of raw request body with webhook secret
+ * 2. Hex encoded result
+ * 3. Compare with X-Cal-Signature-256 header
+ */
+async function validateCalcomSignature(
+  webhookSecret: string,
+  signature: string,
+  body: string
+): Promise<boolean> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(webhookSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+
+  const signatureBuffer = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    encoder.encode(body)
+  );
+
+  // Convert to hex
+  const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  return signature === expectedSignature;
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -147,6 +260,26 @@ export default {
     // Health check
     if (path === "/health") {
       return new Response("ok", { status: 200 });
+    }
+
+    // Route: /webhooks/calcom/{client_slug}
+    const calcomMatch = path.match(/^\/webhooks\/calcom\/([a-z0-9-]+)$/);
+    if (calcomMatch) {
+      if (request.method !== "POST") {
+        return new Response("Method Not Allowed", { status: 405 });
+      }
+      const [, clientSlug] = calcomMatch;
+      return await handleCalcomWebhook(request, env, clientSlug);
+    }
+
+    // Route: /webhooks/jobber/{client_slug}
+    const jobberMatch = path.match(/^\/webhooks\/jobber\/([a-z0-9-]+)$/);
+    if (jobberMatch) {
+      if (request.method !== "POST") {
+        return new Response("Method Not Allowed", { status: 405 });
+      }
+      const [, clientSlug] = jobberMatch;
+      return await handleJobberWebhook(request, env, clientSlug);
     }
 
     // Route: /intake/{client_slug}/{channel}
@@ -444,6 +577,230 @@ async function handleVoiceTranscription(
   `;
 
   return new Response("OK", { status: 200 });
+}
+
+async function handleCalcomWebhook(
+  request: Request,
+  env: Env,
+  clientSlug: string
+): Promise<Response> {
+  // Read body once for signature validation and parsing
+  const body = await request.text();
+
+  // Validate signature if secret is configured
+  if (env.CALCOM_WEBHOOK_SECRET) {
+    const signature = request.headers.get("X-Cal-Signature-256");
+    if (!signature) {
+      console.error("Missing X-Cal-Signature-256 header");
+      return new Response("Forbidden", { status: 403 });
+    }
+
+    const isValid = await validateCalcomSignature(
+      env.CALCOM_WEBHOOK_SECRET,
+      signature,
+      body
+    );
+
+    if (!isValid) {
+      console.error("Invalid Cal.com signature");
+      return new Response("Forbidden", { status: 403 });
+    }
+  } else {
+    console.warn("CALCOM_WEBHOOK_SECRET not set, skipping signature validation");
+  }
+
+  // Parse webhook payload
+  let webhook: CalcomWebhookPayload;
+  try {
+    webhook = JSON.parse(body);
+  } catch {
+    console.error("Invalid JSON in Cal.com webhook");
+    return new Response("Bad Request", { status: 400 });
+  }
+
+  // Only process booking events
+  const supportedEvents = ["BOOKING_CREATED", "BOOKING_CANCELLED", "BOOKING_RESCHEDULED"];
+  if (!supportedEvents.includes(webhook.triggerEvent)) {
+    console.log(`Ignoring Cal.com event: ${webhook.triggerEvent}`);
+    return new Response("OK", { status: 200 });
+  }
+
+  const { payload } = webhook;
+  const attendee = payload.attendees[0]; // Primary attendee
+
+  if (!attendee) {
+    console.error("Cal.com webhook missing attendee");
+    return new Response("Bad Request", { status: 400 });
+  }
+
+  const submissionPayload: CalcomSubmissionPayload = {
+    event_type: webhook.triggerEvent,
+    booking_uid: payload.uid,
+    title: payload.title,
+    start_time: payload.startTime,
+    end_time: payload.endTime,
+    attendee_name: attendee.name,
+    attendee_email: attendee.email,
+    attendee_timezone: attendee.timeZone,
+    organizer_email: payload.organizer.email,
+    status: payload.status,
+    cancellation_reason: payload.cancellationReason,
+  };
+
+  const submissionId = crypto.randomUUID();
+
+  await writeSubmission(env, {
+    id: submissionId,
+    client_slug: clientSlug,
+    channel: "calcom",
+    payload: submissionPayload,
+    source_url: "",
+  });
+
+  return new Response(
+    JSON.stringify({ received: true, submission_id: submissionId }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
+}
+
+/**
+ * Validate Jobber webhook signature.
+ *
+ * Jobber uses HMAC-SHA256 signature in X-Jobber-Hmac-SHA256 header.
+ */
+async function validateJobberSignature(
+  webhookSecret: string,
+  signature: string,
+  body: string
+): Promise<boolean> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(webhookSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+
+  const signatureBuffer = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    encoder.encode(body)
+  );
+
+  // Convert to base64
+  const expectedSignature = btoa(
+    String.fromCharCode(...new Uint8Array(signatureBuffer))
+  );
+
+  return signature === expectedSignature;
+}
+
+async function handleJobberWebhook(
+  request: Request,
+  env: Env,
+  clientSlug: string
+): Promise<Response> {
+  // Read body once for signature validation and parsing
+  const body = await request.text();
+
+  // Validate signature if secret is configured
+  if (env.JOBBER_WEBHOOK_SECRET) {
+    const signature = request.headers.get("X-Jobber-Hmac-SHA256");
+    if (!signature) {
+      console.error("Missing X-Jobber-Hmac-SHA256 header");
+      return new Response("Forbidden", { status: 403 });
+    }
+
+    const isValid = await validateJobberSignature(
+      env.JOBBER_WEBHOOK_SECRET,
+      signature,
+      body
+    );
+
+    if (!isValid) {
+      console.error("Invalid Jobber signature");
+      return new Response("Forbidden", { status: 403 });
+    }
+  } else {
+    console.warn("JOBBER_WEBHOOK_SECRET not set, skipping signature validation");
+  }
+
+  // Parse webhook payload
+  let webhook: JobberWebhookPayload;
+  try {
+    webhook = JSON.parse(body);
+  } catch {
+    console.error("Invalid JSON in Jobber webhook");
+    return new Response("Bad Request", { status: 400 });
+  }
+
+  // Only process supported events
+  const supportedEvents = [
+    "job.created",
+    "job.updated",
+    "job.completed",
+    "client.created",
+    "client.updated",
+  ];
+  if (!supportedEvents.includes(webhook.event)) {
+    console.log(`Ignoring Jobber event: ${webhook.event}`);
+    return new Response("OK", { status: 200 });
+  }
+
+  const { data } = webhook;
+
+  // Build address string from components
+  let address = "";
+  if (data.address) {
+    const parts = [
+      data.address.street,
+      data.address.city,
+      data.address.state,
+      data.address.zip,
+    ].filter(Boolean);
+    address = parts.join(", ");
+  }
+
+  // Extract client info (varies by event type)
+  const clientInfo = data.client || {
+    name: data.name || "",
+    email: data.email || "",
+    phone: data.phone || "",
+  };
+
+  const submissionPayload: JobberSubmissionPayload = {
+    event: webhook.event,
+    jobber_id: data.id,
+    title: data.title,
+    status: data.status,
+    scheduled_at: data.scheduled_at,
+    client_name: clientInfo.name,
+    client_email: clientInfo.email,
+    client_phone: clientInfo.phone,
+    address,
+  };
+
+  const submissionId = crypto.randomUUID();
+
+  await writeSubmission(env, {
+    id: submissionId,
+    client_slug: clientSlug,
+    channel: "jobber",
+    payload: submissionPayload,
+    source_url: "",
+  });
+
+  return new Response(
+    JSON.stringify({ received: true, submission_id: submissionId }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 }
 
 interface SubmissionRecord {

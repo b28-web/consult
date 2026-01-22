@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "apps.web.dashboard",
     "apps.web.inbox",
     "apps.web.crm",
+    "apps.web.integrations",
 ]
 
 MIDDLEWARE = [
@@ -90,6 +91,10 @@ TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN", default="")
 
 # Resend (for email)
 RESEND_API_KEY = env("RESEND_API_KEY", default="")
+
+# Jobber API (CRM integration)
+JOBBER_CLIENT_ID = env("JOBBER_CLIENT_ID", default="")
+JOBBER_CLIENT_SECRET = env("JOBBER_CLIENT_SECRET", default="")
 
 # Password validation
 _V = "django.contrib.auth.password_validation"

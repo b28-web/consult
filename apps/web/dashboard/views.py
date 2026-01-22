@@ -9,6 +9,7 @@ from django.shortcuts import redirect, render
 from django.views.decorators.http import require_GET, require_http_methods
 
 from apps.web.inbox.models import Message
+from apps.web.integrations.models import Integration
 
 
 @require_http_methods(["GET", "POST"])
@@ -73,5 +74,37 @@ def home(request: HttpRequest) -> HttpResponse:
         "dashboard/home.html",
         {
             "unread_count": unread_count,
+        },
+    )
+
+
+@login_required
+@require_GET
+def settings(request: HttpRequest) -> HttpResponse:
+    """
+    GET /dashboard/settings/
+
+    Settings page for managing integrations and account.
+    """
+    # Get integrations for the current client
+    integrations: dict[str, Integration | None] = {
+        "jobber": None,
+        "calcom": None,
+    }
+
+    if hasattr(request, "client") and request.client:
+        for integration in Integration.objects.filter(
+            client=request.client, is_active=True
+        ):
+            if integration.provider == Integration.Provider.JOBBER:
+                integrations["jobber"] = integration
+            elif integration.provider == Integration.Provider.CALCOM:
+                integrations["calcom"] = integration
+
+    return render(
+        request,
+        "dashboard/settings.html",
+        {
+            "integrations": integrations,
         },
     )

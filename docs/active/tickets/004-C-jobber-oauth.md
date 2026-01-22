@@ -1,7 +1,7 @@
 # 004-C: Jobber OAuth Integration
 
 **EP:** [EP-004-integrations](../enhancement_proposals/EP-004-integrations.md)
-**Status:** pending
+**Status:** complete
 
 ## Summary
 
@@ -9,12 +9,12 @@ Implement OAuth flow to connect client's Jobber account.
 
 ## Acceptance Criteria
 
-- [ ] OAuth authorization URL generation
-- [ ] Callback handler exchanges code for tokens
-- [ ] Tokens stored encrypted in Integration model
-- [ ] Token refresh on expiry
-- [ ] Disconnect/revoke functionality
-- [ ] Dashboard UI to initiate connection
+- [x] OAuth authorization URL generation
+- [x] Callback handler exchanges code for tokens
+- [x] Tokens stored encrypted in Integration model
+- [x] Token refresh on expiry
+- [x] Disconnect/revoke functionality
+- [x] Dashboard UI to initiate connection
 
 ## Implementation Notes
 
@@ -58,4 +58,18 @@ integration = Integration.objects.create(
 
 ## Progress
 
-(Not started)
+### 2026-01-22
+- Created `apps/web/integrations` Django app with:
+  - `Integration` model with provider, credentials, webhook_secret, connection status
+  - Unique constraint per client+provider
+  - Token expiry checking and accessor methods
+- Implemented Jobber OAuth views:
+  - `jobber_authorize` - redirects to Jobber OAuth page
+  - `jobber_callback` - exchanges code for tokens, stores in Integration
+  - `jobber_disconnect` - clears credentials and deactivates
+- Added `refresh_jobber_token()` and `get_valid_jobber_token()` for token refresh
+- Added settings page to dashboard (`/dashboard/settings/`) with:
+  - Jobber connect/disconnect UI
+  - Cal.com integration status display
+  - Settings link in sidebar navigation
+- Added JOBBER_CLIENT_ID and JOBBER_CLIENT_SECRET to Django settings

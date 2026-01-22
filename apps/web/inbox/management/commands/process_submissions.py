@@ -17,6 +17,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.web.core.models import Client
+from apps.web.crm.models import Job
 from apps.web.inbox.models import Contact, Message, Submission
 
 logger = logging.getLogger(__name__)
@@ -85,13 +86,21 @@ class Command(BaseCommand):
         return processed, errors
 
     @transaction.atomic
-    def process_one(self, submission: Submission) -> Message:
-        """Process a single submission into a Contact + Message."""
+    def process_one(self, submission: Submission) -> Message | None:
+        """Process a single submission into a Contact + Message (or Job for Cal.com)."""
         # Look up client by slug
         try:
             client = Client.objects.get(slug=submission.client_slug)
         except Client.DoesNotExist as e:
             raise ValueError(f"Unknown client slug: {submission.client_slug}") from e
+
+        # Cal.com bookings create Jobs, not Messages
+        if submission.channel == "calcom":
+            return self._process_calcom_booking(submission, client)
+
+        # Jobber webhooks create/update Jobs and Contacts
+        if submission.channel == "jobber":
+            return self._process_jobber_webhook(submission, client)
 
         # Extract fields from payload (channel-aware)
         payload = submission.payload
@@ -329,3 +338,229 @@ class Command(BaseCommand):
         if channel_lower not in channel_map:
             raise ValueError(f"Unknown channel: {channel}")
         return channel_map[channel_lower]
+
+    def _process_calcom_booking(
+        self, submission: Submission, client: Client
+    ) -> Message | None:
+        """
+        Process Cal.com booking webhook into Contact + Job records.
+
+        For BOOKING_CREATED: creates or updates Job with scheduled status
+        For BOOKING_RESCHEDULED: updates Job with new time
+        For BOOKING_CANCELLED: updates Job status to cancelled
+
+        Returns None since Cal.com doesn't create Messages.
+        """
+        payload = submission.payload
+        event_type = payload.get("event_type", "")
+        booking_uid = payload.get("booking_uid", "")
+
+        if not booking_uid:
+            raise ValueError("Cal.com webhook missing booking_uid")
+
+        # Extract attendee info
+        attendee_name = payload.get("attendee_name", "").strip()
+        attendee_email = payload.get("attendee_email", "").strip().lower()
+        attendee_timezone = payload.get("attendee_timezone", "")
+
+        if not attendee_email:
+            raise ValueError("Cal.com webhook missing attendee_email")
+
+        # Parse datetime strings
+        from datetime import datetime  # noqa: PLC0415
+
+        start_str = payload["start_time"].replace("Z", "+00:00")
+        end_str = payload["end_time"].replace("Z", "+00:00")
+        start_time = datetime.fromisoformat(start_str)
+        end_time = datetime.fromisoformat(end_str)
+        duration_minutes = int((end_time - start_time).total_seconds() / 60)
+
+        # Find or create contact by email
+        contact = self._find_or_create_contact(
+            client=client,
+            email=attendee_email,
+            phone="",
+            name=attendee_name,
+        )
+
+        # Update contact timezone if provided
+        if attendee_timezone and not contact.address:
+            # Store timezone in address field as placeholder
+            # TODO: Add proper timezone field to Contact model
+            pass
+
+        if event_type == "BOOKING_CANCELLED":
+            # Find and cancel existing job
+            job = Job.objects.filter(
+                client=client, calcom_event_id=booking_uid
+            ).first()
+
+            if job:
+                job.status = Job.Status.CANCELLED
+                job.save(update_fields=["status"])
+                logger.info(
+                    "Cancelled Cal.com booking %s -> job %s",
+                    booking_uid,
+                    job.id,
+                )
+            else:
+                logger.warning(
+                    "Cal.com cancellation for unknown booking: %s",
+                    booking_uid,
+                )
+
+        else:
+            # BOOKING_CREATED or BOOKING_RESCHEDULED
+            job, created = Job.objects.update_or_create(
+                client=client,
+                calcom_event_id=booking_uid,
+                defaults={
+                    "contact": contact,
+                    "title": payload.get("title", "Cal.com Booking"),
+                    "status": Job.Status.SCHEDULED,
+                    "scheduled_at": start_time,
+                    "duration_minutes": duration_minutes,
+                },
+            )
+
+            action = "Created" if created else "Updated"
+            logger.info(
+                "%s Cal.com booking %s -> job %s for contact %s",
+                action,
+                booking_uid,
+                job.id,
+                contact.id,
+            )
+
+        # Mark submission as processed (no message created for Cal.com)
+        submission.processed_at = timezone.now()
+        submission.save(update_fields=["processed_at"])
+
+        return None
+
+    def _process_jobber_webhook(
+        self, submission: Submission, client: Client
+    ) -> Message | None:
+        """
+        Process Jobber webhook into Contact + Job records.
+
+        For job.created/updated: creates or updates Job
+        For job.completed: updates Job status to completed
+        For client.created/updated: creates or updates Contact
+
+        Returns None since Jobber doesn't create Messages.
+        """
+        payload = submission.payload
+        event = payload.get("event", "")
+        jobber_id = payload.get("jobber_id", "")
+
+        if not jobber_id:
+            raise ValueError("Jobber webhook missing jobber_id")
+
+        # Handle client events (Contact creation/update)
+        if event.startswith("client."):
+            self._process_jobber_client(submission, client, payload)
+            return None
+
+        # Handle job events
+        client_name = payload.get("client_name", "").strip()
+        client_email = payload.get("client_email", "").strip().lower()
+        client_phone = self._normalize_phone(payload.get("client_phone", ""))
+
+        # Find or create contact if we have client info
+        contact = None
+        if client_email or client_phone:
+            contact = self._find_or_create_contact(
+                client=client,
+                email=client_email,
+                phone=client_phone,
+                name=client_name,
+            )
+
+        # Map Jobber status to our Job.Status
+        status_map = {
+            "scheduled": Job.Status.SCHEDULED,
+            "in_progress": Job.Status.IN_PROGRESS,
+            "requires_invoicing": Job.Status.COMPLETED,
+            "complete": Job.Status.COMPLETED,
+        }
+        jobber_status = payload.get("status", "scheduled").lower()
+        job_status = status_map.get(jobber_status, Job.Status.SCHEDULED)
+
+        # Parse scheduled_at if provided
+        scheduled_at = None
+        if payload.get("scheduled_at"):
+            from datetime import datetime  # noqa: PLC0415
+
+            scheduled_str = payload["scheduled_at"].replace("Z", "+00:00")
+            scheduled_at = datetime.fromisoformat(scheduled_str)
+
+        # Create or update job
+        defaults: dict[str, object] = {
+            "title": payload.get("title", "Jobber Job"),
+            "status": job_status,
+        }
+        if contact:
+            defaults["contact"] = contact
+        if scheduled_at:
+            defaults["scheduled_at"] = scheduled_at
+        if payload.get("address"):
+            defaults["address"] = payload["address"]
+
+        job, created = Job.objects.update_or_create(
+            client=client,
+            jobber_id=jobber_id,
+            defaults=defaults,
+        )
+
+        action = "Created" if created else "Updated"
+        logger.info(
+            "%s Jobber job %s -> job %s",
+            action,
+            jobber_id,
+            job.id,
+        )
+
+        # Mark submission as processed
+        submission.processed_at = timezone.now()
+        submission.save(update_fields=["processed_at"])
+
+        return None
+
+    def _process_jobber_client(
+        self,
+        submission: Submission,
+        client: Client,
+        payload: dict[str, object],
+    ) -> None:
+        """Process Jobber client event into Contact record."""
+        client_name = str(payload.get("client_name", "")).strip()
+        client_email = str(payload.get("client_email", "")).strip().lower()
+        client_phone = self._normalize_phone(str(payload.get("client_phone", "")))
+        jobber_id = str(payload.get("jobber_id", ""))
+
+        if not client_email and not client_phone:
+            logger.warning("Jobber client webhook has no email or phone")
+            submission.processed_at = timezone.now()
+            submission.save(update_fields=["processed_at"])
+            return None
+
+        # Find or create contact
+        contact = self._find_or_create_contact(
+            client=client,
+            email=client_email,
+            phone=client_phone,
+            name=client_name,
+        )
+
+        logger.info(
+            "Processed Jobber client %s -> contact %s",
+            jobber_id,
+            contact.id,
+        )
+
+        # Mark submission as processed
+        submission.processed_at = timezone.now()
+        submission.save(update_fields=["processed_at"])
+
+        return None

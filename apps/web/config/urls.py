@@ -10,4 +10,5 @@ urlpatterns = [
     path("dashboard/", include("apps.web.dashboard.urls")),
     path("dashboard/inbox/", include("apps.web.inbox.urls")),
     path("dashboard/crm/", include("apps.web.crm.urls")),
+    path("dashboard/integrations/", include("apps.web.integrations.urls")),
 ]

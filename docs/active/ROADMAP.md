@@ -10,6 +10,24 @@ Current priorities and planned work for Consult.
 
 ## Completed Sprints
 
+### EP-004: External Integrations (Cal.com + Jobber) ✓
+Connect scheduling and CRM tools.
+
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 004-A | Cal.com embed component | ✓ |
+| 004-B | Cal.com webhook handler | ✓ |
+| 004-C | Jobber OAuth integration | ✓ |
+| 004-D | Jobber webhook sync | ✓ |
+| 004-E | Integration settings UI | ✓ |
+
+**Completed 2026-01-22**: Full Cal.com + Jobber integration with:
+- CalEmbed.astro component for booking widgets
+- Cal.com webhook handler for booking sync
+- Jobber OAuth flow with token refresh
+- Jobber webhook handler for job/client sync
+- Dashboard settings page for managing integrations
+
 ### EP-003: Communications (Twilio + Resend) ✓
 Enable two-way messaging: SMS, voicemail, email.
 
@@ -128,17 +146,6 @@ Create agent-driven pre-deploy validation pipeline with Dagger.
 **Completed 2026-01-21**: Full Dagger pipeline with parallel execution, JSON output, and GitHub Actions integration.
 
 ## Planned Sprints
-
-### EP-004: External Integrations (Cal.com + Jobber)
-Connect scheduling and CRM tools.
-
-| Ticket | Title | Status |
-|--------|-------|--------|
-| 004-A | Cal.com embed component | pending |
-| 004-B | Cal.com webhook handler | pending |
-| 004-C | Jobber OAuth integration | pending |
-| 004-D | Jobber webhook sync | pending |
-| 004-E | Integration settings UI | pending |
 
 ### EP-005: Client Sites at Scale
 Deploy all client sites with automation.

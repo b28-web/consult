@@ -1,7 +1,7 @@
 # 004-B: Cal.com Webhook Handler
 
 **EP:** [EP-004-integrations](../enhancement_proposals/EP-004-integrations.md)
-**Status:** pending
+**Status:** complete
 
 ## Summary
 
@@ -9,12 +9,12 @@ Handle Cal.com booking webhooks to create Job records automatically.
 
 ## Acceptance Criteria
 
-- [ ] Worker endpoint: `POST /webhooks/calcom`
-- [ ] Validates webhook signature
-- [ ] Handles BOOKING_CREATED event
-- [ ] Handles BOOKING_CANCELLED event
-- [ ] Creates/updates Job record via submission queue
-- [ ] Maps Cal.com attendee to Contact
+- [x] Worker endpoint: `POST /webhooks/calcom/{client_slug}`
+- [x] Validates webhook signature
+- [x] Handles BOOKING_CREATED event
+- [x] Handles BOOKING_CANCELLED event
+- [x] Creates/updates Job record via submission queue
+- [x] Maps Cal.com attendee to Contact
 
 ## Implementation Notes
 
@@ -66,4 +66,13 @@ Processing creates:
 
 ## Progress
 
-(Not started)
+### 2026-01-22
+- Added Cal.com webhook route to intake worker: `POST /webhooks/calcom/{client_slug}`
+- Implemented HMAC-SHA256 signature validation (X-Cal-Signature-256 header)
+- Handles BOOKING_CREATED, BOOKING_CANCELLED, BOOKING_RESCHEDULED events
+- Added CalcomWebhookPayload and CalcomSubmissionPayload interfaces
+- Added `_process_calcom_booking` method to process_submissions command
+  - Find/create Contact by attendee email
+  - Create/update Job with calcom_event_id
+  - Handle cancellation by updating Job status
+- All quality checks pass (ruff, mypy, tsc)

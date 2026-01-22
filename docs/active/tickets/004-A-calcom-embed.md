@@ -1,7 +1,7 @@
 # 004-A: Cal.com Embed Component
 
 **EP:** [EP-004-integrations](../enhancement_proposals/EP-004-integrations.md)
-**Status:** pending
+**Status:** complete
 
 ## Summary
 
@@ -9,11 +9,11 @@ Create an Astro component for embedding Cal.com booking widget in client sites.
 
 ## Acceptance Criteria
 
-- [ ] Astro component accepts Cal.com username and event slug
-- [ ] Renders Cal.com embed script
-- [ ] Supports inline and popup modes
-- [ ] Passes client branding (colors) to embed
-- [ ] Works in site template
+- [x] Astro component accepts Cal.com username and event slug
+- [x] Renders Cal.com embed script
+- [x] Supports inline and popup modes
+- [x] Passes client branding (colors) to embed
+- [x] Works in site template
 
 ## Implementation Notes
 
@@ -66,4 +66,12 @@ import { config } from '@/config';
 
 ## Progress
 
-(Not started)
+### 2026-01-22
+- Created `sites/_template/src/components/CalEmbed.astro` with:
+  - Inline and popup mode support
+  - Brand color customization (via `brandColor` prop or fallback from `branding.primaryColor`)
+  - Layout options (month_view, week_view, column_view)
+  - hideEventTypeDetails option
+- Updated `SiteConfig` interface to add `brandColor` to calcom config and new `branding` section
+- Integrated CalEmbed into contact page template (conditional render when calcom configured)
+- Synced component and config to coffee-shop site
