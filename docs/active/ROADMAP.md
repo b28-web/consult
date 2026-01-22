@@ -4,6 +4,10 @@ Current priorities and planned work for Consult.
 
 ## Active Sprints
 
+_No active sprints. See Planned Sprints for upcoming work._
+
+## Completed Sprints
+
 ### EP-011: Agent-Deployable Infrastructure ✓
 Make deployment flow fully runnable by LLM coding agents. Enables autonomous debugging and deployment.
 
@@ -45,7 +49,7 @@ Ansible for Django deployment to Hetzner. Docker for local dev/testing only (no 
 
 Full deployment working end-to-end.
 
-## Completed Sprints
+---
 
 ### EP-007: Pulumi Infrastructure ✓
 Infrastructure as code for Hetzner (Django) + Cloudflare (edge).

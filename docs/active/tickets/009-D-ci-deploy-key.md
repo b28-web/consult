@@ -11,7 +11,7 @@ Set up passwordless SSH key for CI/CD deployments.
 - [x] Generate Ed25519 key pair without passphrase
 - [x] Private key stored in Doppler as `DEPLOY_SSH_PRIVATE_KEY`
 - [x] Public key added to deploy user's authorized_keys via Ansible
-- [ ] CI can SSH to server without passphrase prompt (needs server setup run)
+- [x] CI can SSH to server without passphrase prompt
 - [x] Document key rotation procedure
 
 ## Technical Details
@@ -121,5 +121,6 @@ Push a commit or manually trigger the GitHub Actions workflow.
 - Added `ansible.posix` collection to `ansible/requirements.yml`
 - Documented detailed key rotation procedure
 - All Ansible syntax checks pass
-
-**Remaining**: Need to run `just ansible-setup` on server to deploy the new key
+- Deploy key added to cloud-init for immediate availability on new servers
+- Verified: CI/agent can SSH to server without passphrase prompt
+- **COMPLETE** - All acceptance criteria met

@@ -57,3 +57,4 @@ services:
 - Worker service moved to `--profile worker` (optional, for e2e tests)
 - Tested: build, startup, migrations, healthcheck all pass
 - Hot reload works via volume mount `./apps:/app/apps`
+- **COMPLETE** - All acceptance criteria met
