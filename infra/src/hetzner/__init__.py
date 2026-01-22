@@ -1,5 +1,5 @@
 """Hetzner Cloud infrastructure modules."""
 
-from src.hetzner import network, server, volume
+from src.hetzner import cloud_init, firewall, network, server, volume
 
-__all__ = ["network", "server", "volume"]
+__all__ = ["cloud_init", "firewall", "network", "server", "volume"]

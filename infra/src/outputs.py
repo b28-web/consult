@@ -12,6 +12,7 @@ def export_outputs(
     dns_records: dict[str, Any],
     sites: dict[str, Any],
     intake_worker: dict[str, Any],
+    security_rules: dict[str, Any],
 ) -> None:
     """Export stack outputs for use by deployment scripts and other tools."""
     # Environment
@@ -30,3 +31,6 @@ def export_outputs(
 
     # Workers
     pulumi.export("intake_worker", intake_worker)
+
+    # Security
+    pulumi.export("security_rules", security_rules)

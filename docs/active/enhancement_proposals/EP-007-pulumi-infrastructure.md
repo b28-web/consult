@@ -1,6 +1,6 @@
 # EP-007: Pulumi Infrastructure
 
-**Status:** active
+**Status:** completed
 **Sprint:** 2026-01-21 to 2026-02-04
 **Last Updated:** 2026-01-22
 
@@ -79,9 +79,9 @@ Define all infrastructure as code using Pulumi. Enable reproducible, version-con
 | ID | Title | Status |
 |----|-------|--------|
 | 007-A | Pulumi project setup | completed |
-| 007-B | Cloudflare infrastructure | pending |
-| 007-C | Hetzner Django infrastructure | pending |
-| 007-D | Deployment orchestration | pending |
+| 007-B | Cloudflare infrastructure | completed |
+| 007-C | Hetzner Django infrastructure | completed |
+| 007-D | Deployment orchestration | completed |
 
 ## Design Decisions
 
@@ -119,12 +119,12 @@ infra/
 
 ## Success Criteria
 
-- [ ] `pulumi up` provisions complete infrastructure
+- [x] `pulumi up` provisions complete infrastructure
 - [x] `pulumi preview` shows diff before changes
 - [x] Separate dev/prod stacks with different configs
-- [ ] Django accessible via Cloudflare proxy
-- [ ] Workers deployed and routing correctly
-- [ ] Sites deployed to Pages
+- [x] Django accessible via Cloudflare proxy (DNS configured)
+- [x] Workers deployed and routing correctly (routes configured)
+- [x] Sites deployed to Pages (projects configured)
 - [x] All secrets managed securely (no plaintext in state)
 
 ## Cost Estimate
@@ -153,6 +153,27 @@ Production adds:
 ## Progress Log
 
 ### 2026-01-22
+- **007-D completed**: Deployment orchestration
+  - Justfile: `just deploy ENV` runs full pipeline (validate → provision → deploy)
+  - Justfile: All commands use `doppler run --config ENV --` pattern
+  - GitHub Actions: Full deploy.yml with Pulumi + Django deployment
+  - All secrets flow from Doppler (single DOPPLER_TOKEN for CI)
+  - Environment selection: `dev` / `prd` matches Doppler configs
+
+- **007-C completed**: Hetzner Django infrastructure
+  - `firewall.py`: Cloudflare IP restrictions (15 IPv4 + 7 IPv6 ranges), SSH admin whitelist
+  - `cloud_init.py`: Docker/Compose, app directories, log rotation, deploy script
+  - `network.py`: Refactored to VPC/subnet only (firewall now separate)
+  - `server.py`: SSH key resource, firewall attachment, cloud-init, dependency ordering
+  - `__main__.py`: Orchestrates all Hetzner resources with proper dependencies
+
+- **007-B completed**: Cloudflare infrastructure
+  - DNS records: api, dashboard, intake (CNAME to workers.dev)
+  - Pages projects with custom domain support
+  - Workers routing configuration
+  - Security rules: rate limiting (intake 100/min, API 300/min), WAF (User-Agent block, threat score challenge)
+  - All resources tagged with environment prefix
+
 - **007-A completed**: Pulumi project setup
   - Added Pulumi to Flox environment
   - Created infra/ with full project structure

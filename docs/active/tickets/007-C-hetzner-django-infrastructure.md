@@ -1,7 +1,7 @@
 # 007-C: Hetzner Django Infrastructure
 
 **EP:** [EP-007-pulumi-infrastructure](../enhancement_proposals/EP-007-pulumi-infrastructure.md)
-**Status:** pending
+**Status:** completed
 
 ## Summary
 
@@ -9,13 +9,13 @@ Provision Django backend infrastructure on Hetzner Cloud US West (Hillsboro). Se
 
 ## Acceptance Criteria
 
-- [ ] VPC network created in Hetzner US West
-- [ ] Firewall rules: SSH (restricted), HTTP/HTTPS (Cloudflare only)
-- [ ] CX22 server provisioned with Ubuntu 24.04
-- [ ] Volume attached for persistent data
-- [ ] Docker + Docker Compose installed via cloud-init
-- [ ] Server IP exported for Cloudflare DNS
-- [ ] SSH key managed in Pulumi
+- [x] VPC network created in Hetzner US West
+- [x] Firewall rules: SSH (restricted), HTTP/HTTPS (Cloudflare only)
+- [x] CX22 server provisioned with Ubuntu 24.04
+- [x] Volume attached for persistent data
+- [x] Docker + Docker Compose installed via cloud-init
+- [x] Server IP exported for Cloudflare DNS
+- [x] SSH key managed in Pulumi
 
 ## Implementation Notes
 
@@ -303,4 +303,21 @@ Start with CX22, scale up if needed.
 
 ## Progress
 
-(Updated as work proceeds)
+### 2026-01-22
+- Created `firewall.py` with Cloudflare IP restrictions (IPv4 + IPv6)
+  - SSH: restricted to admin IPs (configurable, open in dev only)
+  - HTTP/HTTPS: only from Cloudflare proxy IPs
+  - Django dev port 8000: only in dev environment
+- Created `cloud_init.py` with server bootstrap script
+  - Docker and Docker Compose installation
+  - App directory structure (/app, /data, /var/log/consult)
+  - Docker log rotation configuration
+  - Deploy script for pulling and restarting containers
+- Refactored `network.py` to focus on VPC and subnet only
+- Updated `server.py` with:
+  - SSH key resource creation (reads from Pulumi config)
+  - Firewall attachment
+  - Cloud-init integration
+  - Proper dependency ordering with subnet
+- Updated `__main__.py` to orchestrate all Hetzner resources
+- All acceptance criteria met

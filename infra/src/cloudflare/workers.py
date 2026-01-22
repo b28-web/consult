@@ -19,7 +19,6 @@ def create_workers(env: str) -> dict[str, Any]:
         Dictionary of worker resources
     """
     config = pulumi.Config()
-    account_id = config.require("cloudflare_account_id")
     zone_id = config.require("cloudflare_zone_id")
     domain = config.require("domain")
 

@@ -1,7 +1,7 @@
 # Deployment Pipeline
 # Triggered manually with environment selection
-# Gates on pre-deploy validation before deploying
-# Uses Doppler for secrets management
+# Full pipeline: validate → provision infrastructure → deploy apps
+# Uses Doppler as single source of truth for all secrets
 
 name: Deploy
 
@@ -9,18 +9,28 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to deploy to'
+        description: 'Target environment'
         required: true
-        default: 'staging'
+        default: 'dev'
         type: choice
         options:
-          - staging
-          - production
+          - dev
+          - prd
       skip_validation:
         description: 'Skip pre-deploy validation (use with caution)'
         required: false
         default: false
         type: boolean
+      skip_infra:
+        description: 'Skip infrastructure provisioning (deploy apps only)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  # Single Doppler token provides access to all configs (dev, prd)
+  DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+  PYTHON_VERSION: "3.13"
 
 concurrency:
   group: deploy-${{ github.event.inputs.environment }}
@@ -28,22 +38,83 @@ concurrency:
 
 jobs:
   # ==========================================================================
-  # Validate - Run pre-deploy checks
+  # Validate - Run pre-deploy checks via Dagger
   # ==========================================================================
   validate:
     name: Pre-Deploy Validation
     if: ${{ !inputs.skip_validation }}
-    uses: ./.github/workflows/validate.yml
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Dagger CLI
+        uses: dagger/dagger-for-github@v6
+        with:
+          version: "latest"
+
+      - name: Run pre-deploy validation
+        run: cd dagger && dagger call pre-deploy --source=..
+
+  # ==========================================================================
+  # Provision Infrastructure via Pulumi
+  # ==========================================================================
+  provision-infra:
+    name: Provision Infrastructure
+    needs: [validate]
+    if: always() && (needs.validate.result == 'success' || inputs.skip_validation) && !inputs.skip_infra
+    runs-on: ubuntu-latest
+    outputs:
+      django_server_ip: ${{ steps.outputs.outputs.django_server_ip }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Pulumi CLI
+        uses: pulumi/actions@v5
+
+      - name: Install Pulumi dependencies
+        working-directory: infra
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -r requirements.txt
+
+      - name: Pulumi preview
+        working-directory: infra
+        run: |
+          doppler run --config ${{ inputs.environment }} -- \
+            pulumi preview --stack ${{ inputs.environment }}
+
+      - name: Pulumi up
+        working-directory: infra
+        run: |
+          doppler run --config ${{ inputs.environment }} -- \
+            pulumi up --stack ${{ inputs.environment }} --yes
+
+      - name: Get outputs
+        id: outputs
+        working-directory: infra
+        run: |
+          SERVER_IP=$(doppler run --config ${{ inputs.environment }} -- \
+            pulumi stack output django_server_ip --stack ${{ inputs.environment }})
+          echo "django_server_ip=$SERVER_IP" >> $GITHUB_OUTPUT
 
   # ==========================================================================
   # Deploy Worker to Cloudflare
   # ==========================================================================
   deploy-worker:
     name: Deploy Worker
-    needs: [validate]
-    if: always() && (needs.validate.result == 'success' || inputs.skip_validation)
+    needs: [validate, provision-infra]
+    if: always() && (needs.validate.result == 'success' || inputs.skip_validation) && (needs.provision-infra.result == 'success' || needs.provision-infra.result == 'skipped')
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -65,27 +136,27 @@ jobs:
         working-directory: workers/intake
         run: pnpm install --frozen-lockfile
 
+      - name: Push secrets to Cloudflare Workers
+        working-directory: workers/intake
+        run: |
+          doppler run --config ${{ inputs.environment }} -- \
+            bash -c 'echo "$NEON_DATABASE_URL" | pnpm wrangler secret put NEON_DATABASE_URL'
+          doppler run --config ${{ inputs.environment }} -- \
+            bash -c 'echo "$INTAKE_API_KEY" | pnpm wrangler secret put INTAKE_API_KEY'
+
       - name: Deploy to Cloudflare Workers
         working-directory: workers/intake
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
-          # Push secrets from Doppler to Cloudflare Workers
-          doppler run -- bash -c 'echo "$NEON_DATABASE_URL" | pnpm wrangler secret put NEON_DATABASE_URL'
-          doppler run -- bash -c 'echo "$INTAKE_API_KEY" | pnpm wrangler secret put INTAKE_API_KEY'
-
-          # Deploy worker (CLOUDFLARE_API_TOKEN comes from Doppler)
-          doppler run -- pnpm wrangler deploy
+          doppler run --config ${{ inputs.environment }} -- pnpm wrangler deploy
 
   # ==========================================================================
   # Deploy Sites to Cloudflare Pages
   # ==========================================================================
   deploy-sites:
     name: Deploy Sites
-    needs: [validate]
-    if: always() && (needs.validate.result == 'success' || inputs.skip_validation)
+    needs: [validate, provision-infra]
+    if: always() && (needs.validate.result == 'success' || inputs.skip_validation) && (needs.provision-infra.result == 'success' || needs.provision-infra.result == 'skipped')
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
     strategy:
       matrix:
         site: [coffee-shop]
@@ -108,6 +179,7 @@ jobs:
         uses: dopplerhq/cli-action@v3
 
       - name: Install dependencies
+        working-directory: sites/${{ matrix.site }}
         run: pnpm install --frozen-lockfile
 
       - name: Build site
@@ -116,18 +188,71 @@ jobs:
 
       - name: Deploy to Cloudflare Pages
         working-directory: sites/${{ matrix.site }}
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
-          # CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID come from Doppler
-          doppler run -- pnpm wrangler pages deploy dist --project-name=${{ matrix.site }}
+          doppler run --config ${{ inputs.environment }} -- \
+            pnpm wrangler pages deploy dist --project-name=${{ matrix.site }}
 
   # ==========================================================================
-  # Deploy Summary
+  # Deploy Django to Hetzner
+  # ==========================================================================
+  deploy-django:
+    name: Deploy Django
+    needs: [validate, provision-infra]
+    if: always() && (needs.validate.result == 'success' || inputs.skip_validation) && needs.provision-infra.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Pulumi CLI
+        uses: pulumi/actions@v5
+
+      - name: Install Pulumi dependencies
+        working-directory: infra
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -r requirements.txt
+
+      - name: Get server IP
+        id: server
+        working-directory: infra
+        run: |
+          SERVER_IP=$(doppler run --config ${{ inputs.environment }} -- \
+            pulumi stack output django_server_ip --stack ${{ inputs.environment }})
+          echo "ip=$SERVER_IP" >> $GITHUB_OUTPUT
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          doppler run --config ${{ inputs.environment }} -- \
+            bash -c 'echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key'
+          chmod 600 ~/.ssh/deploy_key
+
+      - name: Deploy to server
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+              -o StrictHostKeyChecking=accept-new \
+              ubuntu@${{ steps.server.outputs.ip }} \
+              'cd /opt/consult && ./deploy.sh'
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
+
+  # ==========================================================================
+  # Deployment Summary
   # ==========================================================================
   summary:
     name: Deployment Summary
-    needs: [validate, deploy-worker, deploy-sites]
+    needs: [validate, provision-infra, deploy-worker, deploy-sites, deploy-django]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -135,8 +260,12 @@ jobs:
         run: |
           echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Validation | ${{ needs.validate.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Infrastructure | ${{ needs.provision-infra.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Worker | ${{ needs.deploy-worker.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Sites | ${{ needs.deploy-sites.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Django | ${{ needs.deploy-django.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY

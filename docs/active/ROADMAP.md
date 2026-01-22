@@ -4,19 +4,21 @@ Current priorities and planned work for Consult.
 
 ## Active Sprints
 
-### EP-007: Pulumi Infrastructure ← *current*
+None currently. All planned infrastructure work complete.
+
+## Completed Sprints
+
+### EP-007: Pulumi Infrastructure ✓
 Infrastructure as code for Hetzner (Django) + Cloudflare (edge).
 
 | Ticket | Title | Status |
 |--------|-------|--------|
-| 007-A | Pulumi project setup | ✓ completed |
-| 007-B | Cloudflare infrastructure | pending |
-| 007-C | Hetzner Django infrastructure | pending |
-| 007-D | Deployment orchestration | pending |
+| 007-A | Pulumi project setup | ✓ |
+| 007-B | Cloudflare infrastructure | ✓ |
+| 007-C | Hetzner Django infrastructure | ✓ |
+| 007-D | Deployment orchestration | ✓ |
 
-**2026-01-22**: Completed 007-A. Pulumi project initialized with Hetzner/Cloudflare providers, `just setup-infra` extended with infrastructure secrets wizard.
-
-## Completed Sprints
+**Completed 2026-01-22**: Full infrastructure as code with unified deployment pipeline (`just deploy`), Doppler as single secret store, Pulumi for infra state.
 
 ### EP-001: Backend Foundation ✓
 Get the full stack working end-to-end.

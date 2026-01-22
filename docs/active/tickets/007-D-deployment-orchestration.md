@@ -1,7 +1,7 @@
 # 007-D: Deployment Orchestration
 
 **EP:** [EP-007-pulumi-infrastructure](../enhancement_proposals/EP-007-pulumi-infrastructure.md)
-**Status:** pending
+**Status:** completed
 
 ## Summary
 
@@ -233,4 +233,20 @@ jobs:
 
 ## Progress
 
-(Updated as work proceeds)
+### 2026-01-22
+- **Justfile updated**: Added unified deploy commands
+  - `just deploy ENV` - Full pipeline: validate → provision → deploy
+  - `just deploy-validate ENV` - Run Dagger pre-deploy checks
+  - `just deploy-infra ENV` - Pulumi infrastructure provisioning
+  - `just deploy-apps ENV` - Deploy worker, sites, Django
+  - `just deploy-worker-to ENV` - Deploy intake worker to Cloudflare
+  - `just deploy-sites-to ENV` - Deploy all sites to Pages
+  - `just deploy-django-to ENV` - SSH deploy to Hetzner
+  - Updated all `infra-*` commands to use Doppler
+
+- **GitHub Actions deploy.yml rewritten**:
+  - Environment selection: `dev` / `prd` (matches Doppler configs)
+  - `provision-infra` job: Pulumi preview + up with Doppler secrets
+  - `deploy-django` job: SSH to Hetzner server with deploy script
+  - Single `DOPPLER_TOKEN` secret for all config access
+  - Options to skip validation or infrastructure provisioning

@@ -162,6 +162,7 @@ dev = [
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-django" },
+    { name = "pyyaml" },
     { name = "ruff" },
     { name = "types-requests" },
 ]
@@ -181,6 +182,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3" },
     { name = "pytest-django", marker = "extra == 'dev'", specifier = ">=4.9" },
+    { name = "pyyaml", marker = "extra == 'dev'", specifier = ">=6.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8" },
     { name = "types-requests", marker = "extra == 'dev'", specifier = ">=2.32" },
 ]

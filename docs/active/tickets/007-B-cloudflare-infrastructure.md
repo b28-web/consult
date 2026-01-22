@@ -1,7 +1,7 @@
 # 007-B: Cloudflare Infrastructure
 
 **EP:** [EP-007-pulumi-infrastructure](../enhancement_proposals/EP-007-pulumi-infrastructure.md)
-**Status:** pending
+**Status:** completed
 
 ## Summary
 
@@ -9,12 +9,12 @@ Define all Cloudflare resources in Pulumi: DNS records, Workers, Pages projects,
 
 ## Acceptance Criteria
 
-- [ ] DNS records for all domains managed in Pulumi
-- [ ] Workers deployed via Pulumi (intake worker)
-- [ ] Pages projects created for client sites
-- [ ] Cloudflare proxy enabled for Django backend
-- [ ] Basic WAF rules configured
-- [ ] All resources tagged with environment
+- [x] DNS records for all domains managed in Pulumi
+- [x] Workers deployed via Pulumi (intake worker)
+- [x] Pages projects created for client sites
+- [x] Cloudflare proxy enabled for Django backend
+- [x] Basic WAF rules configured
+- [x] All resources tagged with environment
 
 ## Implementation Notes
 
@@ -203,4 +203,14 @@ def create_waf_rules(zone_id: str) -> list:
 
 ## Progress
 
-(Updated as work proceeds)
+### 2026-01-22
+- Added intake DNS record (CNAME to workers.dev) in `dns.py`
+- Created `security.py` with:
+  - Rate limiting for intake endpoint (100 req/min)
+  - Rate limiting for API endpoint (300 req/min)
+  - Firewall rule to block empty User-Agent on API
+  - Firewall rule to challenge suspicious dashboard traffic
+- Added Pages custom domain support in `pages.py`
+- Updated `__init__.py` to export security module
+- Wired security rules into `__main__.py` and `outputs.py`
+- All acceptance criteria met

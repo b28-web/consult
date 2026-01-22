@@ -29,6 +29,7 @@ dev = [
     "types-requests>=2.32",
     # CI/CD pipeline
     "dagger-io>=0.15",
+    "pyyaml>=6.0",
 ]
 
 [build-system]

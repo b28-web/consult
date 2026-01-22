@@ -6,10 +6,9 @@ This module orchestrates infrastructure provisioning across:
 """
 
 import pulumi
-
 from src import outputs
-from src.cloudflare import dns, pages, workers
-from src.hetzner import network, server, volume
+from src.cloudflare import dns, pages, security, workers
+from src.hetzner import firewall, network, server, volume
 
 # Get environment from stack config
 config = pulumi.Config()
@@ -19,8 +18,14 @@ env = config.require("environment")
 # Hetzner Infrastructure
 # =============================================================================
 
-# Network (VPC, firewall rules)
+# VPC network and subnet
 vpc = network.create_network(env)
+
+# Firewall (SSH restricted, HTTP/HTTPS from Cloudflare only)
+hetzner_firewall = firewall.create_firewall(env)
+
+# SSH key for server access
+ssh_key = server.create_ssh_key(env)
 
 # Persistent storage volume
 storage_volume = volume.create_volume(env)
@@ -28,8 +33,11 @@ storage_volume = volume.create_volume(env)
 # Django server
 django_server = server.create_server(
     env=env,
-    network_id=vpc.network.id,
-    volume_id=storage_volume.id,
+    network_id=vpc.network.id.apply(int),
+    subnet=vpc.subnet,
+    firewall_id=hetzner_firewall.id.apply(int),
+    ssh_key_id=ssh_key.id.apply(int),
+    volume_id=storage_volume.id.apply(int),
 )
 
 # =============================================================================
@@ -48,6 +56,9 @@ sites = pages.create_pages_projects(env)
 # Cloudflare Workers (edge functions)
 intake_worker = workers.create_workers(env)
 
+# Cloudflare security rules (WAF, rate limiting)
+security_rules = security.create_security_rules(env)
+
 # =============================================================================
 # Outputs
 # =============================================================================
@@ -58,4 +69,5 @@ outputs.export_outputs(
     dns_records=dns_records,
     sites=sites,
     intake_worker=intake_worker,
+    security_rules=security_rules,
 )

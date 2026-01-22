@@ -18,7 +18,6 @@ def create_dns_records(env: str, server_ip: pulumi.Output[str]) -> dict[str, Any
     """
     config = pulumi.Config()
     zone_id = config.require("cloudflare_zone_id")
-    domain = config.require("domain")
 
     records: dict[str, Any] = {}
 
@@ -50,5 +49,19 @@ def create_dns_records(env: str, server_ip: pulumi.Output[str]) -> dict[str, Any
         comment=f"Consult {env} dashboard",
     )
     records["dashboard"] = dashboard_record
+
+    # Intake worker subdomain (CNAME to workers.dev)
+    worker_name = "consult-intake" if env == "prod" else f"consult-intake-{env}"
+    intake_record = cloudflare.Record(
+        f"consult-{env}-intake-dns",
+        zone_id=zone_id,
+        name=f"{prefix}intake",
+        content=f"{worker_name}.workers.dev",
+        type="CNAME",
+        proxied=True,
+        ttl=1,
+        comment=f"Consult {env} intake worker",
+    )
+    records["intake"] = intake_record
 
     return records

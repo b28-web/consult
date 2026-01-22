@@ -157,11 +157,13 @@ setup-infra:
 
     echo ""
     echo "Infrastructure secrets (for deployment):"
+    INFRA_MISSING=()
     for secret in HETZNER_API_TOKEN CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_ZONE_ID SSH_PUBLIC_KEY; do
         if check_secret "$secret"; then
             success "$secret"
         else
             warn "$secret (not set)"
+            INFRA_MISSING+=("$secret")
         fi
     done
 
@@ -175,18 +177,51 @@ setup-infra:
         fi
     done
 
+    # Flag to track if user already opted in to infra setup
+    INFRA_SETUP_REQUESTED=false
+
     if [ ${#MISSING[@]} -eq 0 ]; then
-        header "All Done!"
         success "All required secrets are configured for local development"
         echo ""
-        echo "Next steps:"
-        echo "  ${BOLD}just dev${NC}             # Start Django dev server"
-        echo "  ${BOLD}just test-local${NC}      # Run full integration tests"
-        echo ""
-        echo "For deployment, also configure infrastructure secrets:"
-        echo "  ${BOLD}just setup-infra${NC}     # Run again to see status"
-        exit 0
+
+        # Check if infrastructure secrets are missing and offer to configure them
+        if [ ${#INFRA_MISSING[@]} -gt 0 ]; then
+            echo -e "${YELLOW}Missing ${#INFRA_MISSING[@]} infrastructure secret(s): ${INFRA_MISSING[*]}${NC}"
+            echo ""
+            echo "These are needed for deploying infrastructure with Pulumi."
+            echo ""
+            if prompt_yes_no "Would you like to configure infrastructure secrets now?"; then
+                # Continue to Step 5 (Infrastructure Secrets)
+                INFRA_SETUP_REQUESTED=true
+            else
+                echo ""
+                echo "Skipped infrastructure setup."
+                echo ""
+                echo "Next steps for local development:"
+                echo "  ${BOLD}just dev${NC}             # Start Django dev server"
+                echo "  ${BOLD}just test-local${NC}      # Run full integration tests"
+                echo ""
+                echo "To configure infrastructure secrets later:"
+                echo "  ${BOLD}just setup-infra${NC}     # Run this wizard again"
+                exit 0
+            fi
+        else
+            header "All Done!"
+            success "All secrets configured!"
+            echo ""
+            echo "Local development:"
+            echo "  ${BOLD}just dev${NC}             # Start Django dev server"
+            echo "  ${BOLD}just test-local${NC}      # Run full integration tests"
+            echo ""
+            echo "Infrastructure deployment:"
+            echo "  ${BOLD}just infra-preview${NC}   # Preview infrastructure changes"
+            echo "  ${BOLD}just infra-up${NC}        # Deploy infrastructure"
+            exit 0
+        fi
     fi
+
+    # Only show Step 3 and 4 if there are missing required secrets
+    if [ ${#MISSING[@]} -gt 0 ]; then
 
     echo ""
     echo -e "${YELLOW}Missing ${#MISSING[@]} required secret(s): ${MISSING[*]}${NC}"
@@ -339,17 +374,30 @@ setup-infra:
         fi
     fi
 
+    fi  # End of "if MISSING has elements"
+
     # =========================================================================
     header "Step 5: Infrastructure Secrets (Pulumi)"
     # =========================================================================
 
-    echo "These secrets are needed to deploy infrastructure with Pulumi."
-    echo "Skip this section if you only need local development."
-    echo ""
-
-    if ! prompt_yes_no "Configure infrastructure deployment secrets?" "n"; then
-        echo "Skipped infrastructure secrets."
+    # Determine if we should configure infra secrets
+    CONFIGURE_INFRA=false
+    if [ "$INFRA_SETUP_REQUESTED" = true ]; then
+        # User already opted in from the early status check
+        CONFIGURE_INFRA=true
     else
+        echo "These secrets are needed to deploy infrastructure with Pulumi."
+        echo "Skip this section if you only need local development."
+        echo ""
+
+        if prompt_yes_no "Configure infrastructure deployment secrets?" "n"; then
+            CONFIGURE_INFRA=true
+        else
+            echo "Skipped infrastructure secrets."
+        fi
+    fi
+
+    if [ "$CONFIGURE_INFRA" = true ]; then
         # HETZNER_API_TOKEN
         if ! check_secret "HETZNER_API_TOKEN"; then
             echo ""
@@ -613,14 +661,14 @@ setup-infra:
         echo -e "${GREEN}${BOLD}All required secrets configured!${NC}"
         echo ""
         echo "Local development:"
-        echo "  ${BOLD}just migrate${NC}         # Run database migrations"
-        echo "  ${BOLD}just dev${NC}             # Start Django dev server"
-        echo "  ${BOLD}just test-local${NC}      # Run integration tests"
+        echo -e "  ${BOLD}just migrate${NC}         # Run database migrations"
+        echo -e "  ${BOLD}just dev${NC}             # Start Django dev server"
+        echo -e "  ${BOLD}just test-local${NC}      # Run integration tests"
         echo ""
         if check_secret "HETZNER_API_TOKEN" && check_secret "CLOUDFLARE_API_TOKEN"; then
             echo "Infrastructure deployment:"
-            echo "  ${BOLD}just infra-preview${NC}   # Preview infrastructure changes"
-            echo "  ${BOLD}just infra-up${NC}        # Deploy infrastructure"
+            echo -e "  ${BOLD}just infra-preview${NC}   # Preview infrastructure changes"
+            echo -e "  ${BOLD}just infra-up${NC}        # Deploy infrastructure"
         else
             echo "For infrastructure deployment, re-run this wizard"
             echo "and configure Hetzner/Cloudflare secrets."
@@ -628,7 +676,7 @@ setup-infra:
     else
         echo -e "${YELLOW}Still missing: ${STILL_MISSING[*]}${NC}"
         echo ""
-        echo "Run ${BOLD}just setup-infra${NC} again after setting them."
+        echo -e "Run ${BOLD}just setup-infra${NC} again after setting them."
         echo "Or set manually: doppler secrets set NAME=value"
     fi
 
@@ -1023,32 +1071,158 @@ dagger-test:
     cd dagger && dagger call test --source=..
 
 # =============================================================================
-# Infrastructure (Pulumi)
+# Unified Deployment (Doppler → Dagger → Pulumi → Apps)
+# =============================================================================
+
+# Full deployment pipeline: validate → provision → deploy
+deploy ENV="dev":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "═══════════════════════════════════════════════════════════"
+    echo "  Deploying to {{ENV}}"
+    echo "═══════════════════════════════════════════════════════════"
+    echo ""
+    just deploy-validate {{ENV}}
+    just deploy-infra {{ENV}}
+    just deploy-apps {{ENV}}
+    echo ""
+    echo "═══════════════════════════════════════════════════════════"
+    echo "  Deployment to {{ENV}} complete!"
+    echo "═══════════════════════════════════════════════════════════"
+
+# Step 1: Validate (Dagger pre-deploy checks)
+deploy-validate ENV="dev":
+    @echo "→ Running pre-deploy validation..."
+    cd dagger && dagger call pre-deploy --source=..
+
+# Step 2: Provision infrastructure (Pulumi)
+deploy-infra ENV="dev":
+    @echo "→ Provisioning infrastructure ({{ENV}})..."
+    cd infra && doppler run --config {{ENV}} -- pulumi up --stack {{ENV}} --yes
+
+# Step 3: Deploy applications
+deploy-apps ENV="dev":
+    @echo "→ Deploying applications..."
+    just deploy-worker-to {{ENV}}
+    just deploy-sites-to {{ENV}}
+    just deploy-django-to {{ENV}}
+
+# Deploy worker to Cloudflare
+deploy-worker-to ENV="dev":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "  Deploying intake worker..."
+    cd workers/intake
+    doppler run --config {{ENV}} -- bash -c 'echo "$NEON_DATABASE_URL" | pnpm wrangler secret put NEON_DATABASE_URL'
+    doppler run --config {{ENV}} -- bash -c 'echo "$INTAKE_API_KEY" | pnpm wrangler secret put INTAKE_API_KEY'
+    doppler run --config {{ENV}} -- pnpm wrangler deploy
+    echo "  ✓ Worker deployed"
+
+# Deploy all sites to Cloudflare Pages
+deploy-sites-to ENV="dev":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for site in sites/*/; do
+        name=$(basename "$site")
+        [[ "$name" == "_template" ]] && continue
+        echo "  Deploying site: $name..."
+        cd "$site"
+        pnpm build
+        doppler run --config {{ENV}} -- pnpm wrangler pages deploy dist --project-name="$name"
+        cd - > /dev/null
+    done
+    echo "  ✓ Sites deployed"
+
+# Deploy Django to Hetzner
+deploy-django-to ENV="dev":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "  Deploying Django to Hetzner..."
+    SERVER_IP=$(cd infra && doppler run --config {{ENV}} -- pulumi stack output django_server_ip --stack {{ENV}})
+    if [ -z "$SERVER_IP" ]; then
+        echo "  ✗ Could not get server IP from Pulumi outputs"
+        exit 1
+    fi
+    echo "  Server: $SERVER_IP"
+    ssh -o StrictHostKeyChecking=accept-new ubuntu@"$SERVER_IP" 'cd /opt/consult && ./deploy.sh'
+    echo "  ✓ Django deployed"
+
+# =============================================================================
+# CI Deployment (Non-interactive, for GitHub Actions / automation)
+# =============================================================================
+
+# CI: Full deployment (validate → infra → apps)
+deploy-ci ENV="dev":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "═══════════════════════════════════════════════════════════"
+    echo "  CI Deploy: {{ENV}} (full pipeline)"
+    echo "═══════════════════════════════════════════════════════════"
+    just deploy-validate {{ENV}}
+    just deploy-infra {{ENV}}
+    just deploy-apps {{ENV}}
+    echo "═══════════════════════════════════════════════════════════"
+    echo "  CI Deploy complete!"
+    echo "═══════════════════════════════════════════════════════════"
+
+# CI: Deploy apps only (skip validation and infrastructure)
+deploy-ci-apps ENV="dev":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "═══════════════════════════════════════════════════════════"
+    echo "  CI Deploy: {{ENV}} (apps only)"
+    echo "═══════════════════════════════════════════════════════════"
+    just deploy-apps {{ENV}}
+    echo "═══════════════════════════════════════════════════════════"
+    echo "  CI Deploy (apps) complete!"
+    echo "═══════════════════════════════════════════════════════════"
+
+# CI: Deploy with infra but skip validation (use with caution)
+deploy-ci-no-validate ENV="dev":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "═══════════════════════════════════════════════════════════"
+    echo "  CI Deploy: {{ENV}} (skip validation)"
+    echo "═══════════════════════════════════════════════════════════"
+    just deploy-infra {{ENV}}
+    just deploy-apps {{ENV}}
+    echo "═══════════════════════════════════════════════════════════"
+    echo "  CI Deploy complete!"
+    echo "═══════════════════════════════════════════════════════════"
+
+# CI: Validate only (useful for PR checks)
+deploy-ci-validate:
+    @echo "Running pre-deploy validation..."
+    cd dagger && dagger call pre-deploy --source=..
+    @echo "Validation passed!"
+
+# =============================================================================
+# Infrastructure (Pulumi with Doppler)
 # =============================================================================
 
 # Preview infrastructure changes
-infra-preview STACK="dev":
-    cd infra && pulumi preview --stack {{STACK}}
+infra-preview ENV="dev":
+    cd infra && doppler run --config {{ENV}} -- pulumi preview --stack {{ENV}}
 
 # Apply infrastructure changes
-infra-up STACK="dev":
-    cd infra && pulumi up --stack {{STACK}}
+infra-up ENV="dev":
+    cd infra && doppler run --config {{ENV}} -- pulumi up --stack {{ENV}}
 
 # Apply infrastructure changes (auto-approve, for CI)
-infra-up-yes STACK="dev":
-    cd infra && pulumi up --stack {{STACK}} --yes
+infra-up-yes ENV="dev":
+    cd infra && doppler run --config {{ENV}} -- pulumi up --stack {{ENV}} --yes
 
 # Destroy infrastructure (careful!)
-infra-destroy STACK="dev":
-    cd infra && pulumi destroy --stack {{STACK}}
+infra-destroy ENV="dev":
+    cd infra && doppler run --config {{ENV}} -- pulumi destroy --stack {{ENV}}
 
 # Show infrastructure outputs
-infra-outputs STACK="dev":
-    cd infra && pulumi stack output --stack {{STACK}} --json
+infra-outputs ENV="dev":
+    cd infra && doppler run --config {{ENV}} -- pulumi stack output --stack {{ENV}} --json
 
 # Refresh infrastructure state
-infra-refresh STACK="dev":
-    cd infra && pulumi refresh --stack {{STACK}}
+infra-refresh ENV="dev":
+    cd infra && doppler run --config {{ENV}} -- pulumi refresh --stack {{ENV}}
 
 # Initialize Pulumi infrastructure
 infra-init:

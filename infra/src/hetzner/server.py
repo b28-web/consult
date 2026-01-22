@@ -3,6 +3,8 @@
 import pulumi
 import pulumi_hcloud as hcloud
 
+from src.hetzner.cloud_init import generate_cloud_init
+
 # Server configuration by environment
 SERVER_CONFIG = {
     "dev": {
@@ -16,9 +18,37 @@ SERVER_CONFIG = {
 }
 
 
+def create_ssh_key(env: str) -> hcloud.SshKey:
+    """Create SSH key for server access.
+
+    The public key is read from Pulumi config (set via `just setup-infra`).
+
+    Args:
+        env: Environment name (dev, prod)
+
+    Returns:
+        The created Hetzner SSH key
+    """
+    config = pulumi.Config()
+    public_key = config.require_secret("ssh_public_key")
+
+    return hcloud.SshKey(
+        f"consult-{env}-ssh-key",
+        name=f"consult-{env}",
+        public_key=public_key,
+        labels={
+            "environment": env,
+            "managed_by": "pulumi",
+        },
+    )
+
+
 def create_server(
     env: str,
     network_id: pulumi.Output[int],
+    subnet: hcloud.NetworkSubnet,
+    firewall_id: pulumi.Output[int],
+    ssh_key_id: pulumi.Output[int],
     volume_id: pulumi.Output[int],
 ) -> hcloud.Server:
     """Create Django application server.
@@ -26,51 +56,16 @@ def create_server(
     Args:
         env: Environment name (dev, prod)
         network_id: ID of the VPC network
+        subnet: The network subnet (for dependency ordering)
+        firewall_id: ID of the firewall to attach
+        ssh_key_id: ID of the SSH key for access
         volume_id: ID of the storage volume to attach
 
     Returns:
         The created Hetzner server
     """
-    config = pulumi.Config()
-    ssh_key_name = config.get("ssh_key_name") or f"consult-{env}"
-
     server_config = SERVER_CONFIG.get(env, SERVER_CONFIG["dev"])
-
-    # Cloud-init script to set up Docker
-    cloud_init = """#cloud-config
-package_update: true
-package_upgrade: true
-
-packages:
-  - docker.io
-  - docker-compose-plugin
-  - curl
-  - git
-
-runcmd:
-  # Enable Docker
-  - systemctl enable docker
-  - systemctl start docker
-
-  # Create app directory
-  - mkdir -p /app
-  - chown -R 1000:1000 /app
-
-  # Mount the volume (will be formatted on first use)
-  - mkdir -p /data
-  - echo "Volume will be mounted by Hetzner"
-
-write_files:
-  - path: /etc/docker/daemon.json
-    content: |
-      {
-        "log-driver": "json-file",
-        "log-opts": {
-          "max-size": "10m",
-          "max-file": "3"
-        }
-      }
-"""
+    cloud_init = generate_cloud_init(env)
 
     server = hcloud.Server(
         f"consult-{env}-django",
@@ -78,7 +73,8 @@ write_files:
         server_type=server_config["server_type"],
         location=server_config["location"],
         image="ubuntu-24.04",
-        ssh_keys=[ssh_key_name],
+        ssh_keys=[ssh_key_id],
+        firewall_ids=[firewall_id],
         user_data=cloud_init,
         public_nets=[
             hcloud.ServerPublicNetArgs(
@@ -91,20 +87,21 @@ write_files:
             "service": "django",
             "managed_by": "pulumi",
         },
+        opts=pulumi.ResourceOptions(depends_on=[subnet]),
     )
 
     # Attach to private network
     hcloud.ServerNetwork(
         f"consult-{env}-django-network",
         server_id=server.id.apply(int),
-        network_id=network_id.apply(int),
+        network_id=network_id,
     )
 
     # Attach storage volume
     hcloud.VolumeAttachment(
         f"consult-{env}-volume-attachment",
         server_id=server.id.apply(int),
-        volume_id=volume_id.apply(int),
+        volume_id=volume_id,
         automount=True,
     )
 
