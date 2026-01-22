@@ -4,7 +4,29 @@ Current priorities and planned work for Consult.
 
 ## Active Sprints
 
-(No active sprints - pick next from Planned Sprints)
+### EP-005: Client Sites at Scale (in progress)
+Deploy 8 service/B2B client sites with scaffolding and registry-based deployment.
+
+*Note: Full restaurant sites with POS integration are in EP-008 (planned).*
+
+**Completed so far:**
+- Site scaffolding script with industry presets
+- Site registry system (`sites/registry.yaml`)
+- Deploy wizard (`just deploy-wizard`)
+- Pulumi integration (reads registry for CF Pages projects)
+
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 005-A | Site scaffolding + registry system | complete |
+| 005-B | Deploy coffee-shop site (cafe) | pending |
+| 005-C | Deploy hauler site (+ Cal.com) | pending |
+| 005-D | Deploy cleaning site | pending |
+| 005-E | Deploy landscaper site | pending |
+| 005-F | Deploy barber site | pending |
+| 005-G | Deploy data-analytics site | pending |
+| 005-H | Deploy web-dev site | pending |
+| 005-I | Deploy local-agency site | pending |
+| 005-J | CI/CD pipeline for sites | pending |
 
 ---
 

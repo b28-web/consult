@@ -125,6 +125,70 @@ just deploy-sites-to dev
 just deploy-django-to dev
 ```
 
+## Site Registry & Deploy Wizard
+
+Client sites are managed through a central registry at `sites/registry.yaml`.
+
+### Registry Format
+
+```yaml
+sites:
+  coffee-shop:
+    ready: true      # Will be deployed
+    dev: {}
+    prod:
+      domain: coffee.example.com  # Custom domain (optional)
+
+  future-site:
+    ready: false     # Won't be deployed yet
+    dev: {}
+```
+
+### Site Management Commands
+
+```bash
+# List all sites and their registry status
+just list-sites
+
+# Register a new site for deployment
+just register-site my-site
+
+# Interactive deploy wizard (recommended)
+just deploy-wizard dev
+```
+
+### Deploy Wizard Workflow
+
+The `just deploy-wizard` command provides an interactive deployment experience:
+
+1. Reads `sites/registry.yaml` to find ready sites
+2. Runs `pulumi preview` to check infrastructure
+3. Prompts to create/update Cloudflare Pages projects
+4. Builds and deploys each ready site
+
+```bash
+# Full interactive wizard
+just deploy-wizard dev
+
+# What it does:
+#   1. Finds: coffee-shop (ready=true)
+#   2. Pulumi: Creates consult-coffee-shop-dev Pages project
+#   3. Deploys: Builds and pushes to Cloudflare Pages
+```
+
+### Creating New Sites
+
+```bash
+# Create site with scaffolding script
+pnpm new-site --slug my-site --name "My Site" --tagline "Best site" --industry saas
+
+# Or create + register in one step
+pnpm new-site --slug my-site --name "My Site" --tagline "Best site" --industry saas --register
+
+# Then deploy
+just deploy-wizard dev
+```
+
 ### Infrastructure Management
 
 ```bash
@@ -339,9 +403,13 @@ pulumi up --target-replace <resource-urn>
 |---------|-------------|
 | `just deploy dev` | Full deploy to dev |
 | `just deploy prd` | Full deploy to production |
+| `just deploy-wizard dev` | Interactive site deploy wizard |
+| `just list-sites` | Show all sites and registry status |
+| `just register-site SLUG` | Register site for deployment |
 | `just deploy-ci dev` | CI deploy (non-interactive) |
 | `just deploy-ci-apps dev` | CI deploy apps only |
 | `just deploy-ci-validate` | Run validation only |
 | `just infra-preview dev` | Preview infra changes |
 | `just infra-outputs dev` | Show infra outputs |
 | `just setup-infra` | Interactive setup wizard |
+| `pnpm new-site --register` | Create + register new site |

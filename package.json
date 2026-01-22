@@ -4,6 +4,7 @@
   "private": true,
   "description": "Multi-tenant web agency platform",
   "scripts": {
+    "new-site": "./scripts/new-site.sh",
     "dev": "pnpm --filter './sites/*' dev",
     "dev:workers": "pnpm --filter './workers/*' dev",
     "build": "pnpm --filter './sites/*' build",

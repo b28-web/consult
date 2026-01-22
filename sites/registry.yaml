@@ -1,0 +1,45 @@
+# Site Deployment Registry
+# =========================
+#
+# Register sites here when ready to deploy. The deploy wizard reads this file
+# to determine which Cloudflare Pages projects to create and deploy.
+#
+# Workflow:
+#   1. Create site:     pnpm new-site --slug foo ...
+#   2. Customize:       Edit sites/foo/src/config.ts, test locally
+#   3. Register:        Add entry below (or: just register-site foo)
+#   4. Deploy:          just deploy-wizard dev
+#
+# Schema:
+#   sites:
+#     <slug>:
+#       ready: bool          # Set true when ready to deploy
+#       dev: {}              # Dev environment config (empty = defaults)
+#       prod:                # Prod environment config (optional)
+#         domain: string     # Custom domain (e.g., foo.example.com)
+#
+# The deploy wizard will:
+#   - Read this registry
+#   - Check which Cloudflare Pages projects exist
+#   - Prompt for missing config (e.g., prod domain)
+#   - Create infrastructure via Pulumi
+#   - Deploy sites via wrangler
+
+sites:
+  coffee-shop:
+    ready: true
+    dev: {}
+    # prod:
+    #   domain: coffee.example.com
+
+  # Example: Site with custom prod domain
+  # hauler:
+  #   ready: true
+  #   dev: {}
+  #   prod:
+  #     domain: hauler.example.com
+
+  # Example: Site not yet ready (won't be deployed)
+  # new-client:
+  #   ready: false
+  #   dev: {}

@@ -1,7 +1,7 @@
 # EP-005: Client Sites at Scale
 
-**Status:** planned
-**Last Updated:** 2026-01-21
+**Status:** active
+**Last Updated:** 2026-01-22
 
 ## Goal
 
@@ -11,7 +11,7 @@ Deploy all 8 planned client sites, establish tooling for rapid site creation, an
 
 | ID | Title | Status |
 |----|-------|--------|
-| 005-A | Site scaffolding script | pending |
+| 005-A | Site scaffolding + registry system | complete |
 | 005-B | Deploy coffee-shop site | pending |
 | 005-C | Deploy hauler site (+ Cal.com) | pending |
 | 005-D | Deploy cleaning site | pending |
@@ -27,9 +27,46 @@ Deploy all 8 planned client sites, establish tooling for rapid site creation, an
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Site creation | Script from template | Fast, consistent |
+| Site registry | `sites/registry.yaml` | Central, version-controlled, pull-based |
 | Deployment | Cloudflare Pages | Already using, works well |
+| Deploy tooling | `just deploy-wizard` | Interactive, validates infra first |
 | CI/CD | GitHub Actions | Standard, integrates with CF |
 | Domain pattern | {client}.consult.io | Consistent, easy DNS |
+
+## Site Registry System
+
+Sites are managed through a central registry at `sites/registry.yaml`. This enables:
+- **Pull-based deployment**: Only sites marked `ready: true` are deployed
+- **Infrastructure-as-code**: Pulumi reads registry to create CF Pages projects
+- **Interactive wizard**: `just deploy-wizard` validates and deploys
+
+### Registry Format
+
+```yaml
+sites:
+  coffee-shop:
+    ready: true      # Will be deployed
+    dev: {}
+    prod:
+      domain: coffee.example.com  # Custom domain (optional)
+```
+
+### Commands
+
+| Command | Purpose |
+|---------|---------|
+| `just list-sites` | Show all sites and registry status |
+| `just register-site SLUG` | Add site to registry |
+| `just deploy-wizard ENV` | Interactive deploy with infra validation |
+| `pnpm new-site --register` | Create + register in one step |
+
+### Workflow
+
+```
+1. Create:    pnpm new-site --slug foo --register
+2. Customize: Edit sites/foo/src/config.ts
+3. Deploy:    just deploy-wizard dev
+```
 
 ## Dependencies
 
@@ -38,20 +75,43 @@ Deploy all 8 planned client sites, establish tooling for rapid site creation, an
 - [ ] DNS configured for *.consult.io
 - [ ] Client branding assets gathered
 
+## Related: EP-008 Restaurant POS Integration
+
+**Note:** This EP covers simple service and B2B sites using the standard `_template/`.
+
+Full **restaurant** sites with POS integration (Toast/Clover/Square), real-time menu sync, 86'd item handling, and online ordering are handled by **[EP-008](EP-008-restaurant-pos-integration.md)**, which creates a separate `_template-restaurant/` with extended functionality.
+
+The `coffee-shop` site in this EP is a **simple cafe** (static menu page, hours display) - not a full restaurant with POS integration.
+
 ## Site Matrix
 
-| Site | Industry | Special Features |
-|------|----------|------------------|
-| coffee-shop | Food & Beverage | Menu, hours |
-| hauler | Junk Removal | Cal.com booking, quote form |
-| cleaning | Cleaning Services | Service packages |
-| landscaper | Landscaping | Seasonal services |
-| barber | Personal Services | Cal.com booking |
-| data-analytics | B2B Software | Case studies, pricing tiers |
-| web-dev | B2B Services | Portfolio, process |
-| local-agency | B2B Services | Meta/self-referential |
+| Site | Industry | Special Features | Notes |
+|------|----------|------------------|-------|
+| coffee-shop | Cafe | Static menu, hours | Simple F&B, no POS |
+| hauler | Junk Removal | Cal.com booking, quote form | |
+| cleaning | Cleaning Services | Service packages | |
+| landscaper | Landscaping | Seasonal services | |
+| barber | Personal Services | Cal.com booking | |
+| data-analytics | B2B Software | Case studies, pricing tiers | |
+| web-dev | B2B Services | Portfolio, process | |
+| local-agency | B2B Services | Meta/self-referential | |
 
 ## Progress Log
+
+### 2026-01-22 (continued)
+- Built site registry system:
+  - Created `sites/registry.yaml` as central deployment registry
+  - Updated Pulumi `pages.py` to read from registry
+  - Added `just list-sites`, `just register-site`, `just deploy-wizard` commands
+  - Added `--register` flag to scaffolding script
+- Tested full workflow with coffee-shop site
+- coffee-shop registered and ready to deploy
+
+### 2026-01-22
+- Completed 005-A: Site scaffolding script
+- Created `scripts/new-site.sh` with industry presets (incl. restaurant for future EP-008)
+- Added `pnpm new-site` command
+- Clarified relationship with EP-008 (restaurant POS sites)
 
 ### 2026-01-21
 - EP created

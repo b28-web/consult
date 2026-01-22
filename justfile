@@ -1111,6 +1111,233 @@ deploy-sites:
     done
 
 # =============================================================================
+# Site Registry Management
+# =============================================================================
+#
+# Sites are registered in sites/registry.yaml. The deploy wizard reads this
+# registry and ensures infrastructure exists before deploying.
+#
+# Workflow:
+#   1. Create site:     pnpm new-site --slug foo ...
+#   2. Customize:       Edit sites/foo/, test locally
+#   3. Register:        just register-site foo
+#   4. Deploy:          just deploy-wizard dev
+
+# List all sites and their registry status
+list-sites:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Site Registry Status"
+    echo "===================="
+    echo ""
+    printf "%-20s %-10s %-10s %s\n" "SITE" "EXISTS" "READY" "DOMAIN"
+    printf "%-20s %-10s %-10s %s\n" "----" "------" "-----" "------"
+
+    # Parse registry
+    if [ -f sites/registry.yaml ]; then
+        # Get registered sites
+        registered=$(grep -E "^  [a-z]" sites/registry.yaml | sed 's/://g' | awk '{print $1}' || true)
+    else
+        registered=""
+    fi
+
+    # Check each site directory
+    for site in sites/*/; do
+        name=$(basename "$site")
+        [[ "$name" == "_template" ]] && continue
+
+        exists="yes"
+
+        # Check if registered and ready
+        if [ -f sites/registry.yaml ] && grep -q "^  $name:" sites/registry.yaml; then
+            # Check ready status
+            if grep -A1 "^  $name:" sites/registry.yaml | grep -q "ready: true"; then
+                ready="yes"
+            else
+                ready="no"
+            fi
+            # Check for domain
+            domain=$(grep -A10 "^  $name:" sites/registry.yaml | grep "domain:" | head -1 | awk '{print $2}' || echo "-")
+        else
+            ready="-"
+            domain="-"
+        fi
+
+        printf "%-20s %-10s %-10s %s\n" "$name" "$exists" "$ready" "$domain"
+    done
+
+    # Check for registered but missing sites
+    if [ -n "$registered" ]; then
+        for name in $registered; do
+            if [ ! -d "sites/$name" ]; then
+                printf "%-20s %-10s %-10s %s\n" "$name" "NO" "-" "(missing)"
+            fi
+        done
+    fi
+
+# Register a site in the registry (marks it ready for deployment)
+register-site SLUG:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    SLUG="{{SLUG}}"
+
+    # Validate site exists
+    if [ ! -d "sites/$SLUG" ]; then
+        echo "Error: Site 'sites/$SLUG' does not exist"
+        echo "Create it first: pnpm new-site --slug $SLUG ..."
+        exit 1
+    fi
+
+    # Check if already registered
+    if [ -f sites/registry.yaml ] && grep -q "^  $SLUG:" sites/registry.yaml; then
+        echo "Site '$SLUG' is already registered in sites/registry.yaml"
+        echo "Edit the file to modify its configuration."
+        exit 0
+    fi
+
+    # Add to registry
+    echo "Registering site: $SLUG"
+
+    # Append to registry file
+    {
+        echo ""
+        echo "  $SLUG:"
+        echo "    ready: true"
+        echo "    dev: {}"
+        echo "    # prod:"
+        echo "    #   domain: $SLUG.example.com"
+    } >> sites/registry.yaml
+
+    echo "Done! Site '$SLUG' registered with ready=true"
+    echo ""
+    echo "Next steps:"
+    echo "  1. Edit sites/registry.yaml to configure prod domain (optional)"
+    echo "  2. Run: just deploy-wizard dev"
+
+# Unregister a site (remove from registry, keeps site files)
+unregister-site SLUG:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "To unregister a site, manually remove its entry from sites/registry.yaml"
+    echo "The site files in sites/{{SLUG}}/ will not be affected."
+
+# Deploy wizard - interactive deployment with registry validation
+deploy-wizard ENV="dev":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    ENV="{{ENV}}"
+    STACK=$(just _stack "$ENV")
+
+    echo "============================================"
+    echo "  Site Deploy Wizard (env: $ENV)"
+    echo "============================================"
+    echo ""
+
+    # Check registry exists
+    if [ ! -f sites/registry.yaml ]; then
+        echo "Error: sites/registry.yaml not found"
+        echo "Create it or run: just register-site <slug>"
+        exit 1
+    fi
+
+    # Parse ready sites from registry
+    echo "Reading sites/registry.yaml..."
+    ready_sites=()
+    while IFS= read -r line; do
+        # Match lines like "  coffee-shop:" (2 spaces, name, colon)
+        if [[ "$line" =~ ^[[:space:]]{2}([a-z][a-z0-9-]*):$ ]]; then
+            current_site="${BASH_REMATCH[1]}"
+        fi
+        # Check for "ready: true" under current site
+        if [[ "$line" =~ ready:[[:space:]]*true && -n "${current_site:-}" ]]; then
+            ready_sites+=("$current_site")
+            current_site=""
+        fi
+    done < sites/registry.yaml
+
+    if [ ${#ready_sites[@]} -eq 0 ]; then
+        echo "No sites marked as ready in registry."
+        echo "Register a site: just register-site <slug>"
+        exit 1
+    fi
+
+    echo "Found ${#ready_sites[@]} ready site(s): ${ready_sites[*]}"
+    echo ""
+
+    # Validate each site directory exists
+    missing=()
+    for site in "${ready_sites[@]}"; do
+        if [ ! -d "sites/$site" ]; then
+            missing+=("$site")
+        fi
+    done
+
+    if [ ${#missing[@]} -gt 0 ]; then
+        echo "Warning: Sites registered but missing directories: ${missing[*]}"
+        echo "Create them with: pnpm new-site --slug <slug> ..."
+        echo ""
+    fi
+
+    # Check/create infrastructure
+    echo "Step 1: Infrastructure (Pulumi)"
+    echo "-------------------------------"
+    echo "Checking Cloudflare Pages projects..."
+
+    # Preview what Pulumi will do
+    echo "Running: pulumi preview --stack $STACK"
+    cd infra
+    if ! doppler run --config "$ENV" -- pulumi preview --stack "$STACK" --non-interactive 2>&1 | head -30; then
+        echo ""
+        echo "Pulumi preview failed. Check your configuration."
+        exit 1
+    fi
+    cd ..
+
+    echo ""
+    read -rp "Apply infrastructure changes? [y/N] " confirm
+    if [[ "$confirm" =~ ^[Yy] ]]; then
+        echo "Applying infrastructure..."
+        cd infra
+        doppler run --config "$ENV" -- pulumi up --stack "$STACK" --yes
+        cd ..
+        echo "Infrastructure updated."
+    else
+        echo "Skipping infrastructure. Sites may not deploy if Pages projects don't exist."
+    fi
+
+    echo ""
+    echo "Step 2: Deploy Sites"
+    echo "--------------------"
+
+    for site in "${ready_sites[@]}"; do
+        if [ ! -d "sites/$site" ]; then
+            echo "Skipping $site (directory missing)"
+            continue
+        fi
+
+        echo ""
+        read -rp "Deploy site '$site'? [Y/n] " confirm
+        if [[ ! "$confirm" =~ ^[Nn] ]]; then
+            echo "Building and deploying $site..."
+            project_name="consult-${site}-${STACK}"
+            cd "sites/$site"
+            pnpm build
+            doppler run --config "$ENV" -- pnpm wrangler pages deploy dist --project-name="$project_name"
+            cd ../..
+            echo "Done: $site deployed to $project_name"
+        else
+            echo "Skipping $site"
+        fi
+    done
+
+    echo ""
+    echo "============================================"
+    echo "  Deploy wizard complete!"
+    echo "============================================"
+
+# =============================================================================
 # Pre-Deploy Validation (Dagger)
 # =============================================================================
 
