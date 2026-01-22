@@ -167,10 +167,12 @@ CONFIRM=yes just agent-test-deploy dev dev_personal
 
 destroy: pass (33s)
 create:  pass (69s)
-setup:   pass (51s)
-deploy:  FAIL - Django STATIC_ROOT config issue (app, not infra)
+setup:   pass (52s)
+deploy:  pass (29s)
+verify:  pass (4s)
+Total:   187s
 ```
 
-Infrastructure test passes through setup. Deploy fails due to Django application configuration (`STATIC_ROOT` not set), which is outside the scope of this ticket.
+Full end-to-end test passing.
 
-- **COMPLETE** - All infrastructure acceptance criteria met
+- **COMPLETE** - All acceptance criteria met

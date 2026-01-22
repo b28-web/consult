@@ -21,7 +21,7 @@ Make deployment flow fully runnable by LLM coding agents. Enables autonomous deb
 - Get structured JSON error output with actionable suggestions
 - Debug failures without human intervention
 
-**Note:** Full test blocked by Django `STATIC_ROOT` config issue (app config, not infra).
+Full end-to-end test passes: destroy → create → setup → deploy → verify (~187s).
 
 ---
 
@@ -43,7 +43,7 @@ Ansible for Django deployment to Hetzner. Docker for local dev/testing only (no 
 - Passwordless deploy key for CI (via Doppler DEPLOY_SSH_PRIVATE_KEY)
 - Doppler service token auth for server
 
-**Note:** Full deploy blocked by Django `STATIC_ROOT` config issue (app config, not infra).
+Full deployment working end-to-end.
 
 ## Completed Sprints
 

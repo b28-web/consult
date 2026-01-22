@@ -119,6 +119,6 @@ Production:
 - Non-interactive execution via Doppler-stored SSH keys
 - GitHub Actions integration deferred (manual deploys working)
 
-### Note
+### Final Status
 
-Full deploy blocked by Django `STATIC_ROOT` configuration issue (application-level, not infrastructure). All infrastructure work is complete.
+All deployment flows working end-to-end. `STATIC_ROOT` configured, `collectstatic` runs successfully during deploy.
