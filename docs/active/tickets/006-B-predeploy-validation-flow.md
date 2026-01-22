@@ -1,7 +1,7 @@
 # 006-B: Pre-Deploy Validation Flow
 
 **EP:** [EP-006-automated-deploy-validation](../enhancement_proposals/EP-006-automated-deploy-validation.md)
-**Status:** pending
+**Status:** completed
 
 ## Summary
 
@@ -9,12 +9,12 @@ Implement the full pre-deployment validation pipeline that an LLM agent can run 
 
 ## Acceptance Criteria
 
-- [ ] Single command: `just pre-deploy` runs complete validation
-- [ ] Parallel execution where possible (build stages, quality checks)
-- [ ] Integration tests use isolated test database
-- [ ] Output is structured and parseable (JSON + human-readable)
-- [ ] Exit code 0 = safe to deploy, non-zero = issues found
-- [ ] Total runtime < 5 minutes on warm cache
+- [x] Single command: `just pre-deploy` runs complete validation
+- [x] Parallel execution where possible (build stages, quality checks)
+- [x] Integration tests use isolated test database
+- [x] Output is structured and parseable (JSON + human-readable)
+- [x] Exit code 0 = safe to deploy, non-zero = issues found
+- [x] Total runtime < 5 minutes on warm cache (~15s cached)
 
 ## Validation Stages
 
@@ -157,4 +157,35 @@ Fix the issues above and run 'just pre-deploy' again.
 
 ## Progress
 
-(Updated as work proceeds)
+### 2026-01-21
+- Fixed site build: Updated node containers from node:20 to node:22 (project requires node >= 22)
+- Fixed site build: Updated pnpm-lock.yaml which was out of sync with sites/_template/package.json
+- Fixed pytest: Added PYTHONPATH=/app to Python container so `apps` package is importable
+- Excluded nested node_modules from site build context for cleaner builds
+- All 6 validation stages now pass:
+  - ✓ Build: Django container
+  - ✓ Build: Worker container
+  - ✓ Build: coffee-shop site
+  - ✓ Quality: ruff check
+  - ✓ Quality: mypy
+  - ✓ Quality: pytest (no tests collected - project has no unit tests yet)
+
+### 2026-01-21 (continued)
+- Added Stage 3: Integration tests to Dagger pipeline
+- Created Postgres service container (postgres:16-alpine) for isolated test database
+- Implemented Django integration container with Postgres service binding
+- Added 4 integration test checks:
+  - ✓ Run migrations (applies migrations to test DB)
+  - ✓ Django health (GET /admin/login/ returns 200)
+  - ✓ Migration check (manage.py migrate --check)
+  - ✓ Worker health (GET /health returns 200, local mode)
+- Added `just pre-deploy-integration` command for standalone integration testing
+- Note: Intake E2E skipped in Dagger (requires Neon HTTP API); use `just test-local` for full E2E
+
+### 2026-01-21 (final)
+- Added parallel execution using `asyncio.gather()` for build and quality stages
+- Added JSON output option (`--json-output` flag or `just pre-deploy-json`)
+- Fixed line length issues in pipeline code for ruff compliance
+- All acceptance criteria now met
+
+**Ticket complete** - ready to update status to completed

@@ -1,11 +1,11 @@
 # Deployment Pipeline
-# Triggered by push to main (after CI passes) or manual dispatch
+# Triggered manually with environment selection
+# Gates on pre-deploy validation before deploying
+# Uses Doppler for secrets management
 
 name: Deploy
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       environment:
@@ -16,52 +16,127 @@ on:
         options:
           - staging
           - production
+      skip_validation:
+        description: 'Skip pre-deploy validation (use with caution)'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
-  group: deploy-${{ github.ref }}
+  group: deploy-${{ github.event.inputs.environment }}
   cancel-in-progress: false  # Don't cancel ongoing deploys
 
 jobs:
   # ==========================================================================
-  # Deploy to Staging (automatic on main push)
+  # Validate - Run pre-deploy checks
   # ==========================================================================
-  staging:
-    name: Deploy to Staging
+  validate:
+    name: Pre-Deploy Validation
+    if: ${{ !inputs.skip_validation }}
+    uses: ./.github/workflows/validate.yml
+
+  # ==========================================================================
+  # Deploy Worker to Cloudflare
+  # ==========================================================================
+  deploy-worker:
+    name: Deploy Worker
+    needs: [validate]
+    if: always() && (needs.validate.result == 'success' || inputs.skip_validation)
     runs-on: ubuntu-latest
-    environment: staging
-    if: github.event_name == 'push' || github.event.inputs.environment == 'staging'
+    environment: ${{ inputs.environment }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
 
       - name: Install Doppler CLI
         uses: dopplerhq/cli-action@v3
 
-      - name: Deploy to VPS
+      - name: Install dependencies
+        working-directory: workers/intake
+        run: pnpm install --frozen-lockfile
+
+      - name: Deploy to Cloudflare Workers
+        working-directory: workers/intake
         env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN_STAGING }}
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
-          echo "Staging deployment placeholder"
-          echo "Will be configured when VPS is provisioned"
-          # doppler run -- ./scripts/deploy.sh staging
+          # Push secrets from Doppler to Cloudflare Workers
+          doppler run -- bash -c 'echo "$NEON_DATABASE_URL" | pnpm wrangler secret put NEON_DATABASE_URL'
+          doppler run -- bash -c 'echo "$INTAKE_API_KEY" | pnpm wrangler secret put INTAKE_API_KEY'
+
+          # Deploy worker (CLOUDFLARE_API_TOKEN comes from Doppler)
+          doppler run -- pnpm wrangler deploy
 
   # ==========================================================================
-  # Deploy to Production (manual only)
+  # Deploy Sites to Cloudflare Pages
   # ==========================================================================
-  production:
-    name: Deploy to Production
+  deploy-sites:
+    name: Deploy Sites
+    needs: [validate]
+    if: always() && (needs.validate.result == 'success' || inputs.skip_validation)
     runs-on: ubuntu-latest
-    environment: production
-    if: github.event.inputs.environment == 'production'
+    environment: ${{ inputs.environment }}
+    strategy:
+      matrix:
+        site: [coffee-shop]
+      fail-fast: false
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
 
       - name: Install Doppler CLI
         uses: dopplerhq/cli-action@v3
 
-      - name: Deploy to VPS
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build site
+        working-directory: sites/${{ matrix.site }}
+        run: pnpm build
+
+      - name: Deploy to Cloudflare Pages
+        working-directory: sites/${{ matrix.site }}
         env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN_PRODUCTION }}
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
-          echo "Production deployment placeholder"
-          echo "Will be configured when VPS is provisioned"
-          # doppler run -- ./scripts/deploy.sh production
+          # CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID come from Doppler
+          doppler run -- pnpm wrangler pages deploy dist --project-name=${{ matrix.site }}
+
+  # ==========================================================================
+  # Deploy Summary
+  # ==========================================================================
+  summary:
+    name: Deployment Summary
+    needs: [validate, deploy-worker, deploy-sites]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Validation | ${{ needs.validate.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Worker | ${{ needs.deploy-worker.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Sites | ${{ needs.deploy-sites.result }} |" >> $GITHUB_STEP_SUMMARY

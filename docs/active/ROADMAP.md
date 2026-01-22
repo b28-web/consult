@@ -15,14 +15,16 @@ Get the full stack working end-to-end.
 
 **Completed 2026-01-22**: Full stack verified with `just test-local`. Production deploy deferred to EP-007.
 
-### EP-006: Automated Deploy Validation
+### EP-006: Automated Deploy Validation ✓
 Create agent-driven pre-deploy validation pipeline with Dagger.
 
 | Ticket | Title | Status |
 |--------|-------|--------|
-| 006-A | Dagger pipeline setup | pending |
-| 006-B | Pre-deploy validation flow | pending |
-| 006-C | GitHub Actions integration | pending |
+| 006-A | Dagger pipeline setup | completed |
+| 006-B | Pre-deploy validation flow | completed |
+| 006-C | GitHub Actions integration | completed |
+
+**Completed 2026-01-21**: Full Dagger pipeline with parallel execution, JSON output, and GitHub Actions integration.
 
 ### EP-007: Pulumi Infrastructure
 Infrastructure as code for Hetzner (Django) + Cloudflare (edge).
@@ -86,6 +88,42 @@ Deploy all client sites with automation.
 | 005-H | Deploy web-dev site | pending |
 | 005-I | Deploy local-agency site | pending |
 | 005-J | CI/CD pipeline for sites | pending |
+
+### EP-008: Restaurant Client Type with POS Integration
+Add restaurants as a client type with POS sync (Toast, Clover, Square) and online ordering.
+
+**Phase 1: Foundation** - Menu display with static fallback
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 008-A | POS adapter interface and mock implementation | pending |
+| 008-B | Restaurant domain models and migrations | pending |
+| 008-C | Menu API endpoints | pending |
+| 008-D | Restaurant site template (menu display) | pending |
+
+**Phase 2: POS Read Integration** - Live menu sync with Toast
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 008-E | 86'd item webhook handler and availability polling | pending |
+| 008-F | Toast adapter implementation | pending |
+
+**Phase 3: Additional POS Providers** - Clover and Square support
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 008-G | Clover adapter implementation | pending |
+| 008-H | Square adapter implementation | pending |
+
+**Phase 4: Online Ordering** - Full cart, checkout, payments
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 008-I | Cart and checkout frontend components | pending |
+| 008-J | Order API endpoints | pending |
+| 008-K | Stripe payment integration | pending |
+| 008-L | Order submission to POS | pending |
+
+**Phase 5: Production Deployment** - First live restaurant
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 008-M | First restaurant client deployment | pending |
 
 ## Icebox
 

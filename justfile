@@ -716,6 +716,50 @@ deploy-sites:
     done
 
 # =============================================================================
+# Pre-Deploy Validation (Dagger)
+# =============================================================================
+
+# Run full pre-deploy validation via Dagger
+pre-deploy:
+    cd dagger && dagger call pre-deploy --source=..
+
+# Run full pre-deploy validation with JSON output
+pre-deploy-json:
+    cd dagger && dagger call pre-deploy --source=.. --json-output
+
+# Run only build validation
+pre-deploy-build:
+    cd dagger && dagger call build-all --source=..
+
+# Run only quality checks
+pre-deploy-quality:
+    cd dagger && dagger call quality-all --source=..
+
+# Run only integration tests
+pre-deploy-integration:
+    cd dagger && dagger call integration-all --source=..
+
+# Build specific components
+pre-deploy-django:
+    cd dagger && dagger call build-django --source=..
+
+pre-deploy-worker:
+    cd dagger && dagger call build-worker --source=..
+
+pre-deploy-site SITE="coffee-shop":
+    cd dagger && dagger call build-site --source=.. --name={{SITE}}
+
+# Run specific quality checks via Dagger
+dagger-lint:
+    cd dagger && dagger call lint --source=..
+
+dagger-typecheck:
+    cd dagger && dagger call typecheck --source=..
+
+dagger-test:
+    cd dagger && dagger call test --source=..
+
+# =============================================================================
 # Production
 # =============================================================================
 

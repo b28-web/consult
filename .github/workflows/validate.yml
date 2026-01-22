@@ -1,0 +1,47 @@
+# Pre-Deploy Validation via Dagger
+# Runs the same containerized validation pipeline locally and in CI
+# This ensures identical behavior across environments
+
+name: Validate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_call:
+    # Allow other workflows to call this one
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pre-deploy:
+    name: Pre-Deploy Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Dagger CLI
+        uses: dagger/dagger-for-github@v6
+        with:
+          version: "latest"
+
+      - name: Run pre-deploy validation
+        run: |
+          cd dagger && dagger call pre-deploy --source=..
+
+      - name: Run pre-deploy validation (JSON)
+        if: always()
+        run: |
+          cd dagger && dagger call pre-deploy --source=.. --json-output > ../validation-report.json || true
+
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-report
+          path: validation-report.json
+          retention-days: 7
