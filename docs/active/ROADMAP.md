@@ -16,6 +16,7 @@ Deploy 8 service/B2B client sites with scaffolding and registry-based deployment
 - Pulumi integration (reads registry for CF Pages projects)
 - 4 sites deployed: coffee-shop, hauler, cleaning, landscaper
 - Fixed Tailwind v4 + DaisyUI CSS integration
+- Template hardening: mobile responsiveness, README documentation
 
 | Ticket | Title | Status |
 |--------|-------|--------|
@@ -24,8 +25,8 @@ Deploy 8 service/B2B client sites with scaffolding and registry-based deployment
 | 005-C | Deploy hauler site (+ Cal.com) | complete |
 | 005-D | Deploy cleaning site | complete |
 | 005-E | Deploy landscaper site | complete |
-| **005-F** | **Template hardening (mobile, CSS)** | **next** |
-| 005-G | Deploy barber site | pending |
+| 005-F | Template hardening (mobile, CSS) | complete |
+| **005-G** | **Deploy barber site** | **next** |
 | 005-H | Deploy data-analytics site | pending |
 | 005-I | Deploy web-dev site | pending |
 | 005-J | Deploy local-agency site | pending |

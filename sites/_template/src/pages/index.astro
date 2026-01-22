@@ -8,12 +8,12 @@ import { config } from "@/config";
 
 <PageLayout title="Home">
   <!-- Hero Section -->
-  <section class="hero min-h-[70vh] bg-base-200">
-    <div class="hero-content text-center">
+  <section class="hero min-h-[50vh] sm:min-h-[60vh] lg:min-h-[70vh] bg-base-200">
+    <div class="hero-content text-center px-4">
       <div class="max-w-2xl">
-        <h1 class="text-5xl font-bold">{config.client.name}</h1>
-        <p class="py-6 text-xl">{config.client.tagline}</p>
-        <div class="flex gap-4 justify-center">
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold">{config.client.name}</h1>
+        <p class="py-4 sm:py-6 text-lg sm:text-xl">{config.client.tagline}</p>
+        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
           <a href="/contact" class="btn btn-primary">Get a Quote</a>
           <a href="/services" class="btn btn-outline">Our Services</a>
         </div>
@@ -22,16 +22,16 @@ import { config } from "@/config";
   </section>
 
   <!-- Services Preview -->
-  <section class="py-16 px-4">
+  <section class="py-12 sm:py-16 px-4">
     <div class="max-w-6xl mx-auto">
-      <h2 class="text-3xl font-bold text-center mb-12">Our Services</h2>
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <h2 class="text-2xl sm:text-3xl font-bold text-center mb-8 sm:mb-12">Our Services</h2>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {config.services.map((service) => (
           <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-              <h3 class="card-title">{service.name}</h3>
-              <p>{service.description}</p>
-              <div class="card-actions justify-end">
+            <div class="card-body p-4 sm:p-6">
+              <h3 class="card-title text-lg sm:text-xl">{service.name}</h3>
+              <p class="text-sm sm:text-base">{service.description}</p>
+              <div class="card-actions justify-end mt-2">
                 <a href={`/services#${service.slug}`} class="btn btn-primary btn-sm">
                   Learn More
                 </a>
@@ -44,11 +44,11 @@ import { config } from "@/config";
   </section>
 
   <!-- CTA Section -->
-  <section class="py-16 bg-primary text-primary-content">
+  <section class="py-12 sm:py-16 bg-primary text-primary-content">
     <div class="max-w-4xl mx-auto text-center px-4">
-      <h2 class="text-3xl font-bold mb-4">Ready to Get Started?</h2>
-      <p class="text-lg mb-8">Contact us today for a free consultation.</p>
-      <a href="/contact" class="btn btn-secondary btn-lg">Contact Us</a>
+      <h2 class="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Ready to Get Started?</h2>
+      <p class="text-base sm:text-lg mb-6 sm:mb-8">Contact us today for a free consultation.</p>
+      <a href="/contact" class="btn btn-secondary btn-md sm:btn-lg">Contact Us</a>
     </div>
   </section>
 </PageLayout>

@@ -16,7 +16,7 @@ Deploy all 8 planned client sites, establish tooling for rapid site creation, an
 | 005-C | Deploy hauler site (+ Cal.com) | complete |
 | 005-D | Deploy cleaning site | complete |
 | 005-E | Deploy landscaper site | complete |
-| **005-F** | **Template hardening (mobile, CSS)** | **pending** |
+| 005-F | Template hardening (mobile, CSS) | complete |
 | 005-G | Deploy barber site | pending |
 | 005-H | Deploy data-analytics site | pending |
 | 005-I | Deploy web-dev site | pending |
@@ -101,6 +101,15 @@ The `coffee-shop` site in this EP is a **simple cafe** (static menu page, hours 
 | local-agency | B2B Services | Meta/self-referential | |
 
 ## Progress Log
+
+### 2026-01-22 (template hardening)
+- Completed 005-F: Template hardening for mobile responsiveness
+- Fixed navbar (truncation, icon-only call button on mobile)
+- Fixed hero sections (responsive heights, stacking buttons)
+- Fixed card layouts (responsive grid, padding)
+- Added mobile utilities to global.css
+- Created template README with customization guide
+- Propagated all fixes to 4 existing sites
 
 ### 2026-01-22 (CSS fix + reprioritization)
 - Fixed Tailwind v4 + DaisyUI integration (added `@config` directive)

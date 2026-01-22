@@ -16,10 +16,10 @@ const currentPath = Astro.url.pathname;
 
 <BaseLayout title={title} description={description}>
   <!-- Navbar (DaisyUI) -->
-  <div class="navbar bg-base-100 shadow-sm sticky top-0 z-50">
+  <div class="navbar bg-base-100 shadow-sm sticky top-0 z-50 px-2 sm:px-4">
     <div class="navbar-start">
       <div class="dropdown">
-        <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-square lg:hidden">
           <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
           </svg>
@@ -37,7 +37,7 @@ const currentPath = Astro.url.pathname;
           ))}
         </ul>
       </div>
-      <a href="/" class="btn btn-ghost text-xl">{config.client.name}</a>
+      <a href="/" class="btn btn-ghost text-base sm:text-xl truncate max-w-[140px] sm:max-w-none">{config.client.name}</a>
     </div>
     <div class="navbar-center hidden lg:flex">
       <ul class="menu menu-horizontal px-1">
@@ -52,8 +52,11 @@ const currentPath = Astro.url.pathname;
     </div>
     <div class="navbar-end">
       {config.client.phone && (
-        <a href={`tel:${config.client.phone.replace(/\D/g, "")}`} class="btn btn-primary">
-          Call Now
+        <a href={`tel:${config.client.phone.replace(/\D/g, "")}`} class="btn btn-primary btn-sm sm:btn-md">
+          <svg class="h-4 w-4 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+          </svg>
+          <span class="hidden sm:inline">Call Now</span>
         </a>
       )}
     </div>
