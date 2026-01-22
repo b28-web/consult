@@ -5,59 +5,114 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
-        ('core', '0001_initial'),
+        ("core", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Note',
+            name="Note",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('content', models.TextField()),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("content", models.TextField()),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='Tag',
+            name="Tag",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('name', models.CharField(max_length=50)),
-                ('color', models.CharField(default='#6366f1', max_length=7)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("name", models.CharField(max_length=50)),
+                ("color", models.CharField(default="#6366f1", max_length=7)),
             ],
             options={
-                'ordering': ['name'],
+                "ordering": ["name"],
             },
         ),
         migrations.CreateModel(
-            name='Job',
+            name="Job",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('title', models.CharField(max_length=200)),
-                ('description', models.TextField(blank=True)),
-                ('status', models.CharField(choices=[('scheduled', 'Scheduled'), ('in_progress', 'In Progress'), ('completed', 'Completed'), ('cancelled', 'Cancelled')], default='scheduled', max_length=20)),
-                ('scheduled_at', models.DateTimeField(blank=True, null=True)),
-                ('duration_minutes', models.PositiveIntegerField(blank=True, null=True)),
-                ('address', models.TextField(blank=True)),
-                ('estimated_price', models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True)),
-                ('final_price', models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True)),
-                ('calcom_event_id', models.CharField(blank=True, max_length=100)),
-                ('jobber_id', models.CharField(blank=True, max_length=100)),
-                ('client', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='%(class)ss', to='core.client')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("title", models.CharField(max_length=200)),
+                ("description", models.TextField(blank=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("scheduled", "Scheduled"),
+                            ("in_progress", "In Progress"),
+                            ("completed", "Completed"),
+                            ("cancelled", "Cancelled"),
+                        ],
+                        default="scheduled",
+                        max_length=20,
+                    ),
+                ),
+                ("scheduled_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "duration_minutes",
+                    models.PositiveIntegerField(blank=True, null=True),
+                ),
+                ("address", models.TextField(blank=True)),
+                (
+                    "estimated_price",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=10, null=True
+                    ),
+                ),
+                (
+                    "final_price",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=10, null=True
+                    ),
+                ),
+                ("calcom_event_id", models.CharField(blank=True, max_length=100)),
+                ("jobber_id", models.CharField(blank=True, max_length=100)),
+                (
+                    "client",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="%(class)ss",
+                        to="core.client",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-scheduled_at'],
+                "ordering": ["-scheduled_at"],
             },
         ),
     ]

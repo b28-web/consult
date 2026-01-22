@@ -27,6 +27,8 @@ dev = [
     # Type stubs
     "django-stubs>=5.1",
     "types-requests>=2.32",
+    # CI/CD pipeline
+    "dagger-io>=0.15",
 ]
 
 [build-system]
@@ -74,7 +76,7 @@ section-order = ["future", "standard-library", "django", "third-party", "first-p
 django = ["django"]
 
 [tool.ruff.lint.per-file-ignores]
-"**/migrations/*.py" = ["E501", "ERA"]  # migrations can have long lines
+"**/migrations/*.py" = ["E501", "ERA", "RUF012"]  # migrations can have long lines and mutable class attrs
 "**/tests/*.py" = ["ARG", "PLR2004"]    # tests often have unused args and magic values
 "**/admin.py" = ["RUF012"]              # Django admin uses mutable class attrs
 "**/models.py" = ["RUF012"]             # Django models use mutable class attrs in Meta

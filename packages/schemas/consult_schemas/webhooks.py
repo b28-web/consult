@@ -4,7 +4,6 @@ from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, Field
 
-
 # =============================================================================
 # Cal.com Webhooks
 # =============================================================================
@@ -98,14 +97,14 @@ class JobberWebhookPayload(BaseModel):
 
 
 # =============================================================================
-# Toast/Square (placeholder for future)
+# POS Webhooks (Toast, Clover, Square) - see EP-008
 # =============================================================================
 
 
 class POSWebhookPayload(BaseModel):
-    """Generic POS webhook payload - will be specialized per provider."""
+    """Generic POS webhook payload - will be specialized per provider in EP-008."""
 
-    provider: str  # "toast" or "square"
+    provider: str  # "toast", "clover", or "square"
     event_type: str
     occurred_at: datetime
     data: dict

@@ -20,7 +20,9 @@ class ContactFormSubmission(BaseModel):
     message: str = Field(min_length=1, max_length=5000)
 
     # Metadata
-    source_url: str | None = Field(default=None, description="Page URL where form was submitted")
+    source_url: str | None = Field(
+        default=None, description="Page URL where form was submitted"
+    )
     submitted_at: datetime = Field(default_factory=datetime.utcnow)
     user_agent: str | None = None
     ip_address: str | None = None
@@ -38,14 +40,22 @@ class QuoteRequestSubmission(BaseModel):
     phone: str = Field(max_length=20)  # Required for quote requests
 
     # Service details
-    service_type: str | None = Field(default=None, description="Type of service requested")
+    service_type: str | None = Field(
+        default=None, description="Type of service requested"
+    )
     service_address: str = Field(min_length=1, max_length=500)
-    preferred_date: str | None = Field(default=None, description="Preferred service date")
-    preferred_time: str | None = Field(default=None, description="Preferred time window")
+    preferred_date: str | None = Field(
+        default=None, description="Preferred service date"
+    )
+    preferred_time: str | None = Field(
+        default=None, description="Preferred time window"
+    )
 
     # Additional info
     description: str = Field(min_length=1, max_length=5000)
-    photos: list[str] = Field(default_factory=list, description="URLs to uploaded photos")
+    photos: list[str] = Field(
+        default_factory=list, description="URLs to uploaded photos"
+    )
 
     # Metadata
     source_url: str | None = None

@@ -43,7 +43,7 @@
       "on-activate": "  # Ensure we're using the flox-provided Python\n  export PYTHON=$(which python3)\n\n  # Create uv virtual environment if it doesn't exist\n  if [ ! -d \".venv\" ]; then\n    echo \"Creating Python virtual environment...\"\n    uv venv .venv\n  fi\n\n  # Check if Doppler is configured\n  if ! doppler configure --check 2>/dev/null; then\n    echo \"\"\n    echo \"WARNING: Doppler not configured for this project.\"\n    echo \"Run: doppler setup\"\n    echo \"\"\n  fi\n"
     },
     "profile": {
-      "common": "  # Activate the Python virtual environment\n  source .venv/bin/activate 2>/dev/null || true\n\n  # Show environment status\n  echo \"Consult Dev Environment\"\n  echo \"  Python: $(python3 --version 2>/dev/null || echo 'not found')\"\n  echo \"  Node:   $(node --version 2>/dev/null || echo 'not found')\"\n  echo \"  uv:     $(uv --version 2>/dev/null || echo 'not found')\"\n  echo \"\"\n"
+      "common": "  # Activate the Python virtual environment\n  source .venv/bin/activate 2>/dev/null || true\n\n  # Load local secrets (not committed to git)\n  if [ -f \".secrets.local\" ]; then\n    source .secrets.local\n  fi\n\n  # Show environment status\n  echo \"Consult Dev Environment\"\n  echo \"  Python: $(python3 --version 2>/dev/null || echo 'not found')\"\n  echo \"  Node:   $(node --version 2>/dev/null || echo 'not found')\"\n  echo \"  uv:     $(uv --version 2>/dev/null || echo 'not found')\"\n  if [ -n \"$DOPPLER_TOKEN\" ]; then\n    echo \"  Doppler: configured ✓\"\n  else\n    echo \"  Doppler: not configured (create .secrets.local)\"\n  fi\n  echo \"\"\n"
     },
     "options": {
       "systems": [

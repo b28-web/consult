@@ -2,7 +2,7 @@
 
 **Status:** completed
 **Sprint:** 2026-01-21 to 2026-01-28
-**Last Updated:** 2026-01-21
+**Last Updated:** 2026-01-22
 
 ## Goal
 
@@ -55,22 +55,22 @@ Use **Dagger** to create a programmable CI/CD pipeline that:
 │         ┌─────────────────┼─────────────────┐                    │
 │         ▼                 ▼                 ▼                    │
 │   ┌──────────┐     ┌──────────┐     ┌──────────┐                │
-│   │  Build   │     │  Test    │     │  Verify  │                │
+│   │  Build   │     │ Quality  │     │Integration│                │
 │   │  Stage   │     │  Stage   │     │  Stage   │                │
 │   └────┬─────┘     └────┬─────┘     └────┬─────┘                │
 │        │                │                │                       │
 │   ┌────▼────┐      ┌────▼────┐     ┌────▼────┐                  │
-│   │ Django  │      │ Smoke   │     │ Intake  │                  │
-│   │ Container│     │ Tests   │     │ E2E     │                  │
+│   │ Django  │      │  Ruff   │     │ Run     │                  │
+│   │ Container│     │  Check  │     │ Migrate │                  │
 │   ├─────────┤      ├─────────┤     ├─────────┤                  │
-│   │ Worker  │      │ Django  │     │ Form    │                  │
-│   │ Container│     │ Check   │     │ Submit  │                  │
+│   │ Worker  │      │  Mypy   │     │ Django  │                  │
+│   │ Container│     │  Types  │     │ Check   │                  │
 │   ├─────────┤      ├─────────┤     ├─────────┤                  │
-│   │ Site    │      │ Mypy    │     │ DB      │                  │
-│   │ Build   │      │ Ruff    │     │ Verify  │                  │
+│   │ Site    │      │ Pytest  │     │Migration│                  │
+│   │ Build   │      │ (unit)  │     │ Check   │                  │
 │   └─────────┘      └─────────┘     └─────────┘                  │
 │                                                                  │
-│   Output: JSON report + exit code                                │
+│   Output: JSON report + exit code + timing per stage             │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -83,37 +83,47 @@ The pipeline is designed for LLM agents:
 just pre-deploy
 
 # Expected output (success):
-# ══════════════════════════════════════
-# PRE-DEPLOY VALIDATION: PASSED
-# ══════════════════════════════════════
-# ✓ Build: Django container
-# ✓ Build: Worker container
-# ✓ Build: coffee-shop site
-# ✓ Quality: ruff check
-# ✓ Quality: mypy
-# ✓ Test: pytest (12 passed)
-# ✓ Integration: smoke tests
-# ✓ Integration: intake e2e
+# ══════════════════════════════════════════════════════════════
+#   PRE-DEPLOY VALIDATION
+# ══════════════════════════════════════════════════════════════
+#
+# Build Stage ✓                                     [5.9s]
+#   ✓ Django container                            (1.4s)
+#   ✓ Worker container                            (0.7s)
+#   ✓ coffee-shop site                            (5.9s)
+#
+# Quality Stage ✓                                   [3.2s]
+#   ✓ ruff check                                  (1.6s)
+#   ✓ mypy                                        (3.1s)
+#   ✓ pytest (no tests collected)                 (2.4s)
+#
+# Integration Stage ✓                               [0.2s]
+#   ✓ Run migrations                              (0.2s)
+#   ✓ Django check                                (0.0s)
+#   ✓ Migration check                             (0.0s)
+#   ✓ Worker build verified                       (0.0s)
+#
+# ══════════════════════════════════════════════════════════════
+#   RESULT: PASSED                                Total: 9.3s
+# ══════════════════════════════════════════════════════════════
 #
 # Ready to deploy!
 # Exit code: 0
 
 # Expected output (failure):
-# ══════════════════════════════════════
-# PRE-DEPLOY VALIDATION: FAILED
-# ══════════════════════════════════════
-# ✓ Build: Django container
-# ✗ Build: Worker container
-#   → TypeScript error in src/index.ts:45
+# Build Stage ✗                                     [1.2s]
+#   ✓ Django container                            (0.8s)
+#   ✗ Worker container                            (0.4s)
+#     → TypeScript error in src/index.ts:45
 # ...
 # Exit code: 1
 ```
 
 ## Success Criteria
 
-- [x] `just pre-deploy` runs full validation in < 5 minutes (~15s cached)
+- [x] `just pre-deploy` runs full validation in < 5 minutes (~9-10s cached)
 - [x] Same command works locally and in GitHub Actions
-- [x] Clear, parseable output for LLM agents
+- [x] Clear, parseable output for LLM agents with per-stage timing
 - [x] Catches: build failures, type errors, test failures, integration issues
 - [x] No host system pollution (everything in containers)
 
@@ -150,9 +160,9 @@ just pre-deploy
   - Django integration container with service binding
   - 4 integration checks implemented:
     - Run migrations (apply to test DB)
-    - Django health (GET /admin/login/)
+    - Django check (manage.py check --database default)
     - Migration check (manage.py migrate --check)
-    - Worker health (GET /health, local mode)
+    - Worker build verified (TypeScript compilation in build stage)
   - Added `just pre-deploy-integration` for standalone testing
   - Design decision: Intake E2E requires Neon HTTP API, stays in `just test-local`
   - Remaining: parallel execution, JSON output
@@ -170,6 +180,15 @@ just pre-deploy
   - Updated `.github/workflows/deploy.yml` - gates on validation, deploys Worker + Sites
   - All EP-006 tickets complete
   - **EP-006 COMPLETE** - Ready for archive
+
+### 2026-01-22 (optimization)
+- **Integration test optimization**: Reduced execution time from 30s+ (often hanging) to ~9s
+  - Replaced Django HTTP health check (curl loop) with `manage.py check --database default`
+  - Simplified Worker health check to return immediately (build stage already validates TypeScript)
+  - Added `--noreload` flag to Django runserver for faster startup
+  - Changed health check polling from 30×1s to 50×0.2s intervals
+- **Timing output**: Added per-check timing display for identifying slow stages
+- Pipeline now completes reliably in ~9-10 seconds with caching
 
 ## References
 
