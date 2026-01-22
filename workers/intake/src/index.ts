@@ -79,11 +79,17 @@ async function handleFormSubmission(
   // Parse form data (supports both JSON and form-urlencoded)
   const contentType = request.headers.get("content-type") || "";
   let data: FormSubmission;
+  let honeypotTriggered = false;
 
   if (contentType.includes("application/json")) {
     data = await request.json();
+    // Check honeypot field for JSON requests
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    honeypotTriggered = !!(data as any).website;
   } else {
     const formData = await request.formData();
+    // Check honeypot field for form requests
+    honeypotTriggered = !!formData.get("website");
     data = {
       name: formData.get("name") as string,
       email: formData.get("email") as string,
@@ -97,17 +103,8 @@ async function handleFormSubmission(
     };
   }
 
-  // Basic validation
-  if (!data.name || !data.email || !data.message) {
-    return new Response(
-      JSON.stringify({ error: "Name, email, and message are required" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
   // Honeypot check (spam prevention)
-  const formData = await request.clone().formData().catch(() => null);
-  if (formData?.get("website")) {
+  if (honeypotTriggered) {
     // Bot detected, silently accept but don't process
     return new Response(
       JSON.stringify({
@@ -115,6 +112,14 @@ async function handleFormSubmission(
         message: "Thank you, we'll be in touch soon.",
       }),
       { status: 202, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  // Basic validation
+  if (!data.name || !data.email || !data.message) {
+    return new Response(
+      JSON.stringify({ error: "Name, email, and message are required" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
 
@@ -223,14 +228,15 @@ async function writeSubmission(env: Env, submission: SubmissionRecord): Promise<
   const sql = neon(env.NEON_DATABASE_URL);
 
   await sql`
-    INSERT INTO inbox_submission (id, client_slug, channel, payload, source_url, created_at)
+    INSERT INTO inbox_submission (id, client_slug, channel, payload, source_url, created_at, error)
     VALUES (
       ${submission.id}::uuid,
       ${submission.client_slug},
       ${submission.channel},
       ${JSON.stringify(submission.payload)}::jsonb,
       ${submission.source_url},
-      NOW()
+      NOW(),
+      ''
     )
   `;
 }

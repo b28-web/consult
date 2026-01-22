@@ -479,7 +479,8 @@ smoke-test:
 test-intake:
     doppler run -- uv run python scripts/test_intake.py
 
-# Run full local test suite (start services, test, stop)
+# Run full local test suite (native processes, not Docker)
+# Uses --remote mode for worker to avoid workerd TLS issues with Neon
 test-local:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -489,38 +490,69 @@ test-local:
     echo "╚═══════════════════════════════════════╝"
     echo ""
 
+    # Check wrangler auth for --remote mode
+    if ! (cd workers/intake && pnpm wrangler whoami &>/dev/null); then
+        echo "Worker tests require Cloudflare authentication for --remote mode."
+        echo "Run: cd workers/intake && pnpm wrangler login"
+        echo ""
+        echo "Or to skip worker tests, run: just test"
+        exit 1
+    fi
+
+    # Create PID directory
+    mkdir -p .pids
+
     # Cleanup on exit
     cleanup() {
         echo ""
         echo "Cleaning up..."
-        docker compose down
+        for pidfile in .pids/*.pid; do
+            if [ -f "$pidfile" ]; then
+                pid=$(cat "$pidfile")
+                kill "$pid" 2>/dev/null || true
+                pkill -P "$pid" 2>/dev/null || true
+                rm -f "$pidfile"
+            fi
+        done
+        rm -rf .pids
     }
     trap cleanup EXIT
 
-    # Start services
-    echo "Starting services via Docker Compose..."
-    doppler run -- docker compose up -d --build
+    # Start Django
+    echo "Starting Django on :8000..."
+    doppler run -- uv run python apps/web/manage.py runserver 8000 > .pids/django.log 2>&1 &
+    echo $! > .pids/django.pid
 
-    # Wait for services to be healthy
-    echo "Waiting for services to be healthy..."
-    for i in {1..30}; do
-        DJANGO_HEALTH=$(docker compose ps django --format json 2>/dev/null | grep -o '"Health":"[^"]*"' | cut -d'"' -f4 || echo "unknown")
-        WORKER_HEALTH=$(docker compose ps worker --format json 2>/dev/null | grep -o '"Health":"[^"]*"' | cut -d'"' -f4 || echo "unknown")
+    # Start Worker with --remote mode (avoids workerd TLS issues with Neon)
+    echo "Starting Worker on :8787 (remote mode)..."
+    cd workers/intake
+    doppler run -- sh -c 'echo "NEON_DATABASE_URL=$NEON_DATABASE_URL" > .dev.vars && echo "INTAKE_API_KEY=$INTAKE_API_KEY" >> .dev.vars'
+    pnpm wrangler dev --remote --port 8787 > ../../.pids/worker.log 2>&1 &
+    echo $! > ../../.pids/worker.pid
+    cd ../..
 
-        if [ "$DJANGO_HEALTH" = "healthy" ] && [ "$WORKER_HEALTH" = "healthy" ]; then
-            echo "All services healthy!"
+    # Wait for services to be ready (remote mode takes longer)
+    echo "Waiting for services (remote mode may take 10-20s)..."
+    for i in {1..45}; do
+        DJANGO_OK=$(curl -sf http://localhost:8000/admin/login/ > /dev/null 2>&1 && echo "yes" || echo "no")
+        WORKER_OK=$(curl -sf http://localhost:8787/health > /dev/null 2>&1 && echo "yes" || echo "no")
+
+        if [ "$DJANGO_OK" = "yes" ] && [ "$WORKER_OK" = "yes" ]; then
+            echo "All services ready!"
             break
         fi
 
-        if [ $i -eq 30 ]; then
-            echo "Timeout waiting for services to be healthy"
-            echo "Django: $DJANGO_HEALTH, Worker: $WORKER_HEALTH"
-            docker compose logs
+        if [ $i -eq 45 ]; then
+            echo "Timeout waiting for services"
+            echo "Django: $DJANGO_OK, Worker: $WORKER_OK"
+            echo "--- Django logs ---"
+            tail -20 .pids/django.log || true
+            echo "--- Worker logs ---"
+            tail -20 .pids/worker.log || true
             exit 1
         fi
 
-        echo "  Waiting... (django=$DJANGO_HEALTH, worker=$WORKER_HEALTH)"
-        sleep 2
+        sleep 1
     done
 
     echo ""

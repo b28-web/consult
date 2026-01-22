@@ -40,7 +40,10 @@ def main() -> int:
     req = urllib.request.Request(
         "http://localhost:8787/intake/coffee-shop/form",
         data=json.dumps(form_data).encode(),
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            "User-Agent": "ConsultTestRunner/1.0",  # Cloudflare blocks Python-urllib
+        },
         method="POST",
     )
 
