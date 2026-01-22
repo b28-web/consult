@@ -4,9 +4,32 @@ Current priorities and planned work for Consult.
 
 ## Active Sprints
 
-_No active sprints. See Planned Sprints for upcoming work._
+(No active sprints - pick next from Planned Sprints)
+
+---
 
 ## Completed Sprints
+
+### EP-002: Submission Processing & Dashboard ✓
+Build the core inbox experience with AI classification.
+
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 002-A | Submission processing task | ✓ |
+| 002-B | BAML classification integration | ✓ |
+| 002-C | Dashboard shell with auth | ✓ |
+| 002-D | Inbox list view (HTMX) | ✓ |
+| 002-E | Message detail panel (HTMX) | ✓ |
+| 002-F | Contact profile view | ✓ |
+
+**Completed 2026-01-22**: Full inbox experience with:
+- Submission processing and AI classification (BAML + Gemini)
+- Dashboard shell with DaisyUI + HTMX
+- Inbox list with urgency sorting and filters
+- Message detail panel with contact history
+- Contact profile with search, inline edit, notes
+
+---
 
 ### EP-011: Agent-Deployable Infrastructure ✓
 Make deployment flow fully runnable by LLM coding agents. Enables autonomous debugging and deployment.
@@ -86,18 +109,6 @@ Create agent-driven pre-deploy validation pipeline with Dagger.
 **Completed 2026-01-21**: Full Dagger pipeline with parallel execution, JSON output, and GitHub Actions integration.
 
 ## Planned Sprints
-
-### EP-002: Submission Processing & Dashboard
-Build the core inbox experience with AI classification.
-
-| Ticket | Title | Status |
-|--------|-------|--------|
-| 002-A | Submission processing task | pending |
-| 002-B | BAML classification integration | pending |
-| 002-C | Dashboard shell with auth | pending |
-| 002-D | Inbox list view (HTMX) | pending |
-| 002-E | Message detail panel (HTMX) | pending |
-| 002-F | Contact profile view | pending |
 
 ### EP-003: Communications (Twilio + Resend)
 Enable two-way messaging: SMS, voicemail, email.

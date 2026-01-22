@@ -1,0 +1,36 @@
+{% load humanize %}
+
+<div class="h-full flex flex-col">
+    {# Header #}
+    <div class="p-4 border-b">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-semibold">{{ message.contact.name }}</h2>
+                <p class="text-sm text-base-content/60">
+                    {% if message.contact.email %}{{ message.contact.email }}{% endif %}
+                    {% if message.contact.email and message.contact.phone %} &middot; {% endif %}
+                    {% if message.contact.phone %}{{ message.contact.phone }}{% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    {# Success message #}
+    <div class="flex-1 flex items-center justify-center p-8">
+        <div class="text-center">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-success/20 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Reply sent</h3>
+            <p class="text-base-content/60 mb-4">Your message has been sent to {{ message.contact.name }}.</p>
+            <a href="{% url 'inbox:list' %}"
+               hx-get="{% url 'inbox:list' %}"
+               hx-target="#message-list"
+               class="btn btn-primary btn-sm">
+                Back to inbox
+            </a>
+        </div>
+    </div>
+</div>

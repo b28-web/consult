@@ -1,0 +1,38 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Inbox{% endblock %}
+
+{% block content %}
+<div class="flex flex-col lg:flex-row gap-4 h-[calc(100vh-8rem)]">
+    {# Message list panel #}
+    <div class="lg:w-1/2 xl:w-2/5 flex flex-col bg-base-100 rounded-lg shadow-sm overflow-hidden">
+        {# Header with title and filters #}
+        <div class="p-4 border-b">
+            <div class="flex items-center justify-between mb-3">
+                <h1 class="text-xl font-semibold">Inbox</h1>
+                {% if unread_count %}
+                <span class="badge badge-primary">{{ unread_count }} unread</span>
+                {% endif %}
+            </div>
+            {% include "inbox/partials/filters.html" %}
+        </div>
+
+        {# Message list (scrollable) #}
+        <div class="flex-1 overflow-y-auto p-2">
+            {% include "inbox/partials/message_list.html" %}
+        </div>
+    </div>
+
+    {# Detail panel #}
+    <div class="lg:w-1/2 xl:w-3/5 bg-base-100 rounded-lg shadow-sm overflow-hidden">
+        <div id="detail-panel" class="h-full flex items-center justify-center text-base-content/50">
+            <div class="text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <p class="text-lg">Select a message to view</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

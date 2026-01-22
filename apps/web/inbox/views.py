@@ -1,26 +1,49 @@
 """
 Inbox views - HTMX partials for dashboard.
 
-All views return HTML fragments for HTMX swap.
+Full page views return complete HTML on initial load.
+HTMX requests return just the partial fragments.
 """
 
+from django.contrib.auth.decorators import login_required
+from django.db.models import Case, IntegerField, Value, When
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
 
 from .models import Message
 
+# Urgency ordering: urgent=0, high=1, medium=2, low=3, empty=4
+URGENCY_ORDER = Case(
+    When(urgency="urgent", then=Value(0)),
+    When(urgency="high", then=Value(1)),
+    When(urgency="medium", then=Value(2)),
+    When(urgency="low", then=Value(3)),
+    default=Value(4),
+    output_field=IntegerField(),
+)
 
+
+@login_required
 def inbox_list(request: HttpRequest) -> HttpResponse:
     """
     GET /dashboard/inbox/
 
     Returns inbox message list.
+    - Full page on initial load (non-HTMX)
+    - Just the message list partial on HTMX requests
+
     Supports filtering via query params:
     - status: unread, read, replied, archived
     - urgency: low, medium, high, urgent
     - channel: form, sms, voicemail, email
     """
-    messages = Message.objects.for_client(request).select_related("contact")
+    messages = (
+        Message.objects.for_client(request)
+        .filter(direction=Message.Direction.INBOUND)
+        .select_related("contact")
+        .annotate(urgency_order=URGENCY_ORDER)
+        .order_by("urgency_order", "-received_at")
+    )
 
     # Filters
     status = request.GET.get("status")
@@ -35,22 +58,59 @@ def inbox_list(request: HttpRequest) -> HttpResponse:
     if channel:
         messages = messages.filter(channel=channel)
 
-    return render(request, "inbox/partials/message_list.html", {"messages": messages})
+    # Unread count for badge
+    unread_count = (
+        Message.objects.for_client(request)
+        .filter(direction=Message.Direction.INBOUND, status=Message.Status.UNREAD)
+        .count()
+    )
+
+    context = {
+        "messages": messages,
+        "unread_count": unread_count,
+        "current_status": status,
+        "current_channel": channel,
+        "current_urgency": urgency,
+    }
+
+    # Return partial for HTMX requests, full page otherwise
+    if request.headers.get("HX-Request"):
+        return render(request, "inbox/partials/message_list.html", context)
+
+    return render(request, "inbox/inbox.html", context)
 
 
+@login_required
 def message_detail(request: HttpRequest, message_id: int) -> HttpResponse:
     """
     GET /dashboard/inbox/{message_id}/
 
-    Returns message detail panel.
+    Returns message detail panel with contact history.
     """
     message = get_object_or_404(
         Message.objects.for_client(request).select_related("contact"),
         id=message_id,
     )
-    return render(request, "inbox/partials/message_detail.html", {"message": message})
+
+    # Get contact history (other messages from same contact, excluding current)
+    contact_history = (
+        Message.objects.for_client(request)
+        .filter(contact=message.contact)
+        .exclude(id=message_id)
+        .order_by("-received_at")[:5]
+    )
+
+    return render(
+        request,
+        "inbox/partials/message_detail.html",
+        {
+            "message": message,
+            "contact_history": contact_history,
+        },
+    )
 
 
+@login_required
 def message_reply(request: HttpRequest, message_id: int) -> HttpResponse:
     """
     POST /dashboard/inbox/{message_id}/reply/
@@ -97,6 +157,7 @@ def message_reply(request: HttpRequest, message_id: int) -> HttpResponse:
     )
 
 
+@login_required
 def message_mark(request: HttpRequest, message_id: int) -> HttpResponse:
     """
     POST /dashboard/inbox/{message_id}/mark/

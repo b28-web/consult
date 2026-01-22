@@ -1,0 +1,37 @@
+{% load humanize %}
+
+<div class="card bg-base-100 shadow-sm">
+    <div class="card-body">
+        <h3 class="card-title text-base">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Notes
+        </h3>
+
+        {# Add note form #}
+        <form hx-post="{% url 'crm:add_note' contact.id %}"
+              hx-target="#notes-list"
+              hx-swap="afterbegin"
+              hx-on::after-request="this.reset()"
+              class="mb-4">
+            <div class="flex gap-2">
+                <input type="text"
+                       name="content"
+                       class="input input-bordered input-sm flex-1"
+                       placeholder="Add a note..."
+                       required>
+                <button type="submit" class="btn btn-primary btn-sm">Add</button>
+            </div>
+        </form>
+
+        {# Notes list #}
+        <div id="notes-list" class="space-y-3">
+            {% for note in contact.notes.all %}
+            {% include "crm/partials/note_item.html" with note=note %}
+            {% empty %}
+            <p class="text-base-content/50 text-sm" id="no-notes-message">No notes yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>

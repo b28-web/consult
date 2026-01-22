@@ -1,0 +1,91 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+
+{% block title %}{{ contact.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    {# Breadcrumb #}
+    <div class="text-sm breadcrumbs mb-4">
+        <ul>
+            <li><a href="{% url 'crm:contact_list' %}">Contacts</a></li>
+            <li>{{ contact.name }}</li>
+        </ul>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {# Left column - Contact info #}
+        <div class="lg:col-span-1 space-y-6">
+            {# Profile card #}
+            <div class="card bg-base-100 shadow-sm">
+                <div class="card-body">
+                    {# Header with avatar #}
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="avatar placeholder">
+                            <div class="bg-neutral text-neutral-content rounded-full w-16">
+                                <span class="text-xl">{{ contact.name|slice:":2"|upper }}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold">{{ contact.name }}</h1>
+                            {% if contact.last_message_at %}
+                            <p class="text-sm text-base-content/60">Last contact {{ contact.last_message_at|naturaltime }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {# Contact info - editable #}
+                    <div id="contact-info">
+                        {% include "crm/partials/contact_info.html" %}
+                    </div>
+                </div>
+            </div>
+
+            {# Tags #}
+            {% if contact.tags.all %}
+            <div class="card bg-base-100 shadow-sm">
+                <div class="card-body">
+                    <h3 class="card-title text-base">Tags</h3>
+                    <div class="flex flex-wrap gap-2">
+                        {% for tag in contact.tags.all %}
+                        <span class="badge" style="background-color: {{ tag.color }}20; color: {{ tag.color }}; border-color: {{ tag.color }}">
+                            {{ tag.name }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {# Notes #}
+            {% include "crm/partials/contact_notes.html" %}
+        </div>
+
+        {# Right column - Messages and Jobs #}
+        <div class="lg:col-span-2 space-y-6">
+            {# Messages #}
+            {% include "crm/partials/contact_messages.html" %}
+
+            {# Jobs #}
+            {% include "crm/partials/contact_jobs.html" %}
+        </div>
+    </div>
+</div>
+
+{# Message detail modal #}
+<dialog id="message-modal" class="modal">
+    <div class="modal-box max-w-2xl max-h-[80vh]">
+        <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">X</button>
+        </form>
+        <div id="message-modal-content">
+            <div class="flex items-center justify-center h-40">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+{% endblock %}

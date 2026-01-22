@@ -1,0 +1,58 @@
+{% load humanize %}
+
+<div class="card bg-base-100 shadow-sm">
+    <div class="card-body">
+        <h3 class="card-title text-base">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            Jobs
+            {% if contact.jobs.count %}
+            <span class="badge badge-ghost badge-sm">{{ contact.jobs.count }}</span>
+            {% endif %}
+        </h3>
+
+        {% if contact.jobs.all %}
+        <div class="divide-y -mx-4">
+            {% for job in contact.jobs.all|slice:":5" %}
+            <div class="px-4 py-3 hover:bg-base-200/50">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="font-medium">{{ job.title }}</span>
+                    {% if job.status == 'scheduled' %}
+                    <span class="badge badge-info badge-sm">Scheduled</span>
+                    {% elif job.status == 'in_progress' %}
+                    <span class="badge badge-warning badge-sm">In Progress</span>
+                    {% elif job.status == 'completed' %}
+                    <span class="badge badge-success badge-sm">Completed</span>
+                    {% elif job.status == 'cancelled' %}
+                    <span class="badge badge-ghost badge-sm">Cancelled</span>
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-4 text-sm text-base-content/60">
+                    {% if job.scheduled_at %}
+                    <span class="flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        {{ job.scheduled_at|date:"M d, Y" }}
+                    </span>
+                    {% endif %}
+                    {% if job.estimated_price %}
+                    <span>${{ job.estimated_price }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% if contact.jobs.count > 5 %}
+        <div class="text-center pt-2">
+            <a href="{% url 'crm:job_list' %}?contact={{ contact.id }}" class="link link-primary text-sm">
+                View all {{ contact.jobs.count }} jobs
+            </a>
+        </div>
+        {% endif %}
+        {% else %}
+        <p class="text-base-content/50 text-sm">No jobs yet.</p>
+        {% endif %}
+    </div>
+</div>

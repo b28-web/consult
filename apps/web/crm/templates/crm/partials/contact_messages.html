@@ -1,0 +1,51 @@
+{% load humanize %}
+
+<div class="card bg-base-100 shadow-sm">
+    <div class="card-body">
+        <h3 class="card-title text-base">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            Messages
+            {% if contact.messages.count %}
+            <span class="badge badge-ghost badge-sm">{{ contact.messages.count }}</span>
+            {% endif %}
+        </h3>
+
+        {% if contact.messages.all %}
+        <div class="divide-y -mx-4">
+            {% for message in contact.messages.all|slice:":10" %}
+            <div class="px-4 py-3 hover:bg-base-200/50 cursor-pointer"
+                 hx-get="{% url 'inbox:detail' message.id %}"
+                 hx-target="#message-modal-content"
+                 hx-swap="innerHTML"
+                 onclick="document.getElementById('message-modal').showModal()">
+                <div class="flex items-center justify-between mb-1">
+                    <div class="flex items-center gap-2">
+                        {# Direction #}
+                        {% if message.direction == 'inbound' %}
+                        <span class="badge badge-ghost badge-xs">Received</span>
+                        {% else %}
+                        <span class="badge badge-primary badge-xs">Sent</span>
+                        {% endif %}
+                        {# Channel #}
+                        <span class="text-xs text-base-content/50">{{ message.get_channel_display }}</span>
+                    </div>
+                    <span class="text-xs text-base-content/50">{{ message.received_at|naturaltime }}</span>
+                </div>
+                <p class="text-sm text-base-content/70 line-clamp-2">{{ message.body|truncatechars:120 }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% if contact.messages.count > 10 %}
+        <div class="text-center pt-2">
+            <a href="{% url 'inbox:list' %}?contact={{ contact.id }}" class="link link-primary text-sm">
+                View all {{ contact.messages.count }} messages
+            </a>
+        </div>
+        {% endif %}
+        {% else %}
+        <p class="text-base-content/50 text-sm">No messages yet.</p>
+        {% endif %}
+    </div>
+</div>

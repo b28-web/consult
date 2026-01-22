@@ -34,8 +34,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.humanize",
     # Local apps
     "apps.web.core",
+    "apps.web.dashboard",
     "apps.web.inbox",
     "apps.web.crm",
 ]
@@ -103,3 +105,8 @@ STATIC_ROOT = BASE_DIR.parent.parent / "staticfiles"  # /app/staticfiles in prod
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Authentication
+LOGIN_URL = "dashboard:login"
+LOGIN_REDIRECT_URL = "dashboard:home"
+LOGOUT_REDIRECT_URL = "dashboard:login"

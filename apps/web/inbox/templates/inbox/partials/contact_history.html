@@ -1,0 +1,44 @@
+{% load humanize %}
+
+<div class="border-t">
+    <div class="px-4 py-2 bg-base-200/30 flex items-center justify-between">
+        <h4 class="text-sm font-medium">Contact History</h4>
+        <a href="{% url 'crm:contact_detail' message.contact.id %}"
+           class="text-xs link link-primary">
+            View full profile
+        </a>
+    </div>
+    {% if contact_history %}
+    <div class="divide-y">
+        {% for msg in contact_history %}
+        <div class="px-4 py-2 hover:bg-base-200/30 cursor-pointer text-sm"
+             hx-get="{% url 'inbox:detail' msg.id %}"
+             hx-target="#detail-panel"
+             hx-swap="innerHTML">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    {# Direction indicator #}
+                    {% if msg.direction == 'inbound' %}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                    {% else %}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                    {% endif %}
+                    {# Channel badge #}
+                    <span class="badge badge-ghost badge-xs">{{ msg.get_channel_display }}</span>
+                </div>
+                <span class="text-xs text-base-content/50">{{ msg.received_at|naturaltime }}</span>
+            </div>
+            <p class="text-base-content/70 truncate mt-1">{{ msg.body|truncatechars:80 }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="px-4 py-3 text-sm text-base-content/50 text-center">
+        No previous messages from this contact.
+    </div>
+    {% endif %}
+</div>

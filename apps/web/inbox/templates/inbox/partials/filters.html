@@ -1,0 +1,51 @@
+<div class="flex flex-wrap gap-2">
+    {# Status filter #}
+    <select name="status"
+            class="select select-sm select-bordered"
+            hx-get="{% url 'inbox:list' %}"
+            hx-target="#message-list"
+            hx-include="[name='channel'], [name='urgency']">
+        <option value="" {% if not current_status %}selected{% endif %}>All Status</option>
+        <option value="unread" {% if current_status == 'unread' %}selected{% endif %}>Unread</option>
+        <option value="read" {% if current_status == 'read' %}selected{% endif %}>Read</option>
+        <option value="replied" {% if current_status == 'replied' %}selected{% endif %}>Replied</option>
+        <option value="archived" {% if current_status == 'archived' %}selected{% endif %}>Archived</option>
+    </select>
+
+    {# Channel filter #}
+    <select name="channel"
+            class="select select-sm select-bordered"
+            hx-get="{% url 'inbox:list' %}"
+            hx-target="#message-list"
+            hx-include="[name='status'], [name='urgency']">
+        <option value="" {% if not current_channel %}selected{% endif %}>All Channels</option>
+        <option value="form" {% if current_channel == 'form' %}selected{% endif %}>Web Form</option>
+        <option value="sms" {% if current_channel == 'sms' %}selected{% endif %}>SMS</option>
+        <option value="voicemail" {% if current_channel == 'voicemail' %}selected{% endif %}>Voicemail</option>
+        <option value="email" {% if current_channel == 'email' %}selected{% endif %}>Email</option>
+    </select>
+
+    {# Urgency filter #}
+    <select name="urgency"
+            class="select select-sm select-bordered"
+            hx-get="{% url 'inbox:list' %}"
+            hx-target="#message-list"
+            hx-include="[name='status'], [name='channel']">
+        <option value="" {% if not current_urgency %}selected{% endif %}>All Urgency</option>
+        <option value="urgent" {% if current_urgency == 'urgent' %}selected{% endif %}>Urgent</option>
+        <option value="high" {% if current_urgency == 'high' %}selected{% endif %}>High</option>
+        <option value="medium" {% if current_urgency == 'medium' %}selected{% endif %}>Medium</option>
+        <option value="low" {% if current_urgency == 'low' %}selected{% endif %}>Low</option>
+    </select>
+
+    {# Clear filters button #}
+    {% if current_status or current_channel or current_urgency %}
+    <a href="{% url 'inbox:list' %}"
+       class="btn btn-sm btn-ghost"
+       hx-get="{% url 'inbox:list' %}"
+       hx-target="#message-list"
+       hx-push-url="true">
+        Clear
+    </a>
+    {% endif %}
+</div>

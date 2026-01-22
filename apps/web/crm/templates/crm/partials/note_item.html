@@ -1,0 +1,20 @@
+{% load humanize %}
+
+<div class="flex gap-3 p-3 bg-base-200/50 rounded-lg">
+    <div class="avatar placeholder flex-none">
+        <div class="bg-neutral text-neutral-content rounded-full w-8">
+            <span class="text-xs">
+                {% if note.author %}{{ note.author.username|slice:":2"|upper }}{% else %}?{% endif %}
+            </span>
+        </div>
+    </div>
+    <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 mb-1">
+            <span class="font-medium text-sm">
+                {% if note.author %}{{ note.author.username }}{% else %}Unknown{% endif %}
+            </span>
+            <span class="text-xs text-base-content/50">{{ note.created_at|naturaltime }}</span>
+        </div>
+        <p class="text-sm">{{ note.content }}</p>
+    </div>
+</div>
