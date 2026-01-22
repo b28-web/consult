@@ -1,0 +1,222 @@
+---
+/**
+ * Pricing Page
+ *
+ * Displays pricing tiers and information.
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+import { config } from "@/config";
+---
+
+<PageLayout title="Pricing">
+  <!-- Hero -->
+  <section class="bg-base-200 py-16 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+      <h1 class="text-4xl font-bold mb-4">Simple, Transparent Pricing</h1>
+      <p class="text-xl text-base-content/70">
+        No hidden fees. Pay based on how much space your junk takes in our truck.
+      </p>
+    </div>
+  </section>
+
+  <!-- Pricing Tiers -->
+  <section class="py-16 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid md:grid-cols-3 gap-8">
+        <!-- Minimum Load -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body text-center">
+            <h2 class="card-title justify-center text-2xl">Minimum Load</h2>
+            <p class="text-base-content/70">1/8 truck or less</p>
+            <div class="py-6">
+              <span class="text-5xl font-bold">$99</span>
+            </div>
+            <ul class="text-left space-y-2 mb-6">
+              <li class="flex items-center gap-2">
+                <span class="text-success">✓</span> Single item removal
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-success">✓</span> Small cleanups
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-success">✓</span> E-waste disposal
+              </li>
+            </ul>
+            <div class="card-actions justify-center">
+              <a href="/book" class="btn btn-outline btn-primary">Book Now</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Half Truck -->
+        <div class="card bg-primary text-primary-content shadow-xl scale-105">
+          <div class="card-body text-center">
+            <div class="badge badge-secondary mb-2">Most Popular</div>
+            <h2 class="card-title justify-center text-2xl">Half Truck</h2>
+            <p class="opacity-80">1/2 truck load</p>
+            <div class="py-6">
+              <span class="text-5xl font-bold">$299</span>
+            </div>
+            <ul class="text-left space-y-2 mb-6">
+              <li class="flex items-center gap-2">
+                <span class="text-secondary">✓</span> Room cleanouts
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-secondary">✓</span> Garage clearing
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-secondary">✓</span> Furniture removal
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-secondary">✓</span> Appliance disposal
+              </li>
+            </ul>
+            <div class="card-actions justify-center">
+              <a href="/book" class="btn btn-secondary">Book Now</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Full Truck -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body text-center">
+            <h2 class="card-title justify-center text-2xl">Full Truck</h2>
+            <p class="text-base-content/70">Full truck load</p>
+            <div class="py-6">
+              <span class="text-5xl font-bold">$499</span>
+            </div>
+            <ul class="text-left space-y-2 mb-6">
+              <li class="flex items-center gap-2">
+                <span class="text-success">✓</span> Whole house cleanouts
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-success">✓</span> Estate cleanouts
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-success">✓</span> Commercial jobs
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-success">✓</span> Construction debris
+              </li>
+            </ul>
+            <div class="card-actions justify-center">
+              <a href="/book" class="btn btn-outline btn-primary">Book Now</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- What's Included -->
+  <section class="py-16 px-4 bg-base-200">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl font-bold text-center mb-12">What's Included</h2>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="flex gap-4 items-start">
+          <div class="text-3xl">🚚</div>
+          <div>
+            <h3 class="font-bold text-lg">Full-Service Removal</h3>
+            <p class="text-base-content/70">
+              We do all the heavy lifting. Just point and we'll haul.
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-4 items-start">
+          <div class="text-3xl">♻️</div>
+          <div>
+            <h3 class="font-bold text-lg">Eco-Friendly Disposal</h3>
+            <p class="text-base-content/70">
+              We donate, recycle, and responsibly dispose of all items.
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-4 items-start">
+          <div class="text-3xl">🧹</div>
+          <div>
+            <h3 class="font-bold text-lg">Clean Up After</h3>
+            <p class="text-base-content/70">
+              We sweep up and leave your space clean.
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-4 items-start">
+          <div class="text-3xl">📋</div>
+          <div>
+            <h3 class="font-bold text-lg">Upfront Pricing</h3>
+            <p class="text-base-content/70">
+              Get your exact price before we start. No surprises.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Special Items -->
+  <section class="py-16 px-4">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl font-bold text-center mb-8">Special Items</h2>
+      <p class="text-center text-base-content/70 mb-8">
+        Some items require special handling and may have additional fees.
+      </p>
+      <div class="overflow-x-auto">
+        <table class="table table-zebra w-full">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Additional Fee</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Refrigerators/Freezers</td>
+              <td>$50</td>
+              <td>Freon removal required</td>
+            </tr>
+            <tr>
+              <td>TVs/Monitors</td>
+              <td>$25</td>
+              <td>E-waste recycling</td>
+            </tr>
+            <tr>
+              <td>Mattresses</td>
+              <td>$30</td>
+              <td>Per mattress</td>
+            </tr>
+            <tr>
+              <td>Tires</td>
+              <td>$15</td>
+              <td>Per tire</td>
+            </tr>
+            <tr>
+              <td>Hot Tubs</td>
+              <td>Quote</td>
+              <td>Contact for estimate</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-16 bg-primary text-primary-content">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-3xl font-bold mb-4">Not Sure What You Need?</h2>
+      <p class="text-lg mb-8">
+        Get a free, no-obligation quote. We'll assess your job and give you an
+        exact price.
+      </p>
+      <div class="flex gap-4 justify-center flex-wrap">
+        <a href="/services#quote-form" class="btn btn-secondary btn-lg">
+          Get a Quote
+        </a>
+        <a href="/book" class="btn btn-outline btn-lg border-white text-white hover:bg-white hover:text-primary">
+          Book Online
+        </a>
+      </div>
+    </div>
+  </section>
+</PageLayout>

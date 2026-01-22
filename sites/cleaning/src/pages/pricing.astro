@@ -1,0 +1,249 @@
+---
+/**
+ * Pricing Page
+ *
+ * Displays service packages with pricing tiers.
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+import { config } from "@/config";
+
+const packages = [
+  {
+    name: "Basic",
+    price: "$99",
+    frequency: "per visit",
+    description: "Perfect for smaller homes or apartments",
+    features: [
+      "Up to 3 rooms",
+      "Kitchen & bathroom cleaning",
+      "Dusting & vacuuming",
+      "Mopping hard floors",
+      "Trash removal",
+    ],
+    highlighted: false,
+  },
+  {
+    name: "Standard",
+    price: "$149",
+    frequency: "per visit",
+    description: "Our most popular package for families",
+    features: [
+      "Up to 5 rooms",
+      "Everything in Basic",
+      "Inside appliance wipe-down",
+      "Baseboard dusting",
+      "Mirror & glass cleaning",
+      "Bed making",
+    ],
+    highlighted: true,
+  },
+  {
+    name: "Premium",
+    price: "$199",
+    frequency: "per visit",
+    description: "Comprehensive whole-home cleaning",
+    features: [
+      "Whole home (unlimited rooms)",
+      "Everything in Standard",
+      "Inside cabinet wipe-down",
+      "Interior window cleaning",
+      "Organizing assistance",
+      "Laundry folding",
+    ],
+    highlighted: false,
+  },
+];
+
+const addons = [
+  { name: "Inside Refrigerator", price: "$35" },
+  { name: "Inside Oven", price: "$35" },
+  { name: "Interior Windows", price: "$5/window" },
+  { name: "Laundry (wash & fold)", price: "$25/load" },
+  { name: "Organizing (per hour)", price: "$40" },
+];
+---
+
+<PageLayout title="Pricing">
+  <!-- Hero -->
+  <section class="bg-primary/10 py-16 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+      <h1 class="text-4xl font-bold mb-4">Simple, Transparent Pricing</h1>
+      <p class="text-xl text-base-content/70">
+        Choose the package that fits your home. No hidden fees, ever.
+      </p>
+    </div>
+  </section>
+
+  <!-- Pricing Tiers -->
+  <section class="py-16 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid md:grid-cols-3 gap-8">
+        {
+          packages.map((pkg) => (
+            <div
+              class:list={[
+                "card shadow-xl",
+                pkg.highlighted
+                  ? "bg-primary text-primary-content scale-105 border-2 border-secondary"
+                  : "bg-base-100 border border-primary/10",
+              ]}
+            >
+              <div class="card-body text-center">
+                {pkg.highlighted && (
+                  <div class="badge badge-secondary mb-2">Most Popular</div>
+                )}
+                <h2 class="card-title justify-center text-2xl">{pkg.name}</h2>
+                <p class={pkg.highlighted ? "opacity-80" : "text-base-content/70"}>
+                  {pkg.description}
+                </p>
+                <div class="py-6">
+                  <span class="text-5xl font-bold">{pkg.price}</span>
+                  <span class={pkg.highlighted ? "opacity-80" : "text-base-content/70"}>
+                    /{pkg.frequency}
+                  </span>
+                </div>
+                <ul class="text-left space-y-2 mb-6">
+                  {pkg.features.map((feature) => (
+                    <li class="flex items-center gap-2">
+                      <span class={pkg.highlighted ? "text-secondary" : "text-success"}>
+                        ✓
+                      </span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <div class="card-actions justify-center">
+                  <a
+                    href="/contact"
+                    class:list={[
+                      "btn btn-lg",
+                      pkg.highlighted ? "btn-secondary" : "btn-primary",
+                    ]}
+                  >
+                    Get Started
+                  </a>
+                </div>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Frequency Discounts -->
+  <section class="py-16 px-4 bg-primary/5">
+    <div class="max-w-4xl mx-auto text-center">
+      <h2 class="text-3xl font-bold mb-8">Save with Regular Cleaning</h2>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="card bg-base-100 shadow-lg border border-primary/10">
+          <div class="card-body text-center">
+            <h3 class="font-bold text-lg">Weekly</h3>
+            <div class="text-3xl font-bold text-primary">20% off</div>
+            <p class="text-base-content/70">Best value for busy households</p>
+          </div>
+        </div>
+        <div class="card bg-base-100 shadow-lg border border-primary/10">
+          <div class="card-body text-center">
+            <h3 class="font-bold text-lg">Bi-Weekly</h3>
+            <div class="text-3xl font-bold text-primary">15% off</div>
+            <p class="text-base-content/70">Perfect balance of clean & cost</p>
+          </div>
+        </div>
+        <div class="card bg-base-100 shadow-lg border border-primary/10">
+          <div class="card-body text-center">
+            <h3 class="font-bold text-lg">Monthly</h3>
+            <div class="text-3xl font-bold text-primary">10% off</div>
+            <p class="text-base-content/70">Great for light maintenance</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Add-ons -->
+  <section class="py-16 px-4">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl font-bold text-center mb-8">Add-On Services</h2>
+      <p class="text-center text-base-content/70 mb-8">
+        Customize your clean with these optional extras.
+      </p>
+      <div class="overflow-x-auto">
+        <table class="table table-zebra w-full">
+          <thead>
+            <tr>
+              <th>Service</th>
+              <th class="text-right">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              addons.map((addon) => (
+                <tr>
+                  <td>{addon.name}</td>
+                  <td class="text-right font-semibold">{addon.price}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- One-Time Services -->
+  <section class="py-16 px-4 bg-primary/5">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl font-bold text-center mb-8">One-Time Services</h2>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="card bg-base-100 shadow-lg border border-primary/10">
+          <div class="card-body">
+            <h3 class="card-title">Deep Cleaning</h3>
+            <p class="text-base-content/70">
+              Thorough top-to-bottom cleaning for when your home needs extra attention.
+            </p>
+            <div class="text-2xl font-bold text-primary mt-2">From $249</div>
+          </div>
+        </div>
+        <div class="card bg-base-100 shadow-lg border border-primary/10">
+          <div class="card-body">
+            <h3 class="card-title">Move In/Out</h3>
+            <p class="text-base-content/70">
+              Comprehensive cleaning for moving transitions. Get your deposit back!
+            </p>
+            <div class="text-2xl font-bold text-primary mt-2">From $299</div>
+          </div>
+        </div>
+        <div class="card bg-base-100 shadow-lg border border-primary/10">
+          <div class="card-body">
+            <h3 class="card-title">Post-Construction</h3>
+            <p class="text-base-content/70">
+              Specialized cleaning after renovations. Dust, debris, and more.
+            </p>
+            <div class="text-2xl font-bold text-primary mt-2">Custom quote</div>
+          </div>
+        </div>
+        <div class="card bg-base-100 shadow-lg border border-primary/10">
+          <div class="card-body">
+            <h3 class="card-title">Office Cleaning</h3>
+            <p class="text-base-content/70">
+              Professional cleaning for offices and commercial spaces.
+            </p>
+            <div class="text-2xl font-bold text-primary mt-2">Custom quote</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-16 bg-primary text-primary-content">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-3xl font-bold mb-4">Ready to Get Started?</h2>
+      <p class="text-lg mb-8">
+        Contact us for a free, no-obligation quote tailored to your home.
+      </p>
+      <a href="/contact" class="btn btn-secondary btn-lg">Get Your Free Quote</a>
+    </div>
+  </section>
+</PageLayout>

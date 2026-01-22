@@ -1,0 +1,54 @@
+---
+/**
+ * Home Page
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+import { config } from "@/config";
+---
+
+<PageLayout title="Home">
+  <!-- Hero Section -->
+  <section class="hero min-h-[70vh] bg-gradient-to-br from-primary/20 to-secondary/10">
+    <div class="hero-content text-center">
+      <div class="max-w-2xl">
+        <h1 class="text-5xl font-bold">{config.client.name}</h1>
+        <p class="py-6 text-xl">{config.client.tagline}</p>
+        <div class="flex gap-4 justify-center flex-wrap">
+          <a href="/contact" class="btn btn-primary">Get a Free Quote</a>
+          <a href="/gallery" class="btn btn-outline btn-primary">View Our Work</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services Preview -->
+  <section class="py-16 px-4">
+    <div class="max-w-6xl mx-auto">
+      <h2 class="text-3xl font-bold text-center mb-12">Our Services</h2>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {config.services.map((service) => (
+          <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+              <h3 class="card-title">{service.name}</h3>
+              <p>{service.description}</p>
+              <div class="card-actions justify-end">
+                <a href={`/services#${service.slug}`} class="btn btn-primary btn-sm">
+                  Learn More
+                </a>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-16 bg-primary text-primary-content">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-3xl font-bold mb-4">Ready to Transform Your Outdoor Space?</h2>
+      <p class="text-lg mb-8">Get a free consultation and estimate for your project.</p>
+      <a href="/contact" class="btn btn-secondary btn-lg">Get Your Free Quote</a>
+    </div>
+  </section>
+</PageLayout>

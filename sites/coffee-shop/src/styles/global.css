@@ -1,3 +1,6 @@
+/* Point to JS config for DaisyUI plugin */
+@config "../../tailwind.config.ts";
+
 /* Import Tailwind */
 @import "tailwindcss";
 

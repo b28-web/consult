@@ -1,7 +1,7 @@
 # 005-E: Deploy landscaper Site
 
 **EP:** [EP-005-client-sites](../enhancement_proposals/EP-005-client-sites.md)
-**Status:** pending
+**Status:** complete
 
 ## Summary
 
@@ -9,13 +9,13 @@ Deploy landscaping services site with seasonal service offerings.
 
 ## Acceptance Criteria
 
-- [ ] Site created at `sites/landscaper/`
-- [ ] Config: Green Thumb Landscaping, natural earth tones
-- [ ] Pages: Home, Services, Gallery, Contact
-- [ ] Seasonal services highlighted
-- [ ] Photo gallery of past work
-- [ ] Quote request form
-- [ ] Deployed to Cloudflare Pages
+- [x] Site created at `sites/landscaper/`
+- [x] Config: Green Thumb Landscaping, natural earth tones
+- [x] Pages: Home, Services, Gallery, Contact
+- [x] Seasonal services highlighted
+- [x] Photo gallery of past work
+- [x] Quote request form
+- [x] Deployed to Cloudflare Pages
 
 ## Implementation Notes
 
@@ -59,4 +59,11 @@ daisyui: {
 
 ## Progress
 
-(Not started)
+### 2026-01-22
+- Scaffolded site with `pnpm new-site --slug landscaper --industry landscaper --register`
+- Customized theme with forest green (#166534), earth brown (#78350f), sky blue (#0284c7)
+- Created Services page with 6 services + seasonal highlights (Spring/Summer/Fall/Winter)
+- Created Gallery page with project portfolio and testimonials
+- Added maintenance plans (Basic $149, Standard $299, Premium $499)
+- Deployed to Cloudflare Pages
+- Live at https://consult-landscaper-dev.pages.dev

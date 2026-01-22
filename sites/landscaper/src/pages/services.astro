@@ -1,0 +1,200 @@
+---
+/**
+ * Services Page
+ *
+ * Displays all landscaping services with seasonal highlights.
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+import { config } from "@/config";
+
+const seasons = {
+  spring: {
+    name: "Spring",
+    icon: "🌱",
+    services: ["Cleanup & Debris Removal", "Mulching", "Planting", "Lawn Aeration", "Fertilization"],
+  },
+  summer: {
+    name: "Summer",
+    icon: "☀️",
+    services: ["Regular Mowing", "Irrigation Management", "Pest Control", "Hedge Trimming", "Weed Control"],
+  },
+  fall: {
+    name: "Fall",
+    icon: "🍂",
+    services: ["Leaf Removal", "Winterization", "Final Mow", "Overseeding", "Fall Planting"],
+  },
+  winter: {
+    name: "Winter",
+    icon: "❄️",
+    services: ["Snow Removal", "Planning & Design", "Tree Pruning", "Equipment Maintenance"],
+  },
+};
+---
+
+<PageLayout title="Services">
+  <!-- Hero -->
+  <section class="bg-primary/10 py-16 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+      <h1 class="text-4xl font-bold mb-4">Our Services</h1>
+      <p class="text-xl text-base-content/70">
+        Complete landscaping solutions for every season.
+      </p>
+    </div>
+  </section>
+
+  <!-- Services List -->
+  <section class="py-16 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {
+          config.services.map((service) => (
+            <div id={service.slug} class="card bg-base-100 shadow-xl border border-primary/10">
+              <div class="card-body">
+                <div class="text-4xl mb-2">
+                  {service.slug === "lawn-maintenance" && "🌿"}
+                  {service.slug === "landscape-design" && "🎨"}
+                  {service.slug === "tree-shrub-care" && "🌳"}
+                  {service.slug === "irrigation" && "💧"}
+                  {service.slug === "hardscaping" && "🧱"}
+                  {service.slug === "seasonal-cleanup" && "🍃"}
+                </div>
+                <h2 class="card-title">{service.name}</h2>
+                <p class="text-base-content/70">{service.description}</p>
+                <div class="card-actions justify-end mt-4">
+                  <a href="/contact" class="btn btn-primary btn-sm">Get a Quote</a>
+                </div>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Seasonal Services -->
+  <section class="py-16 px-4 bg-secondary/5">
+    <div class="max-w-6xl mx-auto">
+      <h2 class="text-3xl font-bold text-center mb-4">Year-Round Care</h2>
+      <p class="text-center text-base-content/70 mb-12 max-w-2xl mx-auto">
+        Your landscape needs different care throughout the year. We provide seasonal services
+        to keep your property looking great no matter the weather.
+      </p>
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {
+          Object.values(seasons).map((season) => (
+            <div class="card bg-base-100 shadow-lg border border-primary/10">
+              <div class="card-body">
+                <div class="text-4xl text-center mb-2">{season.icon}</div>
+                <h3 class="card-title justify-center">{season.name}</h3>
+                <ul class="mt-4 space-y-2">
+                  {season.services.map((service) => (
+                    <li class="flex items-center gap-2 text-sm">
+                      <span class="text-primary">✓</span>
+                      {service}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Service Packages -->
+  <section class="py-16 px-4">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl font-bold text-center mb-4">Maintenance Plans</h2>
+      <p class="text-center text-base-content/70 mb-12">
+        Save with our recurring maintenance packages.
+      </p>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="card bg-base-100 shadow-xl border border-primary/10">
+          <div class="card-body text-center">
+            <h3 class="card-title justify-center">Basic</h3>
+            <p class="text-base-content/70">Essential lawn care</p>
+            <div class="py-4">
+              <span class="text-4xl font-bold">$149</span>
+              <span class="text-base-content/70">/month</span>
+            </div>
+            <ul class="text-left space-y-2 mb-4">
+              <li class="flex items-center gap-2">
+                <span class="text-success">✓</span> Weekly mowing
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-success">✓</span> Edging & blowing
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-success">✓</span> Weed control
+              </li>
+            </ul>
+            <a href="/contact" class="btn btn-outline btn-primary">Get Started</a>
+          </div>
+        </div>
+        <div class="card bg-primary text-primary-content shadow-xl scale-105">
+          <div class="card-body text-center">
+            <div class="badge badge-secondary mb-2">Most Popular</div>
+            <h3 class="card-title justify-center">Standard</h3>
+            <p class="opacity-80">Complete lawn & garden</p>
+            <div class="py-4">
+              <span class="text-4xl font-bold">$299</span>
+              <span class="opacity-80">/month</span>
+            </div>
+            <ul class="text-left space-y-2 mb-4">
+              <li class="flex items-center gap-2">
+                <span class="text-secondary">✓</span> Everything in Basic
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-secondary">✓</span> Shrub trimming
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-secondary">✓</span> Fertilization
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-secondary">✓</span> Seasonal cleanup
+              </li>
+            </ul>
+            <a href="/contact" class="btn btn-secondary">Get Started</a>
+          </div>
+        </div>
+        <div class="card bg-base-100 shadow-xl border border-primary/10">
+          <div class="card-body text-center">
+            <h3 class="card-title justify-center">Premium</h3>
+            <p class="text-base-content/70">Full property care</p>
+            <div class="py-4">
+              <span class="text-4xl font-bold">$499</span>
+              <span class="text-base-content/70">/month</span>
+            </div>
+            <ul class="text-left space-y-2 mb-4">
+              <li class="flex items-center gap-2">
+                <span class="text-success">✓</span> Everything in Standard
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-success">✓</span> Irrigation management
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-success">✓</span> Tree care
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-success">✓</span> Priority scheduling
+              </li>
+            </ul>
+            <a href="/contact" class="btn btn-outline btn-primary">Get Started</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-16 bg-primary text-primary-content">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-3xl font-bold mb-4">Ready to Transform Your Landscape?</h2>
+      <p class="text-lg mb-8">
+        Get a free consultation and estimate for your project.
+      </p>
+      <a href="/contact" class="btn btn-secondary btn-lg">Get Your Free Quote</a>
+    </div>
+  </section>
+</PageLayout>

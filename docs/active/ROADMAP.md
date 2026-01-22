@@ -14,19 +14,25 @@ Deploy 8 service/B2B client sites with scaffolding and registry-based deployment
 - Site registry system (`sites/registry.yaml`)
 - Deploy wizard (`just deploy-wizard`)
 - Pulumi integration (reads registry for CF Pages projects)
+- 4 sites deployed: coffee-shop, hauler, cleaning, landscaper
+- Fixed Tailwind v4 + DaisyUI CSS integration
 
 | Ticket | Title | Status |
 |--------|-------|--------|
 | 005-A | Site scaffolding + registry system | complete |
 | 005-B | Deploy coffee-shop site (cafe) | complete |
-| 005-C | Deploy hauler site (+ Cal.com) | pending |
-| 005-D | Deploy cleaning site | pending |
-| 005-E | Deploy landscaper site | pending |
-| 005-F | Deploy barber site | pending |
-| 005-G | Deploy data-analytics site | pending |
-| 005-H | Deploy web-dev site | pending |
-| 005-I | Deploy local-agency site | pending |
-| 005-J | CI/CD pipeline for sites | pending |
+| 005-C | Deploy hauler site (+ Cal.com) | complete |
+| 005-D | Deploy cleaning site | complete |
+| 005-E | Deploy landscaper site | complete |
+| **005-F** | **Template hardening (mobile, CSS)** | **next** |
+| 005-G | Deploy barber site | pending |
+| 005-H | Deploy data-analytics site | pending |
+| 005-I | Deploy web-dev site | pending |
+| 005-J | Deploy local-agency site | pending |
+| 005-K | CI/CD pipeline for sites | pending |
+
+> 005-F inserted to fix mobile responsiveness and consolidate template improvements
+> before deploying remaining sites. Reduces O(n) maintenance overhead.
 
 ---
 
@@ -176,9 +182,9 @@ Deploy all client sites with automation.
 |--------|-------|--------|
 | 005-A | Site scaffolding script | pending |
 | 005-B | Deploy coffee-shop site | pending |
-| 005-C | Deploy hauler site (+ Cal.com) | pending |
-| 005-D | Deploy cleaning site | pending |
-| 005-E | Deploy landscaper site | pending |
+| 005-C | Deploy hauler site (+ Cal.com) | complete |
+| 005-D | Deploy cleaning site | complete |
+| 005-E | Deploy landscaper site | complete |
 | 005-F | Deploy barber site | pending |
 | 005-G | Deploy data-analytics site | pending |
 | 005-H | Deploy web-dev site | pending |

@@ -43,3 +43,21 @@ sites:
   # new-client:
   #   ready: false
   #   dev: {}
+
+  hauler:
+    ready: true
+    dev: {}
+    # prod:
+    #   domain: hauler.example.com
+
+  cleaning:
+    ready: true
+    dev: {}
+    # prod:
+    #   domain: cleaning.example.com
+
+  landscaper:
+    ready: true
+    dev: {}
+    # prod:
+    #   domain: landscaper.example.com

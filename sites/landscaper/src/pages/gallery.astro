@@ -1,0 +1,154 @@
+---
+/**
+ * Gallery Page
+ *
+ * Showcases past landscaping projects.
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+import { config } from "@/config";
+
+const projects = [
+  {
+    title: "Modern Backyard Oasis",
+    category: "Landscape Design",
+    description: "Complete backyard transformation with patio, fire pit, and native plantings.",
+  },
+  {
+    title: "Front Yard Curb Appeal",
+    category: "Landscape Design",
+    description: "New walkway, foundation plantings, and lawn renovation.",
+  },
+  {
+    title: "Stone Patio Installation",
+    category: "Hardscaping",
+    description: "Natural stone patio with built-in seating wall and outdoor kitchen area.",
+  },
+  {
+    title: "Perennial Garden",
+    category: "Planting",
+    description: "Low-maintenance perennial beds with year-round color and texture.",
+  },
+  {
+    title: "Irrigation System Upgrade",
+    category: "Irrigation",
+    description: "Smart irrigation system with drip zones and weather-based scheduling.",
+  },
+  {
+    title: "Commercial Property Maintenance",
+    category: "Lawn Maintenance",
+    description: "Year-round maintenance for office park with 5 acres of landscaping.",
+  },
+];
+
+const categories = ["All", "Landscape Design", "Hardscaping", "Planting", "Lawn Maintenance", "Irrigation"];
+---
+
+<PageLayout title="Gallery">
+  <!-- Hero -->
+  <section class="bg-primary/10 py-16 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+      <h1 class="text-4xl font-bold mb-4">Our Work</h1>
+      <p class="text-xl text-base-content/70">
+        Browse our portfolio of completed landscaping projects.
+      </p>
+    </div>
+  </section>
+
+  <!-- Category Filter -->
+  <section class="py-8 px-4 border-b border-primary/10">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex flex-wrap gap-2 justify-center">
+        {
+          categories.map((category, index) => (
+            <button
+              class:list={[
+                "btn btn-sm",
+                index === 0 ? "btn-primary" : "btn-outline btn-primary",
+              ]}
+              data-category={category}
+            >
+              {category}
+            </button>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Gallery Grid -->
+  <section class="py-16 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {
+          projects.map((project, index) => (
+            <div class="card bg-base-100 shadow-xl border border-primary/10 overflow-hidden group">
+              <figure class="relative h-48 bg-gradient-to-br from-primary/20 to-secondary/20">
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <span class="text-6xl opacity-50">
+                    {project.category === "Landscape Design" && "🏡"}
+                    {project.category === "Hardscaping" && "🧱"}
+                    {project.category === "Planting" && "🌺"}
+                    {project.category === "Lawn Maintenance" && "🌿"}
+                    {project.category === "Irrigation" && "💧"}
+                  </span>
+                </div>
+                <div class="absolute inset-0 bg-primary/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span class="text-primary-content font-semibold">View Project</span>
+                </div>
+              </figure>
+              <div class="card-body">
+                <div class="badge badge-outline badge-primary badge-sm">{project.category}</div>
+                <h3 class="card-title mt-2">{project.title}</h3>
+                <p class="text-base-content/70 text-sm">{project.description}</p>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="py-16 px-4 bg-secondary/5">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl font-bold text-center mb-12">What Our Clients Say</h2>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="card bg-base-100 shadow-lg">
+          <div class="card-body">
+            <div class="flex gap-1 text-warning mb-2">
+              <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+            </div>
+            <p class="italic text-base-content/70">
+              "Green Thumb transformed our boring backyard into an outdoor living space we use
+              every day. The design process was collaborative and the installation was flawless."
+            </p>
+            <div class="mt-4 font-semibold">— Sarah M., Homeowner</div>
+          </div>
+        </div>
+        <div class="card bg-base-100 shadow-lg">
+          <div class="card-body">
+            <div class="flex gap-1 text-warning mb-2">
+              <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+            </div>
+            <p class="italic text-base-content/70">
+              "We've used Green Thumb for our commercial property maintenance for 3 years.
+              Reliable, professional, and our property has never looked better."
+            </p>
+            <div class="mt-4 font-semibold">— Mike R., Property Manager</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-16 bg-primary text-primary-content">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-3xl font-bold mb-4">Ready to Start Your Project?</h2>
+      <p class="text-lg mb-8">
+        Let's discuss your vision and create something beautiful together.
+      </p>
+      <a href="/contact" class="btn btn-secondary btn-lg">Get Your Free Consultation</a>
+    </div>
+  </section>
+</PageLayout>

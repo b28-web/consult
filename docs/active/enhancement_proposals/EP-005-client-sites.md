@@ -13,14 +13,18 @@ Deploy all 8 planned client sites, establish tooling for rapid site creation, an
 |----|-------|--------|
 | 005-A | Site scaffolding + registry system | complete |
 | 005-B | Deploy coffee-shop site | complete |
-| 005-C | Deploy hauler site (+ Cal.com) | pending |
-| 005-D | Deploy cleaning site | pending |
-| 005-E | Deploy landscaper site | pending |
-| 005-F | Deploy barber site | pending |
-| 005-G | Deploy data-analytics site | pending |
-| 005-H | Deploy web-dev site | pending |
-| 005-I | Deploy local-agency site | pending |
-| 005-J | CI/CD pipeline for sites | pending |
+| 005-C | Deploy hauler site (+ Cal.com) | complete |
+| 005-D | Deploy cleaning site | complete |
+| 005-E | Deploy landscaper site | complete |
+| **005-F** | **Template hardening (mobile, CSS)** | **pending** |
+| 005-G | Deploy barber site | pending |
+| 005-H | Deploy data-analytics site | pending |
+| 005-I | Deploy web-dev site | pending |
+| 005-J | Deploy local-agency site | pending |
+| 005-K | CI/CD pipeline for sites | pending |
+
+> **Note:** 005-F inserted to consolidate template fixes before deploying more sites.
+> Reduces O(n) maintenance burden by fixing issues once in template.
 
 ## Design Decisions
 
@@ -97,6 +101,30 @@ The `coffee-shop` site in this EP is a **simple cafe** (static menu page, hours 
 | local-agency | B2B Services | Meta/self-referential | |
 
 ## Progress Log
+
+### 2026-01-22 (CSS fix + reprioritization)
+- Fixed Tailwind v4 + DaisyUI integration (added `@config` directive)
+- Rebuilt and redeployed all 4 sites
+- Created 005-F (template hardening) to address mobile responsiveness
+- Shifted remaining site deploys to 005-G through 005-J
+
+### 2026-01-22 (landscaper site)
+- Deployed landscaper site with seasonal services
+- Live at https://consult-landscaper-dev.pages.dev
+- Features: Services page with seasonal highlights, Gallery page, maintenance plans
+- 005-E complete
+
+### 2026-01-22 (cleaning site)
+- Deployed cleaning site with service packages
+- Live at https://consult-cleaning-dev.pages.dev
+- Features: Services page, Pricing page with 3 tiers + frequency discounts
+- 005-D complete
+
+### 2026-01-22 (hauler site)
+- Deployed hauler site with Cal.com booking integration
+- Live at https://consult-hauler-dev.pages.dev
+- Features: Services page with quote form, Pricing page, Book Now with Cal.com embed
+- 005-C complete
 
 ### 2026-01-22 (deployment)
 - Deployed coffee-shop site via `just deploy-wizard dev`

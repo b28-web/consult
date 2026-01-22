@@ -1,0 +1,193 @@
+---
+/**
+ * Services Page
+ *
+ * Displays all services with detailed descriptions and a quote request form.
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+import { config } from "@/config";
+---
+
+<PageLayout title="Services">
+  <!-- Hero -->
+  <section class="bg-base-200 py-16 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+      <h1 class="text-4xl font-bold mb-4">Our Services</h1>
+      <p class="text-xl text-base-content/70">
+        Professional junk removal services for any job, big or small.
+      </p>
+    </div>
+  </section>
+
+  <!-- Services List -->
+  <section class="py-16 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid gap-8">
+        {
+          config.services.map((service, index) => (
+            <div
+              id={service.slug}
+              class:list={[
+                "card lg:card-side bg-base-100 shadow-xl",
+                index % 2 === 1 && "lg:flex-row-reverse",
+              ]}
+            >
+              <figure class="lg:w-1/3 bg-primary/10 flex items-center justify-center p-8">
+                <div class="text-6xl text-primary">
+                  {service.slug === "residential-junk-removal" && "🏠"}
+                  {service.slug === "commercial-cleanouts" && "🏢"}
+                  {service.slug === "construction-debris" && "🔨"}
+                  {service.slug === "appliance-disposal" && "🧊"}
+                  {service.slug === "estate-cleanouts" && "📦"}
+                </div>
+              </figure>
+              <div class="card-body lg:w-2/3">
+                <h2 class="card-title text-2xl">{service.name}</h2>
+                <p class="text-lg">{service.description}</p>
+                <div class="card-actions justify-end mt-4">
+                  <a href="#quote-form" class="btn btn-primary">
+                    Get a Quote
+                  </a>
+                </div>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Quote Request Form -->
+  <section id="quote-form" class="py-16 px-4 bg-base-200">
+    <div class="max-w-2xl mx-auto">
+      <h2 class="text-3xl font-bold text-center mb-8">Request a Free Quote</h2>
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <form
+            action={config.intake.formUrl}
+            method="POST"
+            class="space-y-6"
+            id="quote-request-form"
+          >
+            <input type="hidden" name="form_type" value="quote_request" />
+
+            <div class="form-control">
+              <label class="label" for="name">
+                <span class="label-text">Your Name *</span>
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                class="input input-bordered"
+                required
+              />
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="form-control">
+                <label class="label" for="email">
+                  <span class="label-text">Email *</span>
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  class="input input-bordered"
+                  required
+                />
+              </div>
+              <div class="form-control">
+                <label class="label" for="phone">
+                  <span class="label-text">Phone *</span>
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  class="input input-bordered"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="form-control">
+              <label class="label" for="service">
+                <span class="label-text">Service Needed *</span>
+              </label>
+              <select
+                id="service"
+                name="service"
+                class="select select-bordered"
+                required
+              >
+                <option value="">Select a service...</option>
+                {
+                  config.services.map((service) => (
+                    <option value={service.slug}>{service.name}</option>
+                  ))
+                }
+                <option value="other">Other / Not Sure</option>
+              </select>
+            </div>
+
+            <div class="form-control">
+              <label class="label" for="address">
+                <span class="label-text">Pickup Address *</span>
+              </label>
+              <input
+                type="text"
+                id="address"
+                name="address"
+                class="input input-bordered"
+                placeholder="Street address, city, state, zip"
+                required
+              />
+            </div>
+
+            <div class="form-control">
+              <label class="label" for="items">
+                <span class="label-text">What do you need removed? *</span>
+              </label>
+              <textarea
+                id="items"
+                name="items"
+                class="textarea textarea-bordered h-24"
+                placeholder="Please describe the items, approximate quantity, and any access considerations (stairs, parking, etc.)"
+                required></textarea>
+            </div>
+
+            <div class="form-control">
+              <label class="label" for="preferred_date">
+                <span class="label-text">Preferred Pickup Date</span>
+              </label>
+              <input
+                type="date"
+                id="preferred_date"
+                name="preferred_date"
+                class="input input-bordered"
+              />
+            </div>
+
+            <div class="form-control mt-6">
+              <button type="submit" class="btn btn-primary btn-lg">
+                Request Quote
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-16 bg-primary text-primary-content">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-3xl font-bold mb-4">Need It Gone Today?</h2>
+      <p class="text-lg mb-8">
+        Book online for same-day pickup availability.
+      </p>
+      <a href="/book" class="btn btn-secondary btn-lg">Book Your Pickup</a>
+    </div>
+  </section>
+</PageLayout>

@@ -1,0 +1,81 @@
+---
+/**
+ * Book Now Page
+ *
+ * Cal.com booking widget for scheduling pickups.
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+import CalEmbed from "@/components/CalEmbed.astro";
+import { config } from "@/config";
+---
+
+<PageLayout title="Book Your Pickup">
+  <!-- Hero -->
+  <section class="bg-base-200 py-12 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+      <h1 class="text-4xl font-bold mb-4">Book Your Pickup</h1>
+      <p class="text-xl text-base-content/70">
+        Schedule your junk removal online. Same-day availability.
+      </p>
+    </div>
+  </section>
+
+  <!-- Booking Widget -->
+  <section class="py-12 px-4">
+    <div class="max-w-4xl mx-auto">
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <CalEmbed
+            username={config.calcom!.username}
+            eventSlug={config.calcom!.eventSlug}
+            mode="inline"
+            brandColor={config.calcom!.brandColor}
+            layout="month_view"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="py-16 px-4 bg-base-200">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl font-bold text-center mb-12">How It Works</h2>
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="text-center">
+          <div class="text-5xl mb-4">📅</div>
+          <h3 class="font-bold text-xl mb-2">1. Book Online</h3>
+          <p class="text-base-content/70">
+            Pick a date and time that works for you.
+          </p>
+        </div>
+        <div class="text-center">
+          <div class="text-5xl mb-4">👋</div>
+          <h3 class="font-bold text-xl mb-2">2. We Arrive</h3>
+          <p class="text-base-content/70">
+            Our crew shows up on time, ready to work.
+          </p>
+        </div>
+        <div class="text-center">
+          <div class="text-5xl mb-4">✨</div>
+          <h3 class="font-bold text-xl mb-2">3. It's Gone</h3>
+          <p class="text-base-content/70">
+            We haul it away and leave your space clean.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Alternative -->
+  <section class="py-12 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+      <p class="text-base-content/70 mb-4">
+        Prefer to talk to someone? Give us a call.
+      </p>
+      <a href={`tel:${config.client.phone}`} class="btn btn-outline btn-lg">
+        {config.client.phone}
+      </a>
+    </div>
+  </section>
+</PageLayout>

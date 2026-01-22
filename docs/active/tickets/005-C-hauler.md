@@ -1,7 +1,7 @@
 # 005-C: Deploy hauler Site (+ Cal.com)
 
 **EP:** [EP-005-client-sites](../enhancement_proposals/EP-005-client-sites.md)
-**Status:** pending
+**Status:** complete
 
 ## Summary
 
@@ -9,12 +9,12 @@ Deploy junk hauler site with Cal.com booking integration.
 
 ## Acceptance Criteria
 
-- [ ] Site created at `sites/hauler/`
-- [ ] Config: Quick Haul Co, bold blue/orange theme
-- [ ] Pages: Home, Services, Pricing, Book Now, Contact
-- [ ] Cal.com embed on Book Now page
-- [ ] Quote request form on Services page
-- [ ] Deployed to Cloudflare Pages
+- [x] Site created at `sites/hauler/`
+- [x] Config: Quick Haul Co, bold blue/orange theme
+- [x] Pages: Home, Services, Pricing, Book Now, Contact
+- [x] Cal.com embed on Book Now page
+- [x] Quote request form on Services page
+- [x] Deployed to Cloudflare Pages
 
 ## Implementation Notes
 
@@ -57,4 +57,11 @@ import { config } from '@/config';
 
 ## Progress
 
-(Not started)
+### 2026-01-22
+- Scaffolded site with `pnpm new-site --slug hauler --industry hauler --register`
+- Customized config with Quick Haul Co branding (blue #1d4ed8, orange #ea580c)
+- Created Services page with quote request form
+- Created Pricing page with tier pricing
+- Created Book Now page with Cal.com embed (username: quickhaul, event: pickup)
+- Deployed to Cloudflare Pages via Pulumi + wrangler
+- Live at https://consult-hauler-dev.pages.dev

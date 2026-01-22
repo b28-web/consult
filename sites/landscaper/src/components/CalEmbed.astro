@@ -1,0 +1,80 @@
+---
+/**
+ * Cal.com Embed Component
+ *
+ * Embeds a Cal.com booking widget in inline or popup mode.
+ * See: https://cal.com/docs/embeds/embed-snippet
+ */
+
+interface Props {
+  /** Cal.com username */
+  username: string;
+  /** Event type slug (e.g., "30min", "consultation") */
+  eventSlug: string;
+  /** Display mode: inline (embedded) or popup (button trigger) */
+  mode?: "inline" | "popup";
+  /** Button text for popup mode */
+  buttonText?: string;
+  /** Additional CSS classes for the container/button */
+  class?: string;
+  /** Brand color (hex without #) */
+  brandColor?: string;
+  /** Hide event type details in embed */
+  hideEventTypeDetails?: boolean;
+  /** Calendar layout */
+  layout?: "month_view" | "week_view" | "column_view";
+}
+
+const {
+  username,
+  eventSlug,
+  mode = "inline",
+  buttonText = "Book Appointment",
+  class: className = "",
+  brandColor,
+  hideEventTypeDetails = false,
+  layout = "month_view",
+} = Astro.props;
+
+const calLink = `${username}/${eventSlug}`;
+
+// Build config object for Cal.com embed
+const calConfig: Record<string, unknown> = {
+  layout,
+};
+
+if (hideEventTypeDetails) {
+  calConfig.hideEventTypeDetails = true;
+}
+
+if (brandColor) {
+  calConfig.styles = {
+    branding: {
+      brandColor: `#${brandColor}`,
+    },
+  };
+}
+
+const calConfigJson = JSON.stringify(calConfig);
+---
+
+{
+  mode === "inline" ? (
+    <div
+      data-cal-link={calLink}
+      data-cal-config={calConfigJson}
+      class:list={["cal-embed-inline", className]}
+      style="width:100%;min-height:600px;overflow:auto"
+    />
+  ) : (
+    <button
+      data-cal-link={calLink}
+      data-cal-config={calConfigJson}
+      class:list={["btn btn-primary", className]}
+    >
+      <slot>{buttonText}</slot>
+    </button>
+  )
+}
+
+<script is:inline src="https://app.cal.com/embed/embed.js" async></script>
