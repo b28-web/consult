@@ -3,6 +3,9 @@
   "manifest": {
     "version": 1,
     "install": {
+      "ansible": {
+        "pkg-path": "ansible"
+      },
       "curl": {
         "pkg-path": "curl"
       },
@@ -27,6 +30,12 @@
       "postgresql_16": {
         "pkg-path": "postgresql_16"
       },
+      "pulumi": {
+        "pkg-path": "pulumi"
+      },
+      "pulumi-language-python": {
+        "pkg-path": "pulumiPackages.pulumi-language-python"
+      },
       "python313": {
         "pkg-path": "python313"
       },
@@ -35,7 +44,7 @@
       }
     },
     "vars": {
-      "DJANGO_SETTINGS_MODULE": "config.settings",
+      "DJANGO_SETTINGS_MODULE": "apps.web.config.settings",
       "PYTHONDONTWRITEBYTECODE": "1",
       "PYTHONUNBUFFERED": "1"
     },
@@ -55,6 +64,126 @@
     }
   },
   "packages": [
+    {
+      "attr_path": "ansible",
+      "broken": false,
+      "derivation": "/nix/store/9fr7xwr3zyglv8q5pxnf4qa3vsmlf5yv-python3.13-ansible-core-2.20.0.drv",
+      "description": "Radically simple IT automation",
+      "install_id": "ansible",
+      "license": "GPL-3.0-or-later",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "name": "ansible-core-2.20.0",
+      "pname": "ansible",
+      "rev": "e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "rev_count": 928726,
+      "rev_date": "2026-01-16T12:01:49Z",
+      "scrape_date": "2026-01-17T03:20:15.027302Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2.20.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/dncwcdhaicawb493995mcqv6f64j0pj1-python3.13-ansible-core-2.20.0-dist",
+        "out": "/nix/store/78576mfkwvkn8f33ffa0qvdajvh0fvqf-python3.13-ansible-core-2.20.0"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "ansible",
+      "broken": false,
+      "derivation": "/nix/store/q4yxzzq0hljwqaalwy9yhc4w168dj391-python3.13-ansible-core-2.20.0.drv",
+      "description": "Radically simple IT automation",
+      "install_id": "ansible",
+      "license": "GPL-3.0-or-later",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "name": "ansible-core-2.20.0",
+      "pname": "ansible",
+      "rev": "e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "rev_count": 928726,
+      "rev_date": "2026-01-16T12:01:49Z",
+      "scrape_date": "2026-01-17T03:59:48.100498Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2.20.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/b4yw56gaz31z47fg2q037kp8q23fx9a0-python3.13-ansible-core-2.20.0-dist",
+        "out": "/nix/store/56ic5153bjjlvpwzvhqyp3wlqwa5jhff-python3.13-ansible-core-2.20.0"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "ansible",
+      "broken": false,
+      "derivation": "/nix/store/1fzch348h1gh2x90bh756hd8952401r8-python3.13-ansible-core-2.20.0.drv",
+      "description": "Radically simple IT automation",
+      "install_id": "ansible",
+      "license": "GPL-3.0-or-later",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "name": "ansible-core-2.20.0",
+      "pname": "ansible",
+      "rev": "e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "rev_count": 928726,
+      "rev_date": "2026-01-16T12:01:49Z",
+      "scrape_date": "2026-01-17T04:36:58.576834Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2.20.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/2vasffqr18hq1kyjyc7fksi4is4iidmm-python3.13-ansible-core-2.20.0-dist",
+        "out": "/nix/store/xh9bxjdz9lwfjdvxlsf7cbwc144h21yp-python3.13-ansible-core-2.20.0"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "ansible",
+      "broken": false,
+      "derivation": "/nix/store/pqw4hgxdp2q3szclz07ir7k86lf5aa06-python3.13-ansible-core-2.20.0.drv",
+      "description": "Radically simple IT automation",
+      "install_id": "ansible",
+      "license": "GPL-3.0-or-later",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "name": "ansible-core-2.20.0",
+      "pname": "ansible",
+      "rev": "e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "rev_count": 928726,
+      "rev_date": "2026-01-16T12:01:49Z",
+      "scrape_date": "2026-01-17T05:18:17.217907Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2.20.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/akwkn92f32g2fcv5v358rv77bnhwpjzw-python3.13-ansible-core-2.20.0-dist",
+        "out": "/nix/store/lx5isb0mnhzp8xmrc6qi48k4ry9vh59l-python3.13-ansible-core-2.20.0"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
     {
       "attr_path": "curl",
       "broken": false,
@@ -1104,6 +1233,238 @@
         "plperl": "/nix/store/balsnk9nsfh9npphyihagnr38awdz120-postgresql-16.11-plperl",
         "plpython3": "/nix/store/w47xfv2dr2xjrpgcd4s0pzvpz2sr8fka-postgresql-16.11-plpython3",
         "pltcl": "/nix/store/gr1axk67hlqqwncpgzq6dqbmr79wvw6v-postgresql-16.11-pltcl"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "pulumi",
+      "broken": false,
+      "derivation": "/nix/store/98yql1m694n1rlgvn5jagsn7v8ab7zyz-pulumi-3.192.0.drv",
+      "description": "Cloud development platform that makes creating cloud programs easy and productive",
+      "install_id": "pulumi",
+      "license": "Apache-2.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "name": "pulumi-3.192.0",
+      "pname": "pulumi",
+      "rev": "e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "rev_count": 928726,
+      "rev_date": "2026-01-16T12:01:49Z",
+      "scrape_date": "2026-01-17T03:20:54.795345Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "3.192.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/n8x2hgx3iay2kbzak7ilqflw00m5gxl3-pulumi-3.192.0"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "pulumi",
+      "broken": false,
+      "derivation": "/nix/store/vilymkqmqia03caaqmp2ggx2byp9nnq2-pulumi-3.192.0.drv",
+      "description": "Cloud development platform that makes creating cloud programs easy and productive",
+      "install_id": "pulumi",
+      "license": "Apache-2.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "name": "pulumi-3.192.0",
+      "pname": "pulumi",
+      "rev": "e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "rev_count": 928726,
+      "rev_date": "2026-01-16T12:01:49Z",
+      "scrape_date": "2026-01-17T04:00:49.486836Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "3.192.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/dh0z41gpn9wrmka6xk546dxmz7w0ww1x-pulumi-3.192.0"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "pulumi",
+      "broken": false,
+      "derivation": "/nix/store/q4j35h7zyy44d7dvr6p3h77yx1hgnjnc-pulumi-3.192.0.drv",
+      "description": "Cloud development platform that makes creating cloud programs easy and productive",
+      "install_id": "pulumi",
+      "license": "Apache-2.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "name": "pulumi-3.192.0",
+      "pname": "pulumi",
+      "rev": "e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "rev_count": 928726,
+      "rev_date": "2026-01-16T12:01:49Z",
+      "scrape_date": "2026-01-17T04:37:37.753869Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "3.192.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/hlkfclrqngq31rvlhxf8249zgmq5vc5r-pulumi-3.192.0"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "pulumi",
+      "broken": false,
+      "derivation": "/nix/store/2phb4bzdp8r959pv4ywphq4k32d5i66n-pulumi-3.192.0.drv",
+      "description": "Cloud development platform that makes creating cloud programs easy and productive",
+      "install_id": "pulumi",
+      "license": "Apache-2.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "name": "pulumi-3.192.0",
+      "pname": "pulumi",
+      "rev": "e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "rev_count": 928726,
+      "rev_date": "2026-01-16T12:01:49Z",
+      "scrape_date": "2026-01-17T05:19:19.857931Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "3.192.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/rf2dq59kalsqc64yp31g4p8gdvjdznsz-pulumi-3.192.0"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "pulumiPackages.pulumi-language-python",
+      "broken": false,
+      "derivation": "/nix/store/bafy19wkv1j4kwk20dvcbxm0ffqdcjma-pulumi-python-3.192.0.drv",
+      "description": "Language host for Pulumi programs written in Python",
+      "install_id": "pulumi-language-python",
+      "license": "Apache-2.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "name": "pulumi-python-3.192.0",
+      "pname": "pulumi-language-python",
+      "rev": "e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "rev_count": 928726,
+      "rev_date": "2026-01-16T12:01:49Z",
+      "scrape_date": "2026-01-17T03:20:54.813662Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "3.192.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/bxfi17wslibqzvpdvrdvknmxfqylhi6l-pulumi-python-3.192.0"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "pulumiPackages.pulumi-language-python",
+      "broken": false,
+      "derivation": "/nix/store/r36v3d09vsnrwxi6sgd8ns5rjp997q1s-pulumi-python-3.192.0.drv",
+      "description": "Language host for Pulumi programs written in Python",
+      "install_id": "pulumi-language-python",
+      "license": "Apache-2.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "name": "pulumi-python-3.192.0",
+      "pname": "pulumi-language-python",
+      "rev": "e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "rev_count": 928726,
+      "rev_date": "2026-01-16T12:01:49Z",
+      "scrape_date": "2026-01-17T04:00:49.508868Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "3.192.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/djf7d6i71094ywg2hszqzj24m0m1q64v-pulumi-python-3.192.0"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "pulumiPackages.pulumi-language-python",
+      "broken": false,
+      "derivation": "/nix/store/a76xq2brfn1qkwn1lym33fkz4z92w4k8-pulumi-python-3.192.0.drv",
+      "description": "Language host for Pulumi programs written in Python",
+      "install_id": "pulumi-language-python",
+      "license": "Apache-2.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "name": "pulumi-python-3.192.0",
+      "pname": "pulumi-language-python",
+      "rev": "e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "rev_count": 928726,
+      "rev_date": "2026-01-16T12:01:49Z",
+      "scrape_date": "2026-01-17T04:37:37.773192Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "3.192.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/wmxa3xrisnz4j011r0pgn6g7311vc6v9-pulumi-python-3.192.0"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "pulumiPackages.pulumi-language-python",
+      "broken": false,
+      "derivation": "/nix/store/wkmkg348nh037a1458bj9k0av3a8cr1a-pulumi-python-3.192.0.drv",
+      "description": "Language host for Pulumi programs written in Python",
+      "install_id": "pulumi-language-python",
+      "license": "Apache-2.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "name": "pulumi-python-3.192.0",
+      "pname": "pulumi-language-python",
+      "rev": "e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+      "rev_count": 928726,
+      "rev_date": "2026-01-16T12:01:49Z",
+      "scrape_date": "2026-01-17T05:19:19.880392Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "3.192.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/97dpnpswm3wgjnvp18ismh2qgzk24pxj-pulumi-python-3.192.0"
       },
       "system": "x86_64-linux",
       "group": "toplevel",

@@ -25,11 +25,12 @@ git.pkg-path = "git"
 # Build tools
 gnumake.pkg-path = "gnumake"
 just.pkg-path = "just"
-dagger.pkg-path = "dagger"
+# dagger: install via `brew install dagger/tap/dagger` (flox package has platform issues)
 
 # Infrastructure
 pulumi.pkg-path = "pulumi"
-pulumiPackages.pulumi-language-python.pkg-path = "pulumiPackages.pulumi-language-python"
+pulumi-language-python.pkg-path = "pulumiPackages.pulumi-language-python"
+ansible.pkg-path = "ansible"
 
 # Common utilities (explicit, not fallbacks)
 curl.pkg-path = "curl"

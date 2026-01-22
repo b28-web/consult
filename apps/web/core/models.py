@@ -17,11 +17,31 @@ class Client(models.Model):
     All data is scoped to a Client.
     """
 
+    class Vertical(models.TextChoices):
+        GENERAL = "general", "General"
+        JUNK_HAULER = "junk_hauler", "Junk Hauler"
+        BARBER = "barber", "Barber"
+        CLEANING = "cleaning", "Cleaning Service"
+        LANDSCAPER = "landscaper", "Landscaper"
+        COFFEE_SHOP = "coffee_shop", "Coffee Shop"
+        RESTAURANT = "restaurant", "Restaurant"
+        DATA_ANALYTICS = "data_analytics", "Data Analytics"
+        WEB_DEV = "web_dev", "Web Development"
+        LOCAL_AGENCY = "local_agency", "Local Agency"
+
     slug = models.SlugField(unique=True, help_text="URL-safe identifier")
     name = models.CharField(max_length=200)
     email = models.EmailField()
     phone = models.CharField(max_length=20, blank=True)
     address = models.TextField(blank=True)
+
+    # Business type for AI classification context
+    vertical = models.CharField(
+        max_length=50,
+        choices=Vertical.choices,
+        default=Vertical.GENERAL,
+        help_text="Business vertical for AI classification context",
+    )
 
     # Site configuration
     site_url = models.URLField(blank=True, help_text="Astro site URL")

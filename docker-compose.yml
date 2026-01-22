@@ -1,26 +1,66 @@
+# Local development Docker Compose
+# Usage: just dev (or docker compose up)
+#
+# Services:
+#   - django: Django backend on :8000
+#   - postgres: PostgreSQL database on :5432
+#   - redis: Redis cache on :6379
+#   - worker: Intake worker on :8787 (optional, uses Neon)
+
 services:
-  # Django backend
   django:
     build:
       context: .
-      dockerfile: docker/django.Dockerfile
+      dockerfile: apps/web/Dockerfile
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - SECRET_KEY=${SECRET_KEY}
-      - DEBUG=${DEBUG:-True}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      # Local postgres connection (not Neon)
+      - DATABASE_URL=postgres://consult:consult@postgres:5432/consult
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-not-for-production}
+      - DEBUG=True
+      - ALLOWED_HOSTS=localhost,127.0.0.1
     volumes:
-      - ./apps:/app/apps:ro
+      # Mount source for hot reload
+      - ./apps:/app/apps
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/admin/login/"]
       interval: 5s
       timeout: 3s
-      retries: 3
-      start_period: 10s
+      retries: 5
+      start_period: 15s
 
-  # Intake worker (Cloudflare Workers local dev)
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=consult
+      - POSTGRES_PASSWORD=consult
+      - POSTGRES_DB=consult
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U consult -d consult"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Intake worker (optional - only needed for end-to-end testing)
+  # Uses Neon database (cloud), not local postgres
   worker:
     build:
       context: .
@@ -32,9 +72,14 @@ services:
       - INTAKE_API_KEY=${INTAKE_API_KEY}
     volumes:
       - ./workers/intake/src:/app/src:ro
+    profiles:
+      - worker  # Only start with: docker compose --profile worker up
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8787/health"]
       interval: 5s
       timeout: 3s
       retries: 3
       start_period: 10s
+
+volumes:
+  postgres_data:

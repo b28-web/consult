@@ -26,13 +26,27 @@ class ClientMiddleware:
     def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
         self.get_response = get_response
 
+    # Paths that don't require a client
+    PUBLIC_PATHS = (
+        "/admin/",
+        "/dashboard/login/",
+        "/dashboard/logout/",
+    )
+
     def __call__(self, request: HttpRequest) -> HttpResponse:
-        # Skip for admin
-        if request.path.startswith("/admin/"):
+        # Skip for public paths
+        if any(request.path.startswith(path) for path in self.PUBLIC_PATHS):
+            request.client = None  # type: ignore[attr-defined]
             return self.get_response(request)
 
         client = self._get_client(request)
-        if client is None and request.path.startswith("/dashboard/"):
+        # Only require client for authenticated dashboard users
+        # Let @login_required handle unauthenticated users
+        if (
+            client is None
+            and request.path.startswith("/dashboard/")
+            and request.user.is_authenticated
+        ):
             raise Http404("Client not found")
 
         request.client = client  # type: ignore[attr-defined]

@@ -25,6 +25,7 @@ class Contact(ClientScopedModel):
     name = models.CharField(max_length=200)
     email = models.EmailField(blank=True)
     phone = models.CharField(max_length=20, blank=True)
+    address = models.TextField(blank=True, help_text="Service/mailing address")
 
     # Denormalized stats (updated by signals/tasks)
     message_count = models.PositiveIntegerField(default=0)
@@ -100,6 +101,10 @@ class Message(ClientScopedModel):
     urgency = models.CharField(max_length=20, blank=True)
     suggested_action = models.CharField(max_length=100, blank=True)
     ai_confidence = models.FloatField(null=True, blank=True)
+    ai_summary = models.TextField(blank=True, help_text="AI-generated message summary")
+    is_new_lead = models.BooleanField(
+        default=False, help_text="AI determined this is a new lead"
+    )
 
     # Timestamps
     received_at = models.DateTimeField(auto_now_add=True)
