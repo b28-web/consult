@@ -2,7 +2,7 @@
 
 **Status:** active
 **Sprint:** 2026-01-21 to 2026-02-04
-**Last Updated:** 2026-01-21
+**Last Updated:** 2026-01-22
 
 ## Goal
 
@@ -120,12 +120,12 @@ infra/
 ## Success Criteria
 
 - [ ] `pulumi up` provisions complete infrastructure
-- [ ] `pulumi preview` shows diff before changes
-- [ ] Separate dev/prod stacks with different configs
+- [x] `pulumi preview` shows diff before changes
+- [x] Separate dev/prod stacks with different configs
 - [ ] Django accessible via Cloudflare proxy
 - [ ] Workers deployed and routing correctly
 - [ ] Sites deployed to Pages
-- [ ] All secrets managed securely (no plaintext in state)
+- [x] All secrets managed securely (no plaintext in state)
 
 ## Cost Estimate
 
@@ -160,6 +160,8 @@ Production adds:
   - Cloudflare modules: dns, pages, workers
   - Stack configs for dev/prod
   - Justfile commands: infra-preview, infra-up, infra-init, infra-secrets
+  - Extended `just setup-infra` with infrastructure secrets wizard
+  - Added comprehensive guide: `docs/knowledge/playbook/infrastructure-setup.md`
 
 ### 2026-01-21
 - EP created

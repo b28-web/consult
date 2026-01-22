@@ -4,39 +4,41 @@ Current priorities and planned work for Consult.
 
 ## Active Sprints
 
+### EP-007: Pulumi Infrastructure ← *current*
+Infrastructure as code for Hetzner (Django) + Cloudflare (edge).
+
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 007-A | Pulumi project setup | ✓ completed |
+| 007-B | Cloudflare infrastructure | pending |
+| 007-C | Hetzner Django infrastructure | pending |
+| 007-D | Deployment orchestration | pending |
+
+**2026-01-22**: Completed 007-A. Pulumi project initialized with Hetzner/Cloudflare providers, `just setup-infra` extended with infrastructure secrets wizard.
+
+## Completed Sprints
+
 ### EP-001: Backend Foundation ✓
 Get the full stack working end-to-end.
 
 | Ticket | Title | Status |
 |--------|-------|--------|
-| 001-A | Django backend bootstrap | completed |
-| 001-B | Intake worker deployment | completed |
-| 001-C | First client site (coffee-shop) | completed |
+| 001-A | Django backend bootstrap | ✓ |
+| 001-B | Intake worker deployment | ✓ |
+| 001-C | First client site (coffee-shop) | ✓ |
 
-**Completed 2026-01-22**: Full stack verified with `just test-local`. Production deploy deferred to EP-007.
+**Completed 2026-01-22**: Full stack verified with `just test-local`.
 
 ### EP-006: Automated Deploy Validation ✓
 Create agent-driven pre-deploy validation pipeline with Dagger.
 
 | Ticket | Title | Status |
 |--------|-------|--------|
-| 006-A | Dagger pipeline setup | completed |
-| 006-B | Pre-deploy validation flow | completed |
-| 006-C | GitHub Actions integration | completed |
+| 006-A | Dagger pipeline setup | ✓ |
+| 006-B | Pre-deploy validation flow | ✓ |
+| 006-C | GitHub Actions integration | ✓ |
 
 **Completed 2026-01-21**: Full Dagger pipeline with parallel execution, JSON output, and GitHub Actions integration.
-
-**Updated 2026-01-22**: Optimized integration tests from ~30s+ timeout to ~9s total execution. Replaced slow HTTP health checks with faster `manage.py check` validation.
-
-### EP-007: Pulumi Infrastructure
-Infrastructure as code for Hetzner (Django) + Cloudflare (edge).
-
-| Ticket | Title | Status |
-|--------|-------|--------|
-| 007-A | Pulumi project setup | completed |
-| 007-B | Cloudflare infrastructure | pending |
-| 007-C | Hetzner Django infrastructure | pending |
-| 007-D | Deployment orchestration | pending |
 
 ## Planned Sprints
 
