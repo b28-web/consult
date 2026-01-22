@@ -1,7 +1,7 @@
 # 005-B: Deploy coffee-shop Site
 
 **EP:** [EP-005-client-sites](../enhancement_proposals/EP-005-client-sites.md)
-**Status:** pending
+**Status:** complete
 
 ## Summary
 
@@ -9,37 +9,40 @@ Deploy the first real client site for a coffee shop business.
 
 ## Acceptance Criteria
 
-- [ ] Site created at `sites/coffee-shop/`
-- [ ] Config: The Daily Grind, warm brown theme
-- [ ] Pages: Home, Menu, About, Contact
-- [ ] Contact form connected to intake worker
-- [ ] Deployed to Cloudflare Pages
-- [ ] Accessible at coffee-shop.consult.io (or preview URL)
+- [x] Site created at `sites/coffee-shop/`
+- [x] Config: The Daily Grind, warm brown theme
+- [x] Pages: Home, Menu, About, Contact
+- [x] Contact form connected to intake worker
+- [x] Deployed to Cloudflare Pages
+- [x] Accessible at preview URL
 
-## Implementation Notes
+## Deployed
 
-Brand:
+**URL:** https://consult-coffee-shop-dev.pages.dev
+
+## Implementation
+
+### Branding
 - Name: The Daily Grind
 - Tagline: "Your neighborhood coffee destination"
-- Colors: Brown (#78350f primary), Cream (#fef3c7)
+- Colors: Brown (#78350f primary), Cream (#fef3c7 base)
 
-Services:
+### Services
 - Coffee Bar
-- Fresh Pastries
+- Pastries
 - Catering
 - Event Space
 
-DaisyUI theme:
+### Theme (tailwind.config.ts)
 ```javascript
-// tailwind.config.ts
 daisyui: {
   themes: [{
     client: {
-      primary: "#78350f",      // Warm brown
-      secondary: "#92400e",
-      accent: "#fef3c7",       // Cream
-      neutral: "#1c1917",
-      "base-100": "#fffbeb",   // Warm white
+      primary: "#78350f",      // Rich brown
+      secondary: "#92400e",    // Amber brown
+      accent: "#b45309",       // Warm amber
+      "base-100": "#fef3c7",   // Cream background
+      "base-content": "#78350f", // Brown text
     }
   }]
 }
@@ -47,4 +50,8 @@ daisyui: {
 
 ## Progress
 
-(Not started)
+### 2026-01-22
+- Site already configured with The Daily Grind branding
+- Registered in sites/registry.yaml
+- Deployed via `just deploy-wizard dev`
+- Live at https://consult-coffee-shop-dev.pages.dev

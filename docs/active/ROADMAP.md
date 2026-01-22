@@ -18,7 +18,7 @@ Deploy 8 service/B2B client sites with scaffolding and registry-based deployment
 | Ticket | Title | Status |
 |--------|-------|--------|
 | 005-A | Site scaffolding + registry system | complete |
-| 005-B | Deploy coffee-shop site (cafe) | pending |
+| 005-B | Deploy coffee-shop site (cafe) | complete |
 | 005-C | Deploy hauler site (+ Cal.com) | pending |
 | 005-D | Deploy cleaning site | pending |
 | 005-E | Deploy landscaper site | pending |

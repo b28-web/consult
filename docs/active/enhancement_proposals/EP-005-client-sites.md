@@ -12,7 +12,7 @@ Deploy all 8 planned client sites, establish tooling for rapid site creation, an
 | ID | Title | Status |
 |----|-------|--------|
 | 005-A | Site scaffolding + registry system | complete |
-| 005-B | Deploy coffee-shop site | pending |
+| 005-B | Deploy coffee-shop site | complete |
 | 005-C | Deploy hauler site (+ Cal.com) | pending |
 | 005-D | Deploy cleaning site | pending |
 | 005-E | Deploy landscaper site | pending |
@@ -98,7 +98,12 @@ The `coffee-shop` site in this EP is a **simple cafe** (static menu page, hours 
 
 ## Progress Log
 
-### 2026-01-22 (continued)
+### 2026-01-22 (deployment)
+- Deployed coffee-shop site via `just deploy-wizard dev`
+- Live at https://consult-coffee-shop-dev.pages.dev
+- 005-B complete
+
+### 2026-01-22 (registry)
 - Built site registry system:
   - Created `sites/registry.yaml` as central deployment registry
   - Updated Pulumi `pages.py` to read from registry
