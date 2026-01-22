@@ -7,12 +7,16 @@ This module orchestrates infrastructure provisioning across:
 
 import pulumi
 from src import outputs
-from src.cloudflare import dns, pages, security, workers
+from src.cloudflare import dns, pages, workers
+# from src.cloudflare import security  # Disabled: requires Cloudflare Pro plan
 from src.hetzner import firewall, network, server, volume
 
 # Get environment from stack config
 config = pulumi.Config()
 env = config.require("environment")
+
+# Optional deploy SSH key for CI/automation access (no passphrase)
+deploy_ssh_public_key = config.get("deploy_ssh_public_key")
 
 # =============================================================================
 # Hetzner Infrastructure
@@ -38,6 +42,7 @@ django_server = server.create_server(
     firewall_id=hetzner_firewall.id.apply(int),
     ssh_key_id=ssh_key.id.apply(int),
     volume_id=storage_volume.id.apply(int),
+    deploy_ssh_public_key=deploy_ssh_public_key,
 )
 
 # =============================================================================
@@ -57,7 +62,9 @@ sites = pages.create_pages_projects(env)
 intake_worker = workers.create_workers(env)
 
 # Cloudflare security rules (WAF, rate limiting)
-security_rules = security.create_security_rules(env)
+# Disabled: requires Cloudflare Pro plan for rate limiting
+# security_rules = security.create_security_rules(env)
+security_rules: dict[str, object] = {}  # Empty placeholder
 
 # =============================================================================
 # Outputs

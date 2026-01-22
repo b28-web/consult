@@ -1,5 +1,7 @@
 """Hetzner server provisioning for Django backend."""
 
+from typing import Optional
+
 import pulumi
 import pulumi_hcloud as hcloud
 
@@ -8,11 +10,11 @@ from src.hetzner.cloud_init import generate_cloud_init
 # Server configuration by environment
 SERVER_CONFIG = {
     "dev": {
-        "server_type": "cx22",  # 2 vCPU, 4GB RAM, €4.50/mo
+        "server_type": "cpx11",  # 2 vCPU, 2GB RAM (cx22 deprecated)
         "location": "hil",  # Hillsboro (US West)
     },
     "prod": {
-        "server_type": "cx22",  # Start small, scale as needed
+        "server_type": "cpx21",  # 3 vCPU, 4GB RAM
         "location": "hil",
     },
 }
@@ -50,6 +52,7 @@ def create_server(
     firewall_id: pulumi.Output[int],
     ssh_key_id: pulumi.Output[int],
     volume_id: pulumi.Output[int],
+    deploy_ssh_public_key: Optional[str] = None,
 ) -> hcloud.Server:
     """Create Django application server.
 
@@ -60,12 +63,13 @@ def create_server(
         firewall_id: ID of the firewall to attach
         ssh_key_id: ID of the SSH key for access
         volume_id: ID of the storage volume to attach
+        deploy_ssh_public_key: Optional SSH public key for CI/automation access
 
     Returns:
         The created Hetzner server
     """
     server_config = SERVER_CONFIG.get(env, SERVER_CONFIG["dev"])
-    cloud_init = generate_cloud_init(env)
+    cloud_init = generate_cloud_init(env, deploy_ssh_public_key)
 
     server = hcloud.Server(
         f"consult-{env}-django",

@@ -1,0 +1,212 @@
+# Django deployment playbook
+# Deploys latest code and restarts the application
+#
+# Usage:
+#   just ansible-deploy dev
+#   just ansible-deploy prd
+#
+# Or manually:
+#   cd ansible
+#   ansible-playbook playbooks/deploy.yml -i inventory/dev.yml
+
+---
+- name: Deploy Django application
+  hosts: django
+  become: yes
+  gather_facts: yes
+
+  vars:
+    # Can be overridden via extra vars: -e "git_branch=feature-x"
+    git_branch: "{{ lookup('env', 'GIT_BRANCH') | default('main', true) }}"
+    doppler_project: "{{ lookup('env', 'DOPPLER_PROJECT') | default('b28-consult', true) }}"
+    doppler_config: "{{ lookup('env', 'DOPPLER_CONFIG') | default('dev', true) }}"
+    doppler_token: "{{ lookup('env', 'DOPPLER_SERVICE_TOKEN') | default('', true) }}"
+    git_repo: "{{ lookup('env', 'GIT_REPO') | default('https://github.com/b28-web/consult.git', true) }}"
+    django_server_name: "{{ lookup('env', 'DOMAIN') | default('_', true) }}"
+
+  pre_tasks:
+    - name: Validate required environment variables
+      ansible.builtin.assert:
+        that:
+          - lookup('env', 'DJANGO_SERVER_IP') | length > 0
+        fail_msg: "DJANGO_SERVER_IP environment variable must be set"
+
+    - name: Display deployment info
+      ansible.builtin.debug:
+        msg: |
+          Deploying to: {{ ansible_host }}
+          Git branch: {{ git_branch }}
+          Doppler config: {{ doppler_config }}
+          Domain: {{ django_server_name }}
+
+  roles:
+    - django
+
+  post_tasks:
+    - name: Get git commit info
+      ansible.builtin.shell: |
+        cd {{ app_dir }} && git rev-parse --short HEAD 2>/dev/null || echo "unknown"
+      register: git_commit
+      changed_when: false
+
+    # =========================================================================
+    # Sequential Health Checks - fail fast on specific component
+    # =========================================================================
+
+    # Step 1: Wait for gunicorn socket (30s timeout)
+    - name: "Health Check 1/3: Wait for gunicorn socket"
+      ansible.builtin.wait_for:
+        path: /run/consult/gunicorn.sock
+        state: present
+        timeout: 30
+      register: socket_check
+      ignore_errors: yes
+
+    - name: Check gunicorn socket exists
+      ansible.builtin.stat:
+        path: /run/consult/gunicorn.sock
+      register: gunicorn_socket
+
+    # Step 2: Verify systemd service is active
+    - name: "Health Check 2/3: Verify Django service is active"
+      ansible.builtin.shell: systemctl is-active consult-django
+      register: systemd_status
+      ignore_errors: yes
+
+    # Step 3: Verify nginx is running
+    - name: "Health Check 3/3: Verify nginx is running"
+      ansible.builtin.shell: systemctl is-active nginx
+      register: nginx_status
+      ignore_errors: yes
+
+    # Step 4: HTTP health check with retries
+    - name: "Health Check 4/4: Wait for Django HTTP response"
+      ansible.builtin.uri:
+        url: "http://localhost/admin/login/"
+        status_code: 200
+      register: health_check
+      retries: 15
+      delay: 2
+      until: health_check.status == 200
+      ignore_errors: yes
+
+    # Determine which check failed
+    - name: Determine failed health check
+      ansible.builtin.set_fact:
+        failed_check: >-
+          {% if socket_check.failed | default(false) %}gunicorn_socket
+          {% elif systemd_status.rc | default(0) != 0 %}systemd_service
+          {% elif nginx_status.rc | default(0) != 0 %}nginx_service
+          {% elif health_check.failed | default(false) %}http_response
+          {% else %}none{% endif %}
+        health_check_passed: >-
+          {{ not (socket_check.failed | default(false)) and
+             (systemd_status.rc | default(0) == 0) and
+             (nginx_status.rc | default(0) == 0) and
+             not (health_check.failed | default(false)) }}
+
+    # =========================================================================
+    # Diagnostic collection on failure
+    # =========================================================================
+
+    - name: Get Django service logs on failure
+      ansible.builtin.shell: |
+        journalctl -u consult-django -n 30 --no-pager
+      register: django_logs
+      when: not health_check_passed
+
+    - name: Get nginx error logs on failure
+      ansible.builtin.shell: |
+        tail -30 /var/log/nginx/error.log 2>/dev/null || echo "No nginx error log"
+      register: nginx_logs
+      when: not health_check_passed
+
+    # Generate suggestions based on failed check
+    - name: Generate error suggestions
+      ansible.builtin.set_fact:
+        error_suggestions: |
+          {% set suggestions = [] %}
+          {% if failed_check | trim == 'gunicorn_socket' %}
+          {% set _ = suggestions.append("Gunicorn socket not created - service failed to start.") %}
+          {% set _ = suggestions.append("Check DOPPLER_SERVICE_TOKEN is correctly set in Doppler.") %}
+          {% set _ = suggestions.append("Run: just agent-cmd ENV DOPPLER_CFG 'sudo journalctl -u consult-django -n 50'") %}
+          {% elif failed_check | trim == 'systemd_service' %}
+          {% set _ = suggestions.append("Django systemd service not active - may have crashed on startup.") %}
+          {% set _ = suggestions.append("Run: just agent-cmd ENV DOPPLER_CFG 'sudo systemctl status consult-django'") %}
+          {% elif failed_check | trim == 'nginx_service' %}
+          {% set _ = suggestions.append("Nginx service not running - check nginx configuration.") %}
+          {% set _ = suggestions.append("Run: just agent-cmd ENV DOPPLER_CFG 'sudo nginx -t'") %}
+          {% elif failed_check | trim == 'http_response' %}
+          {% set _ = suggestions.append("HTTP check failed - Django app may be erroring.") %}
+          {% set _ = suggestions.append("Check for Python/Django errors in logs.") %}
+          {% endif %}
+          {% if django_logs is defined and 'Doppler' in django_logs.stdout | default('') %}
+          {% set _ = suggestions.append("Doppler error detected - verify DOPPLER_SERVICE_TOKEN is set correctly.") %}
+          {% endif %}
+          {% if django_logs is defined and 'ModuleNotFoundError' in django_logs.stdout | default('') %}
+          {% set _ = suggestions.append("Missing Python module - try: just agent-cmd ENV DOPPLER_CFG 'cd /app && uv sync'") %}
+          {% endif %}
+          {% if django_logs is defined and 'database' in (django_logs.stdout | default('') | lower) %}
+          {% set _ = suggestions.append("Database error - verify DATABASE_URL in Doppler.") %}
+          {% endif %}
+          {% set _ = suggestions.append("Run: just agent-logs ENV DOPPLER_CFG") %}
+          {% set _ = suggestions.append("Run: just agent-status ENV DOPPLER_CFG") %}
+          {{ suggestions | to_json }}
+      when: not health_check_passed
+
+    # =========================================================================
+    # Structured JSON error output
+    # =========================================================================
+    - name: Display structured error output
+      ansible.builtin.debug:
+        msg: |
+          ═══ DEPLOYMENT FAILED ═══
+
+          {
+            "status": "failed",
+            "phase": "health_check",
+            "failed_check": "{{ failed_check | trim }}",
+            "error": "{% if failed_check | trim == 'gunicorn_socket' %}Gunicorn socket not created after 30s{% elif failed_check | trim == 'systemd_service' %}Django systemd service not active{% elif failed_check | trim == 'nginx_service' %}Nginx service not active{% else %}HTTP {{ health_check.status | default('timeout') }} after 15 retries{% endif %}",
+            "server": "{{ ansible_host }}",
+            "logs": {
+              "django_service": {{ django_logs.stdout | default('No logs available') | to_json }},
+              "nginx_error": {{ nginx_logs.stdout | default('No logs available') | to_json }}
+            },
+            "checks": {
+              "gunicorn_socket": {{ gunicorn_socket.stat.exists | default(false) | to_json }},
+              "systemd_active": {{ (systemd_status.rc | default(1) == 0) | to_json }},
+              "nginx_running": {{ (nginx_status.rc | default(1) == 0) | to_json }},
+              "http_200": {{ (health_check.status | default(0) == 200) | to_json }}
+            },
+            "suggestions": {{ error_suggestions | default('[]') }}
+          }
+      when: not health_check_passed
+
+    - name: Fail if any health check failed
+      ansible.builtin.fail:
+        msg: "Health check failed at: {{ failed_check | trim }}. See structured error output above."
+      when: not health_check_passed
+
+    # =========================================================================
+    # Structured JSON success output
+    # =========================================================================
+    - name: Display structured success output
+      ansible.builtin.debug:
+        msg: |
+          ═══ DEPLOYMENT SUCCESSFUL ═══
+
+          {
+            "status": "success",
+            "server": "{{ ansible_host }}",
+            "url": "http://{{ django_server_name }}",
+            "admin_url": "http://{{ django_server_name }}/admin/",
+            "git_branch": "{{ git_branch }}",
+            "git_commit": "{{ git_commit.stdout | default('unknown') }}",
+            "checks": {
+              "gunicorn_socket": true,
+              "systemd_active": true,
+              "nginx_running": true,
+              "http_200": true
+            }
+          }
+      when: health_check_passed

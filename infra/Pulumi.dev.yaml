@@ -1,8 +1,12 @@
 config:
   consult-infra:environment: dev
-  consult-infra:domain: example.com
-  consult-infra:cloudflare_account_id:
-    secure: PLACEHOLDER_RUN_PULUMI_CONFIG_SET
-  consult-infra:cloudflare_zone_id:
-    secure: PLACEHOLDER_RUN_PULUMI_CONFIG_SET
+  consult-infra:domain: consult.b28.dev
+  consult-infra:cloudflare_account_id: caaec605822549aee441310a1c77bb43
+  consult-infra:cloudflare_zone_id: 244668d17b9c91e4b482502ba6ed0d83
   consult-infra:ssh_key_name: consult-dev
+  hcloud:token:
+    secure: AAABADXqq+slleUYb5+SdlY0F0h//csAnzFSkvka9+8xE7f33w6EQAnwkd0HVUXQPN9h7OC7yk37pHf5Y8rprhGtd9Eb2U/Y25qvUjV9ma3OJswoeAgve0qmKjhJ2jaw
+  cloudflare:apiToken:
+    secure: AAABALa6caKynfdvSf5zdgyWAn52XuAIiMa4hvQuojhuKRjeWVeEnP5l4GQw0Q+FK5xkjn3QBOi2HSVp9xqNmUAhtLG+xy7S
+  consult-infra:ssh_public_key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEagnOVdjHMK4hmqlih2t98+iRVL/Xca7ZCV8G4l7YL0 SSH-Key - Mac Mini M4 - john.hk.chen@gmail.com
+  consult-infra:deploy_ssh_public_key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG5LRkv2ILC32S7s2MrIfH4tTD2wdzaTmKyMzbgM5JhJ ci-deploy@consult

@@ -1,0 +1,41 @@
+# Common variables for all environments
+
+# Application settings
+app_user: deploy
+app_group: deploy
+app_dir: /app
+
+# Python settings
+python_version: "3.12"
+
+# System packages to install
+system_packages:
+  - curl
+  - git
+  - nginx
+  - ufw
+  - acl
+  - gnupg
+  - apt-transport-https
+  - ca-certificates
+
+# Firewall ports
+firewall_allowed_ports:
+  - "22"    # SSH
+  - "80"    # HTTP
+  - "443"   # HTTPS
+
+# Nginx settings
+nginx_worker_processes: auto
+nginx_worker_connections: 1024
+nginx_client_max_body_size: "10M"
+
+# Git settings
+git_repo: "https://github.com/b28-web/consult.git"
+git_branch: main
+
+# Gunicorn settings
+gunicorn_workers: 2
+
+# Doppler settings
+doppler_config: dev

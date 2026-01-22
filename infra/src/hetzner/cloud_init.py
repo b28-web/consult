@@ -1,7 +1,9 @@
 """Cloud-init configuration for Django server bootstrap."""
 
+from typing import Optional
 
-def generate_cloud_init(env: str) -> str:
+
+def generate_cloud_init(env: str, deploy_ssh_public_key: Optional[str] = None) -> str:
     """Generate cloud-init script for Django server.
 
     Sets up:
@@ -9,44 +11,57 @@ def generate_cloud_init(env: str) -> str:
     - App directory structure
     - Volume mount point
     - Log rotation for Docker
+    - Deploy SSH key for CI/automation access
 
     Args:
         env: Environment name (dev, prod)
+        deploy_ssh_public_key: Optional SSH public key for CI/automation access
 
     Returns:
         Cloud-init YAML configuration string
     """
+    # Add deploy key to authorized_keys if provided (for agent/CI access)
+    ssh_keys_section = ""
+    if deploy_ssh_public_key:
+        ssh_keys_section = f"""
+ssh_authorized_keys:
+  - {deploy_ssh_public_key}
+"""
+
     return f"""#cloud-config
 package_update: true
 package_upgrade: true
+{ssh_keys_section}
 
 packages:
-  - docker.io
-  - docker-compose-plugin
+  - ca-certificates
   - curl
   - git
   - htop
   - vim
 
 runcmd:
+  # Install Docker from official repository (includes compose plugin)
+  - install -m 0755 -d /etc/apt/keyrings
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  - chmod a+r /etc/apt/keyrings/docker.asc
+  - |
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" > /etc/apt/sources.list.d/docker.list
+  - apt-get update
+  - apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
   # Enable and start Docker
   - systemctl enable docker
   - systemctl start docker
 
-  # Add ubuntu user to docker group
-  - usermod -aG docker ubuntu
-
   # Create app directory
   - mkdir -p /app
-  - chown -R ubuntu:ubuntu /app
 
   # Create data directory for volume mount
   - mkdir -p /data
-  - chown -R ubuntu:ubuntu /data
 
   # Create log directory
   - mkdir -p /var/log/consult
-  - chown -R ubuntu:ubuntu /var/log/consult
 
   # Set up Docker log rotation
   - |
@@ -86,13 +101,11 @@ runcmd:
     echo "=== Deployment completed at $(date) ==="
     DEPLOY_EOF
   - chmod +x /app/deploy.sh
-  - chown ubuntu:ubuntu /app/deploy.sh
 
 write_files:
   # Health check script
   - path: /app/health-check.sh
     permissions: '0755'
-    owner: ubuntu:ubuntu
     content: |
       #!/bin/bash
       curl -sf http://localhost:8000/health/ || exit 1
@@ -108,7 +121,7 @@ write_files:
 
       [Service]
       Type=simple
-      User=ubuntu
+      User=root
       WorkingDirectory=/app
       ExecStart=/usr/bin/docker compose up
       ExecStop=/usr/bin/docker compose down

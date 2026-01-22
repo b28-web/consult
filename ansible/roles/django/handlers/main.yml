@@ -1,0 +1,20 @@
+# Django role handlers
+---
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Restart django
+  ansible.builtin.service:
+    name: consult-django
+    state: restarted
+
+- name: Reload django
+  ansible.builtin.service:
+    name: consult-django
+    state: reloaded
+
+- name: Reload nginx
+  ansible.builtin.service:
+    name: nginx
+    state: reloaded

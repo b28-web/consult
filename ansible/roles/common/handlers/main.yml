@@ -1,0 +1,11 @@
+# Common role handlers
+---
+- name: Reload nginx
+  ansible.builtin.service:
+    name: nginx
+    state: reloaded
+
+- name: Restart nginx
+  ansible.builtin.service:
+    name: nginx
+    state: restarted

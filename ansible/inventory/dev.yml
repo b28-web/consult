@@ -1,0 +1,21 @@
+# Development environment inventory
+# Server IP is passed via environment variable from Pulumi outputs
+#
+# Usage:
+#   export DJANGO_SERVER_IP=$(cd infra && pulumi stack output django_server_ip --stack dev)
+#   ansible-playbook playbooks/setup.yml -i inventory/dev.yml
+#
+# Or via justfile:
+#   just ansible-setup dev
+
+all:
+  hosts:
+    django:
+      ansible_host: "{{ lookup('env', 'DJANGO_SERVER_IP') }}"
+      ansible_user: root
+      ansible_python_interpreter: /usr/bin/python3
+  vars:
+    env: dev
+    app_user: deploy
+    app_dir: /app
+    domain: "{{ lookup('env', 'DOMAIN') | default('localhost', true) }}"

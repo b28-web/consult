@@ -1,0 +1,52 @@
+# Server setup playbook
+# Configures a fresh server with all dependencies for Django deployment
+#
+# Usage:
+#   just ansible-setup dev
+#   just ansible-setup prd
+#
+# Or manually:
+#   cd ansible
+#   ansible-playbook playbooks/setup.yml -i inventory/dev.yml
+
+---
+- name: Setup server for Django deployment
+  hosts: django
+  become: yes
+  gather_facts: yes
+
+  pre_tasks:
+    - name: Validate required environment variables
+      ansible.builtin.assert:
+        that:
+          - lookup('env', 'DJANGO_SERVER_IP') | length > 0
+        fail_msg: "DJANGO_SERVER_IP environment variable must be set"
+
+    - name: Display target server info
+      ansible.builtin.debug:
+        msg: |
+          Target: {{ ansible_host }}
+          Environment: {{ env }}
+          App directory: {{ app_dir }}
+
+  roles:
+    - common
+
+  post_tasks:
+    - name: Display structured success output
+      ansible.builtin.debug:
+        msg: |
+          ═══ SERVER SETUP SUCCESSFUL ═══
+
+          {
+            "status": "success",
+            "phase": "setup",
+            "server": "{{ ansible_host }}",
+            "environment": "{{ env }}",
+            "app_directory": "{{ app_dir }}",
+            "app_user": "{{ app_user }}",
+            "next_steps": [
+              "Run deployment: just ansible-deploy {{ env }}",
+              "Or SSH as deploy user: ssh {{ app_user }}@{{ ansible_host }}"
+            ]
+          }

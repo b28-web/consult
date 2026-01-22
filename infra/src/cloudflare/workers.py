@@ -34,17 +34,21 @@ def create_workers(env: str) -> dict[str, Any]:
     # Subdomain prefix for non-prod
     prefix = "" if env == "prod" else f"{env}."
 
-    # Worker route
-    route = cloudflare.WorkerRoute(
-        f"consult-{env}-intake-route",
-        zone_id=zone_id,
-        pattern=f"{prefix}intake.{domain}/*",
-        script_name=worker_name,
-    )
+    # Worker route - DISABLED until worker is deployed via wrangler
+    # The route requires the worker to exist first. Deploy worker with:
+    #   just deploy-worker-to dev_personal
+    # Then re-enable this route.
+    #
+    # route = cloudflare.WorkerRoute(
+    #     f"consult-{env}-intake-route",
+    #     zone_id=zone_id,
+    #     pattern=f"{prefix}intake.{domain}/*",
+    #     script_name=worker_name,
+    # )
 
     workers["intake"] = {
         "name": worker_name,
-        "route": route,
+        # "route": route,  # Re-enable after worker deployment
     }
 
     return workers

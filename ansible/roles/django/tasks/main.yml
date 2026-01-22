@@ -1,0 +1,128 @@
+# Django role - application deployment
+---
+- name: Create run directory for gunicorn socket
+  ansible.builtin.file:
+    path: /run/consult
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: "0755"
+
+- name: Create staticfiles directory
+  ansible.builtin.file:
+    path: "{{ app_dir }}/staticfiles"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: "0755"
+
+- name: Check if app directory is a git repo
+  ansible.builtin.stat:
+    path: "{{ app_dir }}/.git"
+  register: git_dir
+
+- name: Clean app directory if not a git repo
+  ansible.builtin.file:
+    path: "{{ app_dir }}"
+    state: absent
+  when: not git_dir.stat.exists
+
+- name: Recreate app directory
+  ansible.builtin.file:
+    path: "{{ app_dir }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: "0755"
+  when: not git_dir.stat.exists
+
+- name: Clone or update repository
+  ansible.builtin.git:
+    repo: "{{ git_repo }}"
+    dest: "{{ app_dir }}"
+    version: "{{ git_branch }}"
+    force: yes
+  become_user: "{{ app_user }}"
+  register: git_result
+
+- name: Install Python dependencies with uv
+  ansible.builtin.shell: |
+    cd {{ app_dir }}
+    /usr/local/bin/uv sync --frozen
+  become_user: "{{ app_user }}"
+  when: git_result.changed or force_deploy | default(false)
+
+- name: Write Doppler token file
+  ansible.builtin.copy:
+    content: "DOPPLER_TOKEN={{ doppler_token }}"
+    dest: "{{ app_dir }}/.doppler-token"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: "0600"
+  when: doppler_token is defined and doppler_token | length > 0
+  no_log: true
+
+- name: Verify Doppler token file exists
+  ansible.builtin.stat:
+    path: "{{ app_dir }}/.doppler-token"
+  register: doppler_token_file
+
+- name: Fail if Doppler token not configured
+  ansible.builtin.fail:
+    msg: |
+      Doppler token not configured. Set DOPPLER_SERVICE_TOKEN in Doppler:
+        1. Go to dashboard.doppler.com -> b28-consult -> dev config
+        2. Access -> Service Tokens -> Generate
+        3. doppler secrets set DOPPLER_SERVICE_TOKEN --config dev_personal
+  when: not doppler_token_file.stat.exists
+
+- name: Run database migrations
+  ansible.builtin.shell: |
+    cd {{ app_dir }}
+    . {{ app_dir }}/.doppler-token
+    doppler run --token $DOPPLER_TOKEN --project {{ doppler_project | default('b28-consult') }} --config {{ doppler_config }} -- /usr/local/bin/uv run python apps/web/manage.py migrate --noinput
+  become_user: "{{ app_user }}"
+  when: git_result.changed or force_deploy | default(false)
+
+- name: Collect static files
+  ansible.builtin.shell: |
+    cd {{ app_dir }}
+    . {{ app_dir }}/.doppler-token
+    doppler run --token $DOPPLER_TOKEN --project {{ doppler_project | default('b28-consult') }} --config {{ doppler_config }} -- /usr/local/bin/uv run python apps/web/manage.py collectstatic --noinput
+  become_user: "{{ app_user }}"
+  when: git_result.changed or force_deploy | default(false)
+
+- name: Install systemd service
+  ansible.builtin.template:
+    src: consult-django.service.j2
+    dest: /etc/systemd/system/consult-django.service
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart django
+
+- name: Install tmpfiles.d config for socket directory
+  ansible.builtin.copy:
+    content: "d /run/consult 0755 {{ app_user }} {{ app_group }} -"
+    dest: /etc/tmpfiles.d/consult.conf
+    mode: "0644"
+
+- name: Install nginx site config
+  ansible.builtin.template:
+    src: nginx-django.conf.j2
+    dest: /etc/nginx/sites-available/consult-django
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Enable nginx site
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/consult-django
+    dest: /etc/nginx/sites-enabled/consult-django
+    state: link
+  notify: Reload nginx
+
+- name: Ensure Django service is started and enabled
+  ansible.builtin.service:
+    name: consult-django
+    state: started
+    enabled: yes

@@ -1,0 +1,153 @@
+# Common role - base server configuration
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install system packages
+  ansible.builtin.apt:
+    name: "{{ system_packages }}"
+    state: present
+
+- name: Create application group
+  ansible.builtin.group:
+    name: "{{ app_group }}"
+    state: present
+
+- name: Create deploy user
+  ansible.builtin.user:
+    name: "{{ app_user }}"
+    group: "{{ app_group }}"
+    groups: sudo
+    shell: /bin/bash
+    create_home: yes
+    state: present
+
+- name: Allow deploy user passwordless sudo
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers.d/{{ app_user }}
+    line: "{{ app_user }} ALL=(ALL) NOPASSWD:ALL"
+    create: yes
+    mode: "0440"
+    validate: "visudo -cf %s"
+
+- name: Create .ssh directory for deploy user
+  ansible.builtin.file:
+    path: /home/{{ app_user }}/.ssh
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: "0700"
+
+- name: Create .doppler directory for deploy user (Doppler CLI cache)
+  ansible.builtin.file:
+    path: /home/{{ app_user }}/.doppler
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: "0700"
+
+- name: Add manual SSH key to authorized_keys
+  ansible.posix.authorized_key:
+    user: "{{ app_user }}"
+    key: "{{ lookup('env', 'SSH_PUBLIC_KEY') }}"
+    comment: "manual-access"
+  when: lookup('env', 'SSH_PUBLIC_KEY') | length > 0
+
+- name: Add CI deploy key to authorized_keys
+  ansible.posix.authorized_key:
+    user: "{{ app_user }}"
+    key: "{{ lookup('env', 'DEPLOY_SSH_PUBLIC_KEY') }}"
+    comment: "ci-deploy@consult"
+  when: lookup('env', 'DEPLOY_SSH_PUBLIC_KEY') | length > 0
+
+- name: Create application directory
+  ansible.builtin.file:
+    path: "{{ app_dir }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: "0755"
+
+- name: Install Python {{ python_version }}
+  ansible.builtin.apt:
+    name:
+      - python{{ python_version }}
+      - python{{ python_version }}-venv
+      - python{{ python_version }}-dev
+    state: present
+
+- name: Set Python {{ python_version }} as default
+  ansible.builtin.shell: |
+    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python{{ python_version }} 1
+  args:
+    creates: /etc/alternatives/python3
+  changed_when: false
+
+- name: Check if uv is installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/uv
+  register: uv_binary
+
+- name: Install uv
+  ansible.builtin.shell: |
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    mv /root/.local/bin/uv /usr/local/bin/uv
+    mv /root/.local/bin/uvx /usr/local/bin/uvx
+  args:
+    creates: /usr/local/bin/uv
+  when: not uv_binary.stat.exists
+
+- name: Install Doppler CLI
+  block:
+    - name: Add Doppler GPG key
+      ansible.builtin.shell: |
+        curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' | gpg --dearmor -o /usr/share/keyrings/doppler-archive-keyring.gpg
+      args:
+        creates: /usr/share/keyrings/doppler-archive-keyring.gpg
+
+    - name: Add Doppler apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/doppler-archive-keyring.gpg] https://packages.doppler.com/public/cli/deb/debian any-version main"
+        state: present
+        filename: doppler
+
+    - name: Install Doppler CLI
+      ansible.builtin.apt:
+        name: doppler
+        state: present
+        update_cache: yes
+
+- name: Configure UFW firewall
+  block:
+    - name: Set UFW default deny incoming
+      ansible.builtin.shell: ufw default deny incoming
+      changed_when: false
+
+    - name: Set UFW default allow outgoing
+      ansible.builtin.shell: ufw default allow outgoing
+      changed_when: false
+
+    - name: Allow firewall ports
+      ansible.builtin.shell: ufw allow {{ item }}/tcp
+      loop: "{{ firewall_allowed_ports }}"
+      changed_when: false
+
+    - name: Enable UFW
+      ansible.builtin.shell: ufw --force enable
+      changed_when: false
+
+- name: Configure nginx
+  block:
+    - name: Remove default nginx site
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Reload nginx
+
+    - name: Ensure nginx is started and enabled
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: yes

@@ -1,0 +1,9 @@
+# Ansible Galaxy requirements
+# Install with: ansible-galaxy install -r requirements.yml
+#
+# Note: Currently using only ansible.builtin modules to minimize dependencies.
+# Add collections here if needed for more advanced features.
+---
+collections:
+  - name: ansible.posix
+    version: ">=1.5.0"

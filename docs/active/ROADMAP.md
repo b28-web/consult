@@ -4,7 +4,46 @@ Current priorities and planned work for Consult.
 
 ## Active Sprints
 
-None currently. All planned infrastructure work complete.
+### EP-011: Agent-Deployable Infrastructure ✓
+Make deployment flow fully runnable by LLM coding agents. Enables autonomous debugging and deployment.
+
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 011-A | SSH key retrieval for agent | ✓ |
+| 011-B | Non-interactive command verification | ✓ |
+| 011-C | Structured error output from Ansible | ✓ |
+| 011-D | Health check improvements | ✓ |
+| 011-E | End-to-end agent test | ✓ |
+
+**Completed 2026-01-22**: Agent can now:
+- SSH to servers using `just agent-cmd` with Doppler-stored keys
+- Run `CONFIRM=yes just agent-test-deploy` for full end-to-end testing
+- Get structured JSON error output with actionable suggestions
+- Debug failures without human intervention
+
+**Note:** Full test blocked by Django `STATIC_ROOT` config issue (app config, not infra).
+
+---
+
+### EP-009: Ansible Deployment ✓
+Ansible for Django deployment to Hetzner. Docker for local dev/testing only (no container registry).
+
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 009-A | Local Docker setup | ✓ |
+| 009-B | Ansible inventory and base playbook | ✓ |
+| 009-C | Django deployment playbook | ✓ |
+| 009-D | CI deploy key setup | ✓ |
+| 009-E | Update justfile and CI | ✓ |
+
+**Completed 2026-01-22**:
+- `just dev` → Docker Compose for local development
+- `just ansible-deploy ENV BRANCH DOPPLER_CFG` → Ansible deploys to Hetzner
+- `just full-rebuild` / `just full-deploy` / `just quick-deploy` workflow commands
+- Passwordless deploy key for CI (via Doppler DEPLOY_SSH_PRIVATE_KEY)
+- Doppler service token auth for server
+
+**Note:** Full deploy blocked by Django `STATIC_ROOT` config issue (app config, not infra).
 
 ## Completed Sprints
 
@@ -18,7 +57,7 @@ Infrastructure as code for Hetzner (Django) + Cloudflare (edge).
 | 007-C | Hetzner Django infrastructure | ✓ |
 | 007-D | Deployment orchestration | ✓ |
 
-**Completed 2026-01-22**: Full infrastructure as code with unified deployment pipeline (`just deploy`), Doppler as single secret store, Pulumi for infra state.
+**Completed 2026-01-22**: Infrastructure as code with Pulumi (Hetzner + Cloudflare), Doppler as single secret store. Django app deployment deferred to EP-009 (Ansible).
 
 ### EP-001: Backend Foundation ✓
 Get the full stack working end-to-end.

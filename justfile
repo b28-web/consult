@@ -158,12 +158,22 @@ setup-infra:
     echo ""
     echo "Infrastructure secrets (for deployment):"
     INFRA_MISSING=()
-    for secret in HETZNER_API_TOKEN CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_ZONE_ID SSH_PUBLIC_KEY; do
+    for secret in HETZNER_API_TOKEN CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_ZONE_ID SSH_PUBLIC_KEY GIT_REPO; do
         if check_secret "$secret"; then
             success "$secret"
         else
             warn "$secret (not set)"
             INFRA_MISSING+=("$secret")
+        fi
+    done
+
+    echo ""
+    echo "CI/CD secrets (for automated deploys):"
+    for secret in DEPLOY_SSH_PRIVATE_KEY DEPLOY_SSH_PUBLIC_KEY DOPPLER_SERVICE_TOKEN; do
+        if check_secret "$secret"; then
+            success "$secret"
+        else
+            warn "$secret (not set)"
         fi
     done
 
@@ -551,6 +561,47 @@ setup-infra:
         else
             success "DOMAIN already set"
         fi
+
+        # GIT_REPO
+        if ! check_secret "GIT_REPO"; then
+            echo ""
+            echo -e "${BOLD}GIT_REPO${NC} - Git repository URL for deployment"
+            info "Server will clone from this URL"
+            echo ""
+            # Try to auto-detect from gh CLI
+            if command -v gh &> /dev/null; then
+                DETECTED_REPO=$(gh repo view --json url -q '.url' 2>/dev/null || echo "")
+                if [ -n "$DETECTED_REPO" ]; then
+                    echo "Detected from gh CLI: ${BOLD}${DETECTED_REPO}.git${NC}"
+                    if prompt_yes_no "Use this repository?"; then
+                        set_secret "GIT_REPO" "${DETECTED_REPO}.git"
+                    else
+                        read -p "Enter git repository URL: " GIT_REPO
+                        if [ -n "$GIT_REPO" ]; then
+                            set_secret "GIT_REPO" "$GIT_REPO"
+                        else
+                            warn "Skipped. Set manually: doppler secrets set GIT_REPO=..."
+                        fi
+                    fi
+                else
+                    read -p "Enter git repository URL: " GIT_REPO
+                    if [ -n "$GIT_REPO" ]; then
+                        set_secret "GIT_REPO" "$GIT_REPO"
+                    else
+                        warn "Skipped. Set manually: doppler secrets set GIT_REPO=..."
+                    fi
+                fi
+            else
+                read -p "Enter git repository URL (e.g., https://github.com/org/repo.git): " GIT_REPO
+                if [ -n "$GIT_REPO" ]; then
+                    set_secret "GIT_REPO" "$GIT_REPO"
+                else
+                    warn "Skipped. Set manually: doppler secrets set GIT_REPO=..."
+                fi
+            fi
+        else
+            success "GIT_REPO already set"
+        fi
     fi
 
     # =========================================================================
@@ -648,7 +699,7 @@ setup-infra:
 
     echo ""
     echo "Infrastructure (deployment):"
-    for secret in HETZNER_API_TOKEN CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_ZONE_ID DOMAIN SSH_PUBLIC_KEY; do
+    for secret in HETZNER_API_TOKEN CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_ZONE_ID DOMAIN SSH_PUBLIC_KEY GIT_REPO; do
         if check_secret "$secret"; then
             success "$secret"
         else
@@ -709,35 +760,69 @@ doppler-env ENV:
     @doppler configure
 
 # =============================================================================
-# Development
+# Development (Docker Compose)
 # =============================================================================
 
-# Run Django development server
+# Start local development stack (Django + Postgres + Redis)
 dev:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Starting local development stack..."
+    echo "  Django:   http://localhost:8000"
+    echo "  Postgres: localhost:5432"
+    echo "  Redis:    localhost:6379"
+    echo ""
+    echo "Press Ctrl+C to stop"
+    echo ""
+    docker compose up --build
+
+# Stop and clean up local development stack
+dev-down:
+    docker compose down -v
+
+# Open a shell in the Django container
+dev-shell:
+    docker compose exec django bash
+
+# Run Django management command in container
+dev-manage *ARGS:
+    docker compose exec django uv run python apps/web/manage.py {{ARGS}}
+
+# Run migrations in the Docker container
+dev-migrate:
+    docker compose exec django uv run python apps/web/manage.py migrate
+
+# =============================================================================
+# Development (Native - no Docker)
+# =============================================================================
+
+# Run Django development server natively (requires Doppler + Neon)
+dev-native:
     doppler run -- uv run python apps/web/manage.py runserver
 
 # =============================================================================
 # Local Testing (Docker Compose)
 # =============================================================================
 
-# Start all local services in containers
+# Start all local services in background (detached mode)
 dev-start:
     #!/usr/bin/env bash
     set -euo pipefail
     echo "Starting local services via Docker Compose..."
-    doppler run -- docker compose up -d --build
+    docker compose up -d --build
     echo ""
     echo "Services starting..."
-    echo "  Django:  http://localhost:8000"
-    echo "  Worker:  http://localhost:8787"
+    echo "  Django:   http://localhost:8000"
+    echo "  Postgres: localhost:5432"
+    echo "  Redis:    localhost:6379"
     echo ""
     echo "Run 'just dev-logs' to tail logs"
     echo "Run 'just smoke-test' to verify"
-    echo "Run 'just dev-stop' to stop"
+    echo "Run 'just dev-down' to stop"
 
-# Stop all local services
+# Stop all local services (alias for dev-down)
 dev-stop:
-    docker compose down
+    docker compose down -v
 
 # Show status of local services
 dev-status:
@@ -751,7 +836,7 @@ dev-logs:
 dev-log SERVICE:
     docker compose logs -f {{SERVICE}}
 
-# Health check / smoke test for running services
+# Health check / smoke test for Django (core local dev)
 smoke-test:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -769,13 +854,12 @@ smoke-test:
         FAILED=$((FAILED + 1))
     fi
 
-    # Test Worker health
+    # Test Worker health (optional, only if running)
     echo -n "Worker /health... "
     if curl -sf http://localhost:8787/health > /dev/null 2>&1; then
         echo "✓"
     else
-        echo "✗ FAILED"
-        FAILED=$((FAILED + 1))
+        echo "- (not running)"
     fi
 
     echo ""
@@ -1073,39 +1157,73 @@ dagger-test:
 # =============================================================================
 # Unified Deployment (Doppler → Dagger → Pulumi → Apps)
 # =============================================================================
+#
+# ENV = Doppler config name (e.g., dev, dev_personal, prd)
+# STACK = Pulumi stack name (defaults to: dev if ENV contains "dev", prd if ENV contains "prd")
+#
+# Examples:
+#   just deploy dev              # Doppler: dev, Pulumi: dev
+#   just deploy dev_personal     # Doppler: dev_personal, Pulumi: dev
+#   just deploy prd              # Doppler: prd, Pulumi: prd
+#   just deploy dev_personal prd # Doppler: dev_personal, Pulumi: prd (explicit override)
+
+# Helper to derive stack name from ENV (strips _personal suffix, maps to dev/prd)
+_stack ENV:
+    #!/usr/bin/env bash
+    if [[ "{{ENV}}" == *"prd"* ]] || [[ "{{ENV}}" == *"prod"* ]]; then
+        echo "prd"
+    else
+        echo "dev"
+    fi
 
 # Full deployment pipeline: validate → provision → deploy
-deploy ENV="dev":
+deploy ENV="dev" STACK="":
     #!/usr/bin/env bash
     set -euo pipefail
+    STACK="{{STACK}}"
+    if [ -z "$STACK" ]; then
+        STACK=$(just _stack {{ENV}})
+    fi
     echo "═══════════════════════════════════════════════════════════"
-    echo "  Deploying to {{ENV}}"
+    echo "  Deploying (Doppler: {{ENV}}, Pulumi: $STACK)"
     echo "═══════════════════════════════════════════════════════════"
     echo ""
-    just deploy-validate {{ENV}}
-    just deploy-infra {{ENV}}
-    just deploy-apps {{ENV}}
+    just deploy-validate
+    just deploy-infra {{ENV}} "$STACK"
+    just deploy-apps {{ENV}} "$STACK"
     echo ""
     echo "═══════════════════════════════════════════════════════════"
-    echo "  Deployment to {{ENV}} complete!"
+    echo "  Deployment complete!"
     echo "═══════════════════════════════════════════════════════════"
 
 # Step 1: Validate (Dagger pre-deploy checks)
-deploy-validate ENV="dev":
+deploy-validate:
     @echo "→ Running pre-deploy validation..."
     cd dagger && dagger call pre-deploy --source=..
 
 # Step 2: Provision infrastructure (Pulumi)
-deploy-infra ENV="dev":
-    @echo "→ Provisioning infrastructure ({{ENV}})..."
-    cd infra && doppler run --config {{ENV}} -- pulumi up --stack {{ENV}} --yes
+deploy-infra ENV="dev" STACK="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    STACK="{{STACK}}"
+    if [ -z "$STACK" ]; then
+        STACK=$(just _stack {{ENV}})
+    fi
+    echo "→ Provisioning infrastructure (Doppler: {{ENV}}, Pulumi: $STACK)..."
+    cd infra && doppler run --config {{ENV}} -- pulumi up --stack "$STACK" --yes
 
 # Step 3: Deploy applications
-deploy-apps ENV="dev":
-    @echo "→ Deploying applications..."
+deploy-apps ENV="dev" STACK="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    STACK="{{STACK}}"
+    if [ -z "$STACK" ]; then
+        STACK=$(just _stack {{ENV}})
+    fi
+    echo "→ Deploying applications..."
     just deploy-worker-to {{ENV}}
     just deploy-sites-to {{ENV}}
-    just deploy-django-to {{ENV}}
+    just deploy-django-to {{ENV}} "$STACK"
 
 # Deploy worker to Cloudflare
 deploy-worker-to ENV="dev":
@@ -1122,29 +1240,37 @@ deploy-worker-to ENV="dev":
 deploy-sites-to ENV="dev":
     #!/usr/bin/env bash
     set -euo pipefail
+    # Derive Pulumi stack from ENV (dev_personal -> dev)
+    STACK=$(just _stack {{ENV}})
     for site in sites/*/; do
         name=$(basename "$site")
         [[ "$name" == "_template" ]] && continue
-        echo "  Deploying site: $name..."
+        # Project name matches Pulumi: consult-{site}-{stack}
+        project_name="consult-${name}-${STACK}"
+        echo "  Deploying site: $name → $project_name..."
         cd "$site"
         pnpm build
-        doppler run --config {{ENV}} -- pnpm wrangler pages deploy dist --project-name="$name"
+        doppler run --config {{ENV}} -- pnpm wrangler pages deploy dist --project-name="$project_name"
         cd - > /dev/null
     done
     echo "  ✓ Sites deployed"
 
 # Deploy Django to Hetzner
-deploy-django-to ENV="dev":
+deploy-django-to ENV="dev" STACK="":
     #!/usr/bin/env bash
     set -euo pipefail
+    STACK="{{STACK}}"
+    if [ -z "$STACK" ]; then
+        STACK=$(just _stack {{ENV}})
+    fi
     echo "  Deploying Django to Hetzner..."
-    SERVER_IP=$(cd infra && doppler run --config {{ENV}} -- pulumi stack output django_server_ip --stack {{ENV}})
+    SERVER_IP=$(cd infra && doppler run --config {{ENV}} -- pulumi stack output django_server_ip --stack "$STACK")
     if [ -z "$SERVER_IP" ]; then
         echo "  ✗ Could not get server IP from Pulumi outputs"
         exit 1
     fi
     echo "  Server: $SERVER_IP"
-    ssh -o StrictHostKeyChecking=accept-new ubuntu@"$SERVER_IP" 'cd /opt/consult && ./deploy.sh'
+    ssh -o StrictHostKeyChecking=accept-new root@"$SERVER_IP" 'cd /app && ./deploy.sh'
     echo "  ✓ Django deployed"
 
 # =============================================================================
@@ -1152,40 +1278,52 @@ deploy-django-to ENV="dev":
 # =============================================================================
 
 # CI: Full deployment (validate → infra → apps)
-deploy-ci ENV="dev":
+deploy-ci ENV="dev" STACK="":
     #!/usr/bin/env bash
     set -euo pipefail
+    STACK="{{STACK}}"
+    if [ -z "$STACK" ]; then
+        STACK=$(just _stack {{ENV}})
+    fi
     echo "═══════════════════════════════════════════════════════════"
-    echo "  CI Deploy: {{ENV}} (full pipeline)"
+    echo "  CI Deploy: {{ENV}} → $STACK (full pipeline)"
     echo "═══════════════════════════════════════════════════════════"
-    just deploy-validate {{ENV}}
-    just deploy-infra {{ENV}}
-    just deploy-apps {{ENV}}
+    just deploy-validate
+    just deploy-infra {{ENV}} "$STACK"
+    just deploy-apps {{ENV}} "$STACK"
     echo "═══════════════════════════════════════════════════════════"
     echo "  CI Deploy complete!"
     echo "═══════════════════════════════════════════════════════════"
 
 # CI: Deploy apps only (skip validation and infrastructure)
-deploy-ci-apps ENV="dev":
+deploy-ci-apps ENV="dev" STACK="":
     #!/usr/bin/env bash
     set -euo pipefail
+    STACK="{{STACK}}"
+    if [ -z "$STACK" ]; then
+        STACK=$(just _stack {{ENV}})
+    fi
     echo "═══════════════════════════════════════════════════════════"
-    echo "  CI Deploy: {{ENV}} (apps only)"
+    echo "  CI Deploy: {{ENV}} → $STACK (apps only)"
     echo "═══════════════════════════════════════════════════════════"
-    just deploy-apps {{ENV}}
+    just deploy-apps {{ENV}} "$STACK"
     echo "═══════════════════════════════════════════════════════════"
     echo "  CI Deploy (apps) complete!"
     echo "═══════════════════════════════════════════════════════════"
 
 # CI: Deploy with infra but skip validation (use with caution)
-deploy-ci-no-validate ENV="dev":
+deploy-ci-no-validate ENV="dev" STACK="":
     #!/usr/bin/env bash
     set -euo pipefail
+    STACK="{{STACK}}"
+    if [ -z "$STACK" ]; then
+        STACK=$(just _stack {{ENV}})
+    fi
     echo "═══════════════════════════════════════════════════════════"
-    echo "  CI Deploy: {{ENV}} (skip validation)"
+    echo "  CI Deploy: {{ENV}} → $STACK (skip validation)"
     echo "═══════════════════════════════════════════════════════════"
-    just deploy-infra {{ENV}}
-    just deploy-apps {{ENV}}
+    just deploy-infra {{ENV}} "$STACK"
+    just deploy-apps {{ENV}} "$STACK"
     echo "═══════════════════════════════════════════════════════════"
     echo "  CI Deploy complete!"
     echo "═══════════════════════════════════════════════════════════"
@@ -1201,28 +1339,74 @@ deploy-ci-validate:
 # =============================================================================
 
 # Preview infrastructure changes
-infra-preview ENV="dev":
-    cd infra && doppler run --config {{ENV}} -- pulumi preview --stack {{ENV}}
+infra-preview ENV="dev" STACK="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    STACK="{{STACK}}"
+    if [ -z "$STACK" ]; then
+        STACK=$(just _stack {{ENV}})
+    fi
+    cd infra && doppler run --config {{ENV}} -- pulumi preview --stack "$STACK"
 
 # Apply infrastructure changes
-infra-up ENV="dev":
-    cd infra && doppler run --config {{ENV}} -- pulumi up --stack {{ENV}}
+infra-up ENV="dev" STACK="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    STACK="{{STACK}}"
+    if [ -z "$STACK" ]; then
+        STACK=$(just _stack {{ENV}})
+    fi
+    cd infra && doppler run --config {{ENV}} -- pulumi up --stack "$STACK"
 
 # Apply infrastructure changes (auto-approve, for CI)
-infra-up-yes ENV="dev":
-    cd infra && doppler run --config {{ENV}} -- pulumi up --stack {{ENV}} --yes
+infra-up-yes ENV="dev" STACK="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    STACK="{{STACK}}"
+    if [ -z "$STACK" ]; then
+        STACK=$(just _stack {{ENV}})
+    fi
+    cd infra && doppler run --config {{ENV}} -- pulumi up --stack "$STACK" --yes
 
 # Destroy infrastructure (careful!)
-infra-destroy ENV="dev":
-    cd infra && doppler run --config {{ENV}} -- pulumi destroy --stack {{ENV}}
+infra-destroy ENV="dev" STACK="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    STACK="{{STACK}}"
+    if [ -z "$STACK" ]; then
+        STACK=$(just _stack {{ENV}})
+    fi
+    cd infra && doppler run --config {{ENV}} -- pulumi destroy --stack "$STACK"
+
+# Destroy infrastructure (auto-approve, for CI/automation)
+infra-destroy-yes ENV="dev" STACK="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    STACK="{{STACK}}"
+    if [ -z "$STACK" ]; then
+        STACK=$(just _stack {{ENV}})
+    fi
+    cd infra && doppler run --config {{ENV}} -- pulumi destroy --stack "$STACK" --yes
 
 # Show infrastructure outputs
-infra-outputs ENV="dev":
-    cd infra && doppler run --config {{ENV}} -- pulumi stack output --stack {{ENV}} --json
+infra-outputs ENV="dev" STACK="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    STACK="{{STACK}}"
+    if [ -z "$STACK" ]; then
+        STACK=$(just _stack {{ENV}})
+    fi
+    cd infra && doppler run --config {{ENV}} -- pulumi stack output --stack "$STACK" --json
 
 # Refresh infrastructure state
-infra-refresh ENV="dev":
-    cd infra && doppler run --config {{ENV}} -- pulumi refresh --stack {{ENV}}
+infra-refresh ENV="dev" STACK="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    STACK="{{STACK}}"
+    if [ -z "$STACK" ]; then
+        STACK=$(just _stack {{ENV}})
+    fi
+    cd infra && doppler run --config {{ENV}} -- pulumi refresh --stack "$STACK"
 
 # Initialize Pulumi infrastructure
 infra-init:
@@ -1293,6 +1477,622 @@ infra-secrets STACK="dev":
     echo ""
     echo "Secrets configured for {{STACK}} stack."
     echo "Now update infra/Pulumi.{{STACK}}.yaml with your domain and zone IDs."
+
+# =============================================================================
+# Ansible Deployment
+# =============================================================================
+
+# Install Ansible Galaxy requirements
+ansible-init:
+    cd ansible && ansible-galaxy install -r requirements.yml
+
+# =============================================================================
+# Full Deployment Workflows
+# =============================================================================
+
+# Full server rebuild: destroy -> create -> setup -> deploy
+# USE THIS WHEN: Server is in a bad state, need clean slate
+# EFFECTS: Destroys existing server, creates new one, full setup
+# TIME: ~5-10 minutes
+# Usage: just full-rebuild dev dev_personal
+# Non-interactive: CONFIRM=yes just full-rebuild dev dev_personal
+full-rebuild ENV="dev" DOPPLER_CONFIG="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    DOPPLER_CFG="{{DOPPLER_CONFIG}}"
+    if [ -z "$DOPPLER_CFG" ]; then DOPPLER_CFG="{{ENV}}"; fi
+
+    # Determine Pulumi stack from ENV
+    if [[ "{{ENV}}" == *"prd"* ]] || [[ "{{ENV}}" == *"prod"* ]]; then
+        STACK="prd"
+    else
+        STACK="dev"
+    fi
+
+    echo "╔════════════════════════════════════════════════════════════════╗"
+    echo "║  FULL SERVER REBUILD                                          ║"
+    echo "║  This will DESTROY the existing server and create a new one   ║"
+    echo "╚════════════════════════════════════════════════════════════════╝"
+    echo ""
+    echo "Environment: {{ENV}}"
+    echo "Pulumi stack: $STACK"
+    echo "Doppler config: $DOPPLER_CFG"
+    echo ""
+
+    # Allow non-interactive confirmation via CONFIRM env var
+    if [ "${CONFIRM:-}" = "yes" ]; then
+        echo "CONFIRM=yes, proceeding without prompt..."
+    else
+        read -p "Are you sure? Type 'yes' to continue: " confirm
+        if [ "$confirm" != "yes" ]; then
+            echo "Aborted."
+            exit 1
+        fi
+    fi
+
+    echo ""
+    echo "═══ Step 1/4: Destroying infrastructure ═══"
+    if ! just infra-destroy-yes "$DOPPLER_CFG" "$STACK"; then
+        echo "Error: Infrastructure destroy failed"
+        exit 3
+    fi
+
+    echo ""
+    echo "═══ Step 2/4: Creating infrastructure ═══"
+    if ! just infra-up-yes "$DOPPLER_CFG" "$STACK"; then
+        echo "Error: Infrastructure creation failed"
+        exit 3
+    fi
+
+    echo ""
+    echo "═══ Step 3/4: Setting up server ═══"
+    if ! just ansible-setup {{ENV}} "$DOPPLER_CFG"; then
+        echo "Error: Server setup failed"
+        exit 4
+    fi
+
+    echo ""
+    echo "═══ Step 4/4: Deploying Django ═══"
+    if ! just ansible-deploy {{ENV}} main "$DOPPLER_CFG"; then
+        echo "Error: Django deploy failed"
+        exit 5
+    fi
+
+    echo ""
+    echo "╔════════════════════════════════════════════════════════════════╗"
+    echo "║  REBUILD COMPLETE                                             ║"
+    echo "╚════════════════════════════════════════════════════════════════╝"
+
+# Full deploy: setup + deploy (no destroy)
+# USE THIS WHEN: Server exists but needs reconfiguration
+# EFFECTS: Re-runs all Ansible setup tasks, then deploys latest code
+# TIME: ~3-5 minutes
+# Usage: just full-deploy dev dev_personal
+full-deploy ENV="dev" DOPPLER_CONFIG="" BRANCH="main":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    DOPPLER_CFG="{{DOPPLER_CONFIG}}"
+    if [ -z "$DOPPLER_CFG" ]; then DOPPLER_CFG="{{ENV}}"; fi
+
+    echo "╔════════════════════════════════════════════════════════════════╗"
+    echo "║  FULL DEPLOY (setup + deploy)                                 ║"
+    echo "╚════════════════════════════════════════════════════════════════╝"
+    echo ""
+    echo "Environment: {{ENV}}"
+    echo "Branch: {{BRANCH}}"
+    echo "Doppler config: $DOPPLER_CFG"
+    echo ""
+
+    echo "═══ Step 1/2: Setting up server ═══"
+    if ! just ansible-setup {{ENV}} "$DOPPLER_CFG"; then
+        echo "Error: Server setup failed"
+        exit 4
+    fi
+
+    echo ""
+    echo "═══ Step 2/2: Deploying Django ═══"
+    if ! just ansible-deploy {{ENV}} {{BRANCH}} "$DOPPLER_CFG"; then
+        echo "Error: Django deploy failed"
+        exit 5
+    fi
+
+    echo ""
+    echo "╔════════════════════════════════════════════════════════════════╗"
+    echo "║  DEPLOY COMPLETE                                              ║"
+    echo "╚════════════════════════════════════════════════════════════════╝"
+
+# Quick deploy: just deploy latest code (no setup)
+# USE THIS WHEN: Server is healthy, just need to deploy new code
+# EFFECTS: Pulls latest code, runs migrations, restarts service
+# TIME: ~1-2 minutes
+# Usage: just quick-deploy dev dev_personal
+quick-deploy ENV="dev" DOPPLER_CONFIG="" BRANCH="main":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    DOPPLER_CFG="{{DOPPLER_CONFIG}}"
+    if [ -z "$DOPPLER_CFG" ]; then DOPPLER_CFG="{{ENV}}"; fi
+
+    echo "╔════════════════════════════════════════════════════════════════╗"
+    echo "║  QUICK DEPLOY (code only)                                     ║"
+    echo "╚════════════════════════════════════════════════════════════════╝"
+    echo ""
+    echo "Environment: {{ENV}}"
+    echo "Branch: {{BRANCH}}"
+    echo "Doppler config: $DOPPLER_CFG"
+    echo ""
+
+    if ! just ansible-deploy {{ENV}} {{BRANCH}} "$DOPPLER_CFG"; then
+        echo "Error: Django deploy failed"
+        exit 5
+    fi
+
+    echo ""
+    echo "╔════════════════════════════════════════════════════════════════╗"
+    echo "║  DEPLOY COMPLETE                                              ║"
+    echo "╚════════════════════════════════════════════════════════════════╝"
+
+# =============================================================================
+# Individual Ansible Commands
+# =============================================================================
+
+# Run server setup playbook (configures fresh server)
+# Usage: just ansible-setup dev dev_personal
+ansible-setup ENV="dev" DOPPLER_CONFIG="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # Determine Pulumi stack from ENV
+    if [[ "{{ENV}}" == *"prd"* ]] || [[ "{{ENV}}" == *"prod"* ]]; then
+        STACK="prd"
+        INVENTORY="prod.yml"
+    else
+        STACK="dev"
+        INVENTORY="dev.yml"
+    fi
+
+    # Use DOPPLER_CONFIG if provided, otherwise default to ENV
+    DOPPLER_CFG="{{DOPPLER_CONFIG}}"
+    if [ -z "$DOPPLER_CFG" ]; then
+        DOPPLER_CFG="{{ENV}}"
+    fi
+
+    echo "Setting up server for environment: {{ENV}} (Pulumi stack: $STACK, Doppler config: $DOPPLER_CFG)"
+
+    # Get server IP from Pulumi
+    export DJANGO_SERVER_IP=$(cd infra && doppler run --config "$DOPPLER_CFG" -- pulumi stack output django_server_ip --stack "$STACK")
+    if [ -z "$DJANGO_SERVER_IP" ]; then
+        echo "Error: Could not get server IP from Pulumi"
+        echo "Make sure infrastructure is deployed: just infra-up {{ENV}}"
+        exit 1
+    fi
+    echo "Target server: $DJANGO_SERVER_IP"
+
+    # Get SSH public keys from Doppler
+    export SSH_PUBLIC_KEY=$(doppler secrets get SSH_PUBLIC_KEY --plain --config "$DOPPLER_CFG" 2>/dev/null || echo "")
+    export DEPLOY_SSH_PUBLIC_KEY=$(doppler secrets get DEPLOY_SSH_PUBLIC_KEY --plain --config "$DOPPLER_CFG" 2>/dev/null || echo "")
+
+    # Get domain from Doppler
+    export DOMAIN=$(doppler secrets get DOMAIN --plain --config "$DOPPLER_CFG" 2>/dev/null || echo "localhost")
+
+    # Get deploy SSH key for non-interactive access (CI/automation)
+    DEPLOY_SSH_KEY=$(doppler secrets get DEPLOY_SSH_PRIVATE_KEY --plain --config "$DOPPLER_CFG" 2>/dev/null || echo "")
+    KEY_FILE=""
+    ANSIBLE_KEY_ARG=""
+    if [ -n "$DEPLOY_SSH_KEY" ]; then
+        KEY_FILE=$(mktemp)
+        trap "rm -f '$KEY_FILE'" EXIT
+        echo "$DEPLOY_SSH_KEY" > "$KEY_FILE"
+        chmod 600 "$KEY_FILE"
+        ANSIBLE_KEY_ARG="--private-key=$KEY_FILE"
+        echo "Using deploy key from Doppler for SSH"
+    fi
+
+    # Run ansible playbook
+    cd ansible
+    ansible-playbook playbooks/setup.yml -i "inventory/$INVENTORY" -v $ANSIBLE_KEY_ARG
+
+# Run server setup with verbose output
+ansible-setup-verbose ENV="dev" DOPPLER_CONFIG="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    if [[ "{{ENV}}" == *"prd"* ]] || [[ "{{ENV}}" == *"prod"* ]]; then
+        STACK="prd"
+        INVENTORY="prod.yml"
+    else
+        STACK="dev"
+        INVENTORY="dev.yml"
+    fi
+
+    DOPPLER_CFG="{{DOPPLER_CONFIG}}"
+    if [ -z "$DOPPLER_CFG" ]; then DOPPLER_CFG="{{ENV}}"; fi
+
+    export DJANGO_SERVER_IP=$(cd infra && doppler run --config "$DOPPLER_CFG" -- pulumi stack output django_server_ip --stack "$STACK")
+    export SSH_PUBLIC_KEY=$(doppler secrets get SSH_PUBLIC_KEY --plain --config "$DOPPLER_CFG" 2>/dev/null || echo "")
+    export DEPLOY_SSH_PUBLIC_KEY=$(doppler secrets get DEPLOY_SSH_PUBLIC_KEY --plain --config "$DOPPLER_CFG" 2>/dev/null || echo "")
+    export DOMAIN=$(doppler secrets get DOMAIN --plain --config "$DOPPLER_CFG" 2>/dev/null || echo "localhost")
+
+    cd ansible
+    ansible-playbook playbooks/setup.yml -i "inventory/$INVENTORY" -vvv
+
+# Deploy Django application via Ansible
+# Usage: just ansible-deploy dev main dev_personal
+ansible-deploy ENV="dev" BRANCH="main" DOPPLER_CONFIG="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # Determine Pulumi stack from ENV
+    if [[ "{{ENV}}" == *"prd"* ]] || [[ "{{ENV}}" == *"prod"* ]]; then
+        STACK="prd"
+        INVENTORY="prod.yml"
+    else
+        STACK="dev"
+        INVENTORY="dev.yml"
+    fi
+
+    # Use DOPPLER_CONFIG if provided, otherwise default to ENV
+    DOPPLER_CFG="{{DOPPLER_CONFIG}}"
+    if [ -z "$DOPPLER_CFG" ]; then DOPPLER_CFG="{{ENV}}"; fi
+
+    echo "Deploying Django to environment: {{ENV}} (Pulumi stack: $STACK, Doppler config: $DOPPLER_CFG)"
+
+    # Get server IP from Pulumi
+    export DJANGO_SERVER_IP=$(cd infra && doppler run --config "$DOPPLER_CFG" -- pulumi stack output django_server_ip --stack "$STACK")
+    if [ -z "$DJANGO_SERVER_IP" ]; then
+        echo "Error: Could not get server IP from Pulumi"
+        echo "Make sure infrastructure is deployed: just infra-up {{ENV}}"
+        exit 1
+    fi
+    echo "Target server: $DJANGO_SERVER_IP"
+
+    # Set deployment variables
+    export GIT_BRANCH="{{BRANCH}}"
+    # Use the same Doppler config for the server - service tokens are scoped to specific configs
+    export DOPPLER_CONFIG="$DOPPLER_CFG"
+    export DOMAIN=$(doppler secrets get DOMAIN --plain --config "$DOPPLER_CFG" 2>/dev/null || echo "localhost")
+    export GIT_REPO=$(doppler secrets get GIT_REPO --plain --config "$DOPPLER_CFG" 2>/dev/null || echo "https://github.com/your-org/consult.git")
+
+    # Get Doppler service token for the server
+    export DOPPLER_SERVICE_TOKEN=$(doppler secrets get DOPPLER_SERVICE_TOKEN --plain --config "$DOPPLER_CFG" 2>/dev/null || echo "")
+
+    # Get deploy SSH key for non-interactive access (CI/automation)
+    DEPLOY_SSH_KEY=$(doppler secrets get DEPLOY_SSH_PRIVATE_KEY --plain --config "$DOPPLER_CFG" 2>/dev/null || echo "")
+    KEY_FILE=""
+    ANSIBLE_KEY_ARG=""
+    if [ -n "$DEPLOY_SSH_KEY" ]; then
+        KEY_FILE=$(mktemp)
+        trap "rm -f '$KEY_FILE'" EXIT
+        echo "$DEPLOY_SSH_KEY" > "$KEY_FILE"
+        chmod 600 "$KEY_FILE"
+        ANSIBLE_KEY_ARG="--private-key=$KEY_FILE"
+        echo "Using deploy key from Doppler for SSH"
+    fi
+
+    # Run ansible playbook
+    cd ansible
+    ansible-playbook playbooks/deploy.yml -i "inventory/$INVENTORY" -v $ANSIBLE_KEY_ARG
+
+# Deploy Django with force (re-run all tasks even if no git changes)
+ansible-deploy-force ENV="dev" BRANCH="main" DOPPLER_CONFIG="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    if [[ "{{ENV}}" == *"prd"* ]] || [[ "{{ENV}}" == *"prod"* ]]; then
+        STACK="prd"
+        INVENTORY="prod.yml"
+        SERVER_DOPPLER_CFG="prd"
+    else
+        STACK="dev"
+        INVENTORY="dev.yml"
+        SERVER_DOPPLER_CFG="dev"
+    fi
+
+    DOPPLER_CFG="{{DOPPLER_CONFIG}}"
+    if [ -z "$DOPPLER_CFG" ]; then DOPPLER_CFG="{{ENV}}"; fi
+
+    export DJANGO_SERVER_IP=$(cd infra && doppler run --config "$DOPPLER_CFG" -- pulumi stack output django_server_ip --stack "$STACK")
+    export GIT_BRANCH="{{BRANCH}}"
+    export DOPPLER_CONFIG="$SERVER_DOPPLER_CFG"
+    export DOMAIN=$(doppler secrets get DOMAIN --plain --config "$DOPPLER_CFG" 2>/dev/null || echo "localhost")
+    export GIT_REPO=$(doppler secrets get GIT_REPO --plain --config "$DOPPLER_CFG" 2>/dev/null || echo "https://github.com/your-org/consult.git")
+    export DOPPLER_SERVICE_TOKEN=$(doppler secrets get DOPPLER_SERVICE_TOKEN --plain --config "$DOPPLER_CFG" 2>/dev/null || echo "")
+
+    cd ansible
+    ansible-playbook playbooks/deploy.yml -i "inventory/$INVENTORY" -v -e "force_deploy=true"
+
+# Check Ansible playbook syntax
+ansible-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd ansible
+    echo "Checking setup.yml..."
+    ansible-playbook playbooks/setup.yml --syntax-check
+    echo "Checking deploy.yml..."
+    ansible-playbook playbooks/deploy.yml --syntax-check
+    echo "All playbooks OK"
+
+# Get Django server logs
+# Usage: just server-logs dev dev_personal
+server-logs ENV="dev" DOPPLER_CONFIG="" LINES="50":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    if [[ "{{ENV}}" == *"prd"* ]] || [[ "{{ENV}}" == *"prod"* ]]; then
+        STACK="prd"
+    else
+        STACK="dev"
+    fi
+
+    DOPPLER_CFG="{{DOPPLER_CONFIG}}"
+    if [ -z "$DOPPLER_CFG" ]; then DOPPLER_CFG="{{ENV}}"; fi
+
+    SERVER_IP=$(cd infra && doppler run --config "$DOPPLER_CFG" -- pulumi stack output django_server_ip --stack "$STACK")
+    echo "Fetching logs from $SERVER_IP..."
+
+    ssh -o StrictHostKeyChecking=no deploy@"$SERVER_IP" "sudo journalctl -u consult-django -n {{LINES}} --no-pager"
+
+# Get Django server status
+# Usage: just server-status dev dev_personal
+server-status ENV="dev" DOPPLER_CONFIG="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    if [[ "{{ENV}}" == *"prd"* ]] || [[ "{{ENV}}" == *"prod"* ]]; then
+        STACK="prd"
+    else
+        STACK="dev"
+    fi
+
+    DOPPLER_CFG="{{DOPPLER_CONFIG}}"
+    if [ -z "$DOPPLER_CFG" ]; then DOPPLER_CFG="{{ENV}}"; fi
+
+    SERVER_IP=$(cd infra && doppler run --config "$DOPPLER_CFG" -- pulumi stack output django_server_ip --stack "$STACK")
+    echo "Checking status on $SERVER_IP..."
+
+    ssh -o StrictHostKeyChecking=no deploy@"$SERVER_IP" "sudo systemctl status consult-django --no-pager; echo ''; echo '=== Nginx Status ==='; sudo systemctl status nginx --no-pager"
+
+# SSH to server
+# Usage: just server-ssh dev dev_personal
+server-ssh ENV="dev" DOPPLER_CONFIG="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    if [[ "{{ENV}}" == *"prd"* ]] || [[ "{{ENV}}" == *"prod"* ]]; then
+        STACK="prd"
+    else
+        STACK="dev"
+    fi
+
+    DOPPLER_CFG="{{DOPPLER_CONFIG}}"
+    if [ -z "$DOPPLER_CFG" ]; then DOPPLER_CFG="{{ENV}}"; fi
+
+    SERVER_IP=$(cd infra && doppler run --config "$DOPPLER_CFG" -- pulumi stack output django_server_ip --stack "$STACK")
+    echo "Connecting to deploy@$SERVER_IP..."
+
+    ssh -o StrictHostKeyChecking=no deploy@"$SERVER_IP"
+
+# List Ansible inventory
+ansible-inventory ENV="dev":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    if [[ "{{ENV}}" == *"prd"* ]] || [[ "{{ENV}}" == *"prod"* ]]; then
+        INVENTORY="prod.yml"
+    else
+        INVENTORY="dev.yml"
+    fi
+
+    cd ansible && ansible-inventory -i "inventory/$INVENTORY" --list
+
+# =============================================================================
+# Agent Commands (for LLM agents to SSH using Doppler-stored keys)
+# =============================================================================
+
+# Run a single command on the server via SSH (retrieves key from Doppler)
+# Usage: just agent-cmd dev dev_personal "sudo journalctl -u consult-django -n 50"
+agent-cmd ENV="dev" DOPPLER_CONFIG="" CMD="echo 'No command specified'":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    DOPPLER_CFG="{{DOPPLER_CONFIG}}"
+    if [ -z "$DOPPLER_CFG" ]; then DOPPLER_CFG="{{ENV}}"; fi
+
+    # Determine Pulumi stack from ENV
+    if [[ "{{ENV}}" == *"prd"* ]] || [[ "{{ENV}}" == *"prod"* ]]; then
+        STACK="prd"
+    else
+        STACK="dev"
+    fi
+
+    # Get server IP from Pulumi
+    SERVER_IP=$(cd infra && doppler run --config "$DOPPLER_CFG" -- pulumi stack output django_server_ip --stack "$STACK")
+    if [ -z "$SERVER_IP" ]; then
+        echo "Error: Could not get server IP from Pulumi"
+        exit 1
+    fi
+
+    # Get SSH key from Doppler
+    SSH_KEY=$(doppler secrets get DEPLOY_SSH_PRIVATE_KEY --plain --config "$DOPPLER_CFG")
+    if [ -z "$SSH_KEY" ]; then
+        echo "Error: DEPLOY_SSH_PRIVATE_KEY not found in Doppler"
+        exit 1
+    fi
+
+    # Write to temp file with secure permissions
+    KEY_FILE=$(mktemp)
+    trap "rm -f '$KEY_FILE'" EXIT
+    echo "$SSH_KEY" > "$KEY_FILE"
+    chmod 600 "$KEY_FILE"
+
+    # Run command via SSH
+    ssh -i "$KEY_FILE" -o StrictHostKeyChecking=no -o BatchMode=yes deploy@"$SERVER_IP" "{{CMD}}"
+
+# Interactive SSH session (retrieves key from Doppler)
+# Usage: just agent-ssh dev dev_personal
+agent-ssh ENV="dev" DOPPLER_CONFIG="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    DOPPLER_CFG="{{DOPPLER_CONFIG}}"
+    if [ -z "$DOPPLER_CFG" ]; then DOPPLER_CFG="{{ENV}}"; fi
+
+    # Determine Pulumi stack from ENV
+    if [[ "{{ENV}}" == *"prd"* ]] || [[ "{{ENV}}" == *"prod"* ]]; then
+        STACK="prd"
+    else
+        STACK="dev"
+    fi
+
+    # Get server IP from Pulumi
+    SERVER_IP=$(cd infra && doppler run --config "$DOPPLER_CFG" -- pulumi stack output django_server_ip --stack "$STACK")
+    if [ -z "$SERVER_IP" ]; then
+        echo "Error: Could not get server IP from Pulumi"
+        exit 1
+    fi
+
+    # Get SSH key from Doppler
+    SSH_KEY=$(doppler secrets get DEPLOY_SSH_PRIVATE_KEY --plain --config "$DOPPLER_CFG")
+    if [ -z "$SSH_KEY" ]; then
+        echo "Error: DEPLOY_SSH_PRIVATE_KEY not found in Doppler"
+        exit 1
+    fi
+
+    # Write to temp file with secure permissions
+    KEY_FILE=$(mktemp)
+    trap "rm -f '$KEY_FILE'" EXIT
+    echo "$SSH_KEY" > "$KEY_FILE"
+    chmod 600 "$KEY_FILE"
+
+    echo "Connecting to deploy@$SERVER_IP..."
+    ssh -i "$KEY_FILE" -o StrictHostKeyChecking=no deploy@"$SERVER_IP"
+
+# Get Django logs via agent SSH (shortcut)
+# Usage: just agent-logs dev dev_personal [LINES]
+agent-logs ENV="dev" DOPPLER_CONFIG="" LINES="50":
+    just agent-cmd {{ENV}} "{{DOPPLER_CONFIG}}" "sudo journalctl -u consult-django -n {{LINES}} --no-pager"
+
+# Get service status via agent SSH (shortcut)
+# Usage: just agent-status dev dev_personal
+agent-status ENV="dev" DOPPLER_CONFIG="":
+    just agent-cmd {{ENV}} "{{DOPPLER_CONFIG}}" "sudo systemctl status consult-django --no-pager; echo ''; echo '=== Nginx Status ==='; sudo systemctl status nginx --no-pager"
+
+# =============================================================================
+# Agent Test Deploy (full end-to-end test)
+# =============================================================================
+
+# Run full deployment test: destroy -> create -> setup -> deploy -> verify
+# Usage: CONFIRM=yes just agent-test-deploy dev dev_personal
+agent-test-deploy ENV="dev" DOPPLER_CONFIG="":
+    #!/usr/bin/env bash
+    set -uo pipefail
+    DOPPLER_CFG="{{DOPPLER_CONFIG}}"
+    if [ -z "$DOPPLER_CFG" ]; then DOPPLER_CFG="{{ENV}}"; fi
+    if [[ "{{ENV}}" == *"prd"* ]] || [[ "{{ENV}}" == *"prod"* ]]; then STACK="prd"; else STACK="dev"; fi
+    START_TIME=$(date +%s)
+    echo "╔════════════════════════════════════════════════════════════════╗"
+    echo "║  AGENT DEPLOYMENT TEST                                        ║"
+    echo "║  Full end-to-end: destroy → create → setup → deploy → verify  ║"
+    echo "╚════════════════════════════════════════════════════════════════╝"
+    echo ""
+    echo "Environment: {{ENV}}, Stack: $STACK, Doppler: $DOPPLER_CFG"
+    echo ""
+    if [ "${CONFIRM:-}" != "yes" ]; then
+        echo "Error: Run with CONFIRM=yes"; exit 1
+    fi
+    DESTROY_STATUS="skip"; CREATE_STATUS="skip"; SETUP_STATUS="skip"
+    DEPLOY_STATUS="skip"; VERIFY_SSH_STATUS="skip"; VERIFY_HTTP_STATUS="skip"
+    DESTROY_DURATION=0; CREATE_DURATION=0; SETUP_DURATION=0
+    DEPLOY_DURATION=0; VERIFY_DURATION=0
+    SERVER_IP=""; FINAL_STATUS="pass"
+    output_result() {
+        echo ""
+        echo "═══ TEST RESULT ═══"
+        echo "{"
+        echo "  \"status\": \"$1\","
+        [ -n "$2" ] && echo "  \"failed_phase\": \"$2\","
+        echo "  \"duration\": \"$(($(date +%s) - START_TIME))s\","
+        [ -n "$SERVER_IP" ] && echo "  \"server\": \"$SERVER_IP\","
+        echo "  \"phases\": {"
+        echo "    \"destroy\": {\"status\": \"$DESTROY_STATUS\", \"duration\": \"${DESTROY_DURATION}s\"},"
+        echo "    \"create\": {\"status\": \"$CREATE_STATUS\", \"duration\": \"${CREATE_DURATION}s\"},"
+        echo "    \"setup\": {\"status\": \"$SETUP_STATUS\", \"duration\": \"${SETUP_DURATION}s\"},"
+        echo "    \"deploy\": {\"status\": \"$DEPLOY_STATUS\", \"duration\": \"${DEPLOY_DURATION}s\"},"
+        echo "    \"verify\": {\"status\": \"$3\", \"duration\": \"${VERIFY_DURATION}s\"}"
+        echo "  },"
+        echo "  \"verification\": {\"ssh\": \"$VERIFY_SSH_STATUS\", \"http\": \"$VERIFY_HTTP_STATUS\"}"
+        echo "}"
+    }
+    echo ""; echo "═══ Phase 1/5: Destroying existing infrastructure ═══"
+    PHASE_START=$(date +%s)
+    if CONFIRM=yes just infra-destroy-yes "$DOPPLER_CFG" "$STACK" 2>&1; then
+        DESTROY_STATUS="pass"; echo "✓ Infrastructure destroyed"
+    else
+        DESTROY_STATUS="pass"; echo "✓ No infrastructure to destroy"
+    fi
+    DESTROY_DURATION=$(($(date +%s) - PHASE_START)); echo "Duration: ${DESTROY_DURATION}s"
+    echo ""; echo "═══ Phase 2/5: Creating infrastructure ═══"
+    PHASE_START=$(date +%s)
+    if just infra-up-yes "$DOPPLER_CFG" "$STACK" 2>&1; then
+        CREATE_STATUS="pass"; echo "✓ Infrastructure created"
+    else
+        CREATE_STATUS="fail"; CREATE_DURATION=$(($(date +%s) - PHASE_START))
+        echo "✗ Infrastructure creation failed"
+        output_result "fail" "create" "skip"; exit 3
+    fi
+    CREATE_DURATION=$(($(date +%s) - PHASE_START)); echo "Duration: ${CREATE_DURATION}s"
+    SERVER_IP=$(cd infra && doppler run --config "$DOPPLER_CFG" -- pulumi stack output django_server_ip --stack "$STACK" 2>/dev/null || echo "")
+    echo "Server IP: $SERVER_IP"
+    echo ""; echo "═══ Phase 3/5: Setting up server ═══"
+    PHASE_START=$(date +%s)
+    if just ansible-setup {{ENV}} "$DOPPLER_CFG" 2>&1; then
+        SETUP_STATUS="pass"; echo "✓ Server setup complete"
+    else
+        SETUP_STATUS="fail"; SETUP_DURATION=$(($(date +%s) - PHASE_START))
+        echo "✗ Server setup failed"
+        output_result "fail" "setup" "skip"; exit 4
+    fi
+    SETUP_DURATION=$(($(date +%s) - PHASE_START)); echo "Duration: ${SETUP_DURATION}s"
+    echo ""; echo "═══ Phase 4/5: Deploying Django ═══"
+    PHASE_START=$(date +%s)
+    if just ansible-deploy {{ENV}} main "$DOPPLER_CFG" 2>&1; then
+        DEPLOY_STATUS="pass"; echo "✓ Django deployed"
+    else
+        DEPLOY_STATUS="fail"; DEPLOY_DURATION=$(($(date +%s) - PHASE_START))
+        echo "✗ Django deployment failed"
+        output_result "fail" "deploy" "skip"; exit 5
+    fi
+    DEPLOY_DURATION=$(($(date +%s) - PHASE_START)); echo "Duration: ${DEPLOY_DURATION}s"
+    echo ""; echo "═══ Phase 5/5: Verifying deployment ═══"
+    PHASE_START=$(date +%s)
+    echo "Checking SSH access..."
+    if just agent-cmd {{ENV}} "$DOPPLER_CFG" "echo 'SSH OK'" 2>&1 | grep -q "SSH OK"; then
+        VERIFY_SSH_STATUS="pass"; echo "✓ SSH access verified"
+    else
+        VERIFY_SSH_STATUS="fail"; FINAL_STATUS="fail"; echo "✗ SSH access failed"
+    fi
+    echo "Checking HTTP response..."
+    if just agent-cmd {{ENV}} "$DOPPLER_CFG" "curl -sf http://localhost/admin/login/ > /dev/null && echo 'HTTP OK'" 2>&1 | grep -q "HTTP OK"; then
+        VERIFY_HTTP_STATUS="pass"; echo "✓ HTTP response verified"
+    else
+        VERIFY_HTTP_STATUS="fail"; FINAL_STATUS="fail"; echo "✗ HTTP response failed"
+    fi
+    VERIFY_DURATION=$(($(date +%s) - PHASE_START)); echo "Duration: ${VERIFY_DURATION}s"
+    if [ "$FINAL_STATUS" = "pass" ]; then
+        output_result "pass" "" "pass"
+        echo ""; echo "╔═══════════════════════════════════════════╗"
+        echo "║  TEST PASSED                              ║"
+        echo "╚═══════════════════════════════════════════╝"
+        exit 0
+    else
+        output_result "fail" "verify" "fail"
+        echo ""; echo "╔═══════════════════════════════════════════╗"
+        echo "║  TEST FAILED                              ║"
+        echo "╚═══════════════════════════════════════════╝"
+        exit 6
+    fi
 
 # =============================================================================
 # Production

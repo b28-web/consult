@@ -1,0 +1,42 @@
+# Consult Django Application Service
+# Managed by Ansible - do not edit manually
+
+[Unit]
+Description=Consult Django (Gunicorn)
+After=network.target
+
+[Service]
+User={{ app_user }}
+Group={{ app_group }}
+WorkingDirectory={{ app_dir }}
+
+# Load Doppler token from file (avoids config directory issues)
+EnvironmentFile={{ app_dir }}/.doppler-token
+
+# Gunicorn via Doppler for secrets
+ExecStart=/usr/bin/doppler run --token ${DOPPLER_TOKEN} --project {{ doppler_project | default('b28-consult') }} --config {{ doppler_config }} -- \
+    {{ app_dir }}/.venv/bin/gunicorn \
+    --workers {{ gunicorn_workers | default(2) }} \
+    --bind unix:/run/consult/gunicorn.sock \
+    --access-logfile - \
+    --error-logfile - \
+    --capture-output \
+    apps.web.config.wsgi:application
+
+# Graceful reload for zero-downtime deploys
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+
+# Restart policy
+Restart=on-failure
+RestartSec=5
+
+# Security hardening
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths={{ app_dir }} /run/consult /home/{{ app_user }}/.doppler
+
+[Install]
+WantedBy=multi-user.target
