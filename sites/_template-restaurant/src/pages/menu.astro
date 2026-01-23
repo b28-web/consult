@@ -1,0 +1,100 @@
+---
+/**
+ * Menu Page
+ *
+ * Fetches menu at build time and displays with availability polling.
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+import MenuNav from "@/components/MenuNav.astro";
+import MenuSection from "@/components/MenuSection.astro";
+import { config } from "@/config";
+import { fetchMenu, getAllCategories } from "@/lib/menu";
+
+// Fetch menu at build time
+const menuData = await fetchMenu(config.client.slug);
+const categories = getAllCategories(menuData.menus);
+---
+
+<PageLayout title="Menu" description={`View the full menu at ${config.client.name}`}>
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold mb-2">Our Menu</h1>
+      {menuData.source === "static" && (
+        <p class="text-sm text-base-content/60">
+          Menu updated periodically. Call to confirm availability.
+        </p>
+      )}
+    </div>
+
+    <!-- Category navigation -->
+    {categories.length > 1 && <MenuNav categories={categories} />}
+
+    <!-- Menu sections -->
+    <div class="space-y-12 mt-8">
+      {categories.map((category) => (
+        <MenuSection category={category} />
+      ))}
+    </div>
+
+    <!-- Footer note -->
+    <div class="mt-12 text-center text-sm text-base-content/60">
+      <p>
+        Prices and availability subject to change.
+        {config.client.phone && (
+          <>
+            Call <a href={`tel:${config.client.phone.replace(/\D/g, "")}`} class="link">{config.client.phone}</a> to place an order.
+          </>
+        )}
+      </p>
+    </div>
+  </div>
+
+  <!-- Availability polling script -->
+  <script define:vars={{ slug: config.client.slug, apiUrl: import.meta.env.PUBLIC_API_URL }}>
+    // Only poll if we have an API URL
+    if (apiUrl) {
+      const POLL_INTERVAL = 60000; // 60 seconds
+
+      async function pollAvailability() {
+        try {
+          const res = await fetch(`${apiUrl}/api/clients/${slug}/availability`);
+          if (res.ok) {
+            const data = await res.json();
+            updateAvailability(data);
+          }
+        } catch (err) {
+          console.error('[availability] Poll failed:', err);
+        }
+      }
+
+      function updateAvailability(data) {
+        // Update item availability
+        Object.entries(data.items).forEach(([itemId, isAvailable]) => {
+          const el = document.querySelector(`[data-item-id="${itemId}"]`);
+          if (el) {
+            el.classList.toggle('unavailable', !isAvailable);
+
+            // Update/add badge
+            let badge = el.querySelector('.badge-error');
+            if (!isAvailable && !badge) {
+              const container = el.querySelector('.flex.flex-wrap');
+              if (container) {
+                badge = document.createElement('span');
+                badge.className = 'badge badge-error badge-sm';
+                badge.textContent = 'Currently unavailable';
+                container.prepend(badge);
+              }
+            } else if (isAvailable && badge) {
+              badge.remove();
+            }
+          }
+        });
+      }
+
+      // Initial poll and start interval
+      pollAvailability();
+      setInterval(pollAvailability, POLL_INTERVAL);
+    }
+  </script>
+</PageLayout>

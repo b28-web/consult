@@ -12,9 +12,9 @@ Add restaurants as a first-class client type with POS integration.
 | 008-A | POS adapter interface and mock implementation | ✓ |
 | 008-B | Restaurant domain models and migrations | ✓ |
 | 008-C | Menu API endpoints | ✓ |
-| 008-D | Restaurant site template (menu display) | pending |
+| 008-D | Restaurant site template (menu display) | ✓ |
 
-**Phase 1 in progress** - Foundation work (3/4 tickets complete)
+**Phase 1 complete** - Foundation work (4/4 tickets complete)
 
 ---
 

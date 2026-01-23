@@ -1,0 +1,25 @@
+---
+/**
+ * MenuNav - Jump links to menu sections
+ */
+import type { MenuCategory } from "@/lib/menu";
+
+interface Props {
+  categories: MenuCategory[];
+}
+
+const { categories } = Astro.props;
+---
+
+<nav class="sticky top-16 z-40 bg-base-100 border-b border-base-200 -mx-4 px-4 py-3 overflow-x-auto">
+  <div class="flex gap-2 min-w-max">
+    {categories.map((category) => (
+      <a
+        href={`#category-${category.id}`}
+        class="btn btn-sm btn-ghost"
+      >
+        {category.name}
+      </a>
+    ))}
+  </div>
+</nav>

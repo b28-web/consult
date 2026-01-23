@@ -1,0 +1,28 @@
+---
+/**
+ * MenuSection - Category with items
+ */
+import MenuItem from "./MenuItem.astro";
+import type { MenuCategory } from "@/lib/menu";
+
+interface Props {
+  category: MenuCategory;
+}
+
+const { category } = Astro.props;
+---
+
+<section id={`category-${category.id}`} class="scroll-mt-20">
+  <div class="mb-4">
+    <h2 class="text-2xl font-bold text-primary">{category.name}</h2>
+    {category.description && (
+      <p class="text-base-content/70 mt-1">{category.description}</p>
+    )}
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    {category.items.map((item) => (
+      <MenuItem item={item} />
+    ))}
+  </div>
+</section>

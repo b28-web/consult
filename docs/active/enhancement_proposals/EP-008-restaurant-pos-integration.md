@@ -455,7 +455,7 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
 | [008-A](../tickets/008-A-pos-adapter-interface.md) | POS adapter interface and mock implementation | 1 | complete |
 | [008-B](../tickets/008-B-restaurant-domain-models.md) | Restaurant domain models and migrations | 1 | complete |
 | [008-C](../tickets/008-C-menu-api-endpoints.md) | Menu API endpoints | 1 | complete |
-| [008-D](../tickets/008-D-restaurant-site-template.md) | Restaurant site template (menu display) | 1 | pending |
+| [008-D](../tickets/008-D-restaurant-site-template.md) | Restaurant site template (menu display) | 1 | complete |
 | [008-E](../tickets/008-E-availability-webhook-polling.md) | 86'd item webhook handler and availability polling | 2 | pending |
 | [008-F](../tickets/008-F-toast-adapter.md) | Toast adapter implementation | 2 | pending |
 | [008-G](../tickets/008-G-clover-adapter.md) | Clover adapter implementation | 3 | pending |
@@ -621,8 +621,21 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
   - Static fallback via `RestaurantProfile.static_menu_json`
   - 18 integration tests, all passing
 
+- **008-D complete**: Restaurant site template
+  - Full Astro template in `sites/_template-restaurant/`
+  - `RestaurantConfig` type with hours, cuisine, features, POS config
+  - Components: Hours, MenuItem, MenuSection, MenuNav, DietaryBadges, AllergenInfo
+  - Pages: Homepage (hero, hours, location), Menu (with polling), Contact
+  - Build-time menu fetch with mock data fallback
+  - 60-second availability polling for 86'd items
+  - Schema.org/Restaurant structured data
+  - Warm color theme (DaisyUI)
+  - Build verified: 3 pages built successfully
+
+**Phase 1 complete!** All foundation tickets done (008-A through 008-D).
+
 **Next steps:**
-- Continue Phase 1: 008-D (Restaurant site template)
+- Continue Phase 2: 008-E (Availability webhook/polling), 008-F (Toast adapter)
 - Apply for Toast Partner API access (needed for order creation in Phase 4)
 
 ## Retrospective
