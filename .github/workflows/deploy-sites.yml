@@ -37,7 +37,6 @@ on:
 
 env:
   NODE_VERSION: '22'
-  PNPM_VERSION: '9'
   DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
 
 concurrency:
@@ -136,8 +135,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Get pnpm store directory
         id: pnpm-cache

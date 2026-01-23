@@ -1338,6 +1338,48 @@ deploy-wizard ENV="dev":
     echo "============================================"
 
 # =============================================================================
+# CI/CD Monitoring
+# =============================================================================
+
+# Show recent GitHub Actions workflow runs
+ci-status:
+    @gh run list --limit 10
+
+# Watch a running workflow (usage: just ci-watch <run-id>)
+ci-watch RUN_ID:
+    gh run watch {{RUN_ID}}
+
+# Show logs for a workflow run (usage: just ci-logs <run-id>)
+ci-logs RUN_ID:
+    gh run view {{RUN_ID}} --log
+
+# Show failed job logs (usage: just ci-logs-failed <run-id>)
+ci-logs-failed RUN_ID:
+    gh run view {{RUN_ID}} --log-failed
+
+# Check status of Deploy Sites workflow runs
+sites-ci-status:
+    @gh run list --workflow=deploy-sites.yml --limit 10
+
+# Manually trigger Deploy Sites workflow
+sites-ci-trigger SITE="all" ENV="dev":
+    gh workflow run deploy-sites.yml -f site={{SITE}} -f environment={{ENV}}
+    @echo "Triggered Deploy Sites workflow for site={{SITE}} env={{ENV}}"
+    @echo "Run 'just sites-ci-status' to monitor"
+
+# Watch the latest Deploy Sites workflow run
+sites-ci-watch:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    RUN_ID=$(gh run list --workflow=deploy-sites.yml --limit 1 --json databaseId --jq '.[0].databaseId')
+    if [ -n "$RUN_ID" ]; then
+        echo "Watching run $RUN_ID..."
+        gh run watch "$RUN_ID"
+    else
+        echo "No Deploy Sites runs found"
+    fi
+
+# =============================================================================
 # Pre-Deploy Validation (Dagger)
 # =============================================================================
 
