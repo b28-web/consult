@@ -1,0 +1,104 @@
+---
+/**
+ * Services Page
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+import { config } from "@/config";
+---
+
+<PageLayout title="Services">
+  <!-- Hero Section -->
+  <section class="py-12 sm:py-16 bg-gradient-to-br from-primary/10 via-secondary/10 to-base-200">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">What We Build</h1>
+      <p class="text-lg sm:text-xl text-base-content/70">
+        From sleek marketing sites to powerful web applications, we craft digital experiences that drive results.
+      </p>
+    </div>
+  </section>
+
+  <!-- Services Grid -->
+  <section class="py-12 sm:py-16 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid md:grid-cols-2 gap-6 sm:gap-8">
+        {config.services.map((service, index) => (
+          <div class="card bg-base-100 shadow-xl border border-base-200 hover:border-primary transition-all hover:shadow-2xl" id={service.slug}>
+            <div class="card-body p-6 sm:p-8">
+              <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mb-4">
+                <span class="text-2xl text-white font-bold">{String(index + 1).padStart(2, '0')}</span>
+              </div>
+              <h3 class="card-title text-xl sm:text-2xl">{service.name}</h3>
+              <p class="text-base-content/70 text-base sm:text-lg">{service.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Tech Stack Section -->
+  <section class="py-12 sm:py-16 bg-neutral text-neutral-content">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="text-center mb-10">
+        <h2 class="text-2xl sm:text-3xl font-bold mb-4">Technologies We Love</h2>
+        <p class="text-lg text-neutral-content/80">
+          We use modern, battle-tested technologies to build fast, scalable, and maintainable solutions.
+        </p>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        {["React", "Next.js", "Astro", "TypeScript", "Node.js", "Python", "Tailwind CSS", "PostgreSQL", "Stripe", "Shopify", "Sanity", "Vercel"].map((tech) => (
+          <div class="bg-neutral-content/10 rounded-lg p-4 flex items-center justify-center text-center hover:bg-neutral-content/20 transition-colors">
+            <span class="text-sm sm:text-base font-medium">{tech}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Choose Us -->
+  <section class="py-12 sm:py-16 px-4">
+    <div class="max-w-6xl mx-auto">
+      <h2 class="text-2xl sm:text-3xl font-bold text-center mb-10">Why Work With Us</h2>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="text-center p-6">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+            <svg class="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold mb-2">Fast Delivery</h3>
+          <p class="text-base-content/70">We move quickly without sacrificing quality. Your project, launched on time.</p>
+        </div>
+        <div class="text-center p-6">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-secondary/10 flex items-center justify-center">
+            <svg class="w-8 h-8 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold mb-2">Secure & Reliable</h3>
+          <p class="text-base-content/70">Security best practices baked in from day one. Sleep easy knowing your site is protected.</p>
+        </div>
+        <div class="text-center p-6">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-accent/10 flex items-center justify-center">
+            <svg class="w-8 h-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold mb-2">Ongoing Partnership</h3>
+          <p class="text-base-content/70">We don't disappear after launch. Long-term support and iteration as your business grows.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-12 sm:py-16 bg-gradient-to-r from-primary to-secondary text-white">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold mb-4">Ready to Build Something Great?</h2>
+      <p class="text-lg mb-8 text-white/80">
+        Tell us about your project and let's create something amazing together.
+      </p>
+      <a href="/contact" class="btn btn-secondary btn-lg">Start Your Project</a>
+    </div>
+  </section>
+</PageLayout>

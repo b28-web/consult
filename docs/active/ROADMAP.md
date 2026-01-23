@@ -14,7 +14,7 @@ Deploy 8 service/B2B client sites with scaffolding and registry-based deployment
 - Site registry system (`sites/registry.yaml`)
 - Deploy wizard (`just deploy-wizard`)
 - Pulumi integration (reads registry for CF Pages projects)
-- 6 sites deployed: coffee-shop, hauler, cleaning, landscaper, barber, data-analytics
+- 8 sites deployed: coffee-shop, hauler, cleaning, landscaper, barber, data-analytics, webstudio, local-agency
 - Fixed Tailwind v4 + DaisyUI CSS integration
 - Template hardening: mobile responsiveness, README documentation
 
@@ -28,9 +28,9 @@ Deploy 8 service/B2B client sites with scaffolding and registry-based deployment
 | 005-F | Template hardening (mobile, CSS) | complete |
 | 005-G | Deploy barber site | complete |
 | 005-H | Deploy data-analytics site | complete |
-| **005-I** | **Deploy web-dev site** | **next** |
-| 005-J | Deploy local-agency site | pending |
-| 005-K | CI/CD pipeline for sites | pending |
+| 005-I | Deploy webstudio site | complete |
+| 005-J | Deploy local-agency site | complete |
+| **005-K** | **CI/CD pipeline for sites** | **next** |
 
 > 005-F inserted to fix mobile responsiveness and consolidate template improvements
 > before deploying remaining sites. Reduces O(n) maintenance overhead.

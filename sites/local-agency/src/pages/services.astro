@@ -1,0 +1,110 @@
+---
+/**
+ * Services Page
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+import { config } from "@/config";
+---
+
+<PageLayout title="Services">
+  <!-- Hero Section -->
+  <section class="py-12 sm:py-16 bg-primary text-primary-content">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">Our Services</h1>
+      <p class="text-lg sm:text-xl text-primary-content/80">
+        Everything you need to establish and grow your online presence.
+      </p>
+    </div>
+  </section>
+
+  <!-- Services Grid -->
+  <section class="py-12 sm:py-16 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid md:grid-cols-2 gap-6 sm:gap-8">
+        {config.services.map((service, index) => (
+          <div class="card bg-base-100 shadow-xl border border-base-200" id={service.slug}>
+            <div class="card-body p-6 sm:p-8">
+              <div class="w-14 h-14 rounded-xl bg-primary text-primary-content flex items-center justify-center mb-4">
+                <span class="text-2xl font-bold">{String(index + 1).padStart(2, '0')}</span>
+              </div>
+              <h3 class="card-title text-xl sm:text-2xl">{service.name}</h3>
+              <p class="text-base-content/70 text-base sm:text-lg">{service.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Why It Matters -->
+  <section class="py-12 sm:py-16 bg-base-200 px-4">
+    <div class="max-w-6xl mx-auto">
+      <h2 class="text-2xl sm:text-3xl font-bold text-center mb-10">Why These Services Matter</h2>
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="text-center">
+          <div class="text-4xl mb-4">🔍</div>
+          <h3 class="text-xl font-bold mb-2">Get Found</h3>
+          <p class="text-base-content/70">
+            When customers search for your type of business, you need to show up. Our SEO ensures you're visible.
+          </p>
+        </div>
+        <div class="text-center">
+          <div class="text-4xl mb-4">📱</div>
+          <h3 class="text-xl font-bold mb-2">Look Professional</h3>
+          <p class="text-base-content/70">
+            First impressions matter. A professional website builds trust before customers even call.
+          </p>
+        </div>
+        <div class="text-center">
+          <div class="text-4xl mb-4">💰</div>
+          <h3 class="text-xl font-bold mb-2">Capture Leads</h3>
+          <p class="text-base-content/70">
+            Contact forms and booking widgets work 24/7, turning visitors into customers while you sleep.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- What You Get -->
+  <section class="py-12 sm:py-16 px-4">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-2xl sm:text-3xl font-bold text-center mb-10">What's Included With Every Site</h2>
+      <div class="grid sm:grid-cols-2 gap-4">
+        {[
+          "Custom design matched to your brand",
+          "Mobile-responsive layout",
+          "Contact form with email notifications",
+          "Google Maps integration",
+          "Social media links",
+          "SSL security certificate",
+          "Basic SEO setup",
+          "Fast-loading pages",
+          "30 days of free revisions",
+          "Launch support and training",
+        ].map((feature) => (
+          <div class="flex items-center gap-3 p-3 bg-base-100 rounded-lg border border-base-200">
+            <svg class="w-5 h-5 text-success flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+            <span>{feature}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-12 sm:py-16 bg-primary text-primary-content">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold mb-4">Ready to Get Started?</h2>
+      <p class="text-lg mb-8 text-primary-content/80">
+        Book a free call and we'll discuss which services are right for your business.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="/contact" class="btn btn-secondary btn-lg">Book Free Call</a>
+        <a href="/pricing" class="btn btn-outline border-primary-content text-primary-content hover:bg-primary-content hover:text-primary btn-lg">View Pricing</a>
+      </div>
+    </div>
+  </section>
+</PageLayout>

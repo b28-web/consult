@@ -19,8 +19,8 @@ Deploy all 8 planned client sites, establish tooling for rapid site creation, an
 | 005-F | Template hardening (mobile, CSS) | complete |
 | 005-G | Deploy barber site | complete |
 | 005-H | Deploy data-analytics site | complete |
-| 005-I | Deploy web-dev site | pending |
-| 005-J | Deploy local-agency site | pending |
+| 005-I | Deploy webstudio site | complete |
+| 005-J | Deploy local-agency site | complete |
 | 005-K | CI/CD pipeline for sites | pending |
 
 > **Note:** 005-F inserted to consolidate template fixes before deploying more sites.
@@ -97,10 +97,25 @@ The `coffee-shop` site in this EP is a **simple cafe** (static menu page, hours 
 | landscaper | Landscaping | Seasonal services | |
 | barber | Personal Services | Cal.com booking | |
 | data-analytics | B2B Software | Case studies, pricing tiers | |
-| web-dev | B2B Services | Portfolio, process | |
+| webstudio | B2B Services | Portfolio, process | Renamed from web-dev |
 | local-agency | B2B Services | Meta/self-referential | |
 
 ## Progress Log
+
+### 2026-01-22 (local-agency site)
+- Deployed local-agency site (Consult Local - meta/self-referential agency site)
+- Live at https://consult-local-agency-dev.pages.dev
+- Features: Blue/slate theme, 3-tier pricing, testimonials, 5-step process
+- Pages: Home, Services, How It Works, Pricing, Contact
+- 005-J complete
+
+### 2026-01-22 (webstudio site)
+- Deployed webstudio site (web dev agency for Pixel Perfect Studios)
+- Live at https://consult-webstudio-dev.pages.dev
+- Features: Pink/purple gradient theme, 6 portfolio projects, process timeline with FAQ
+- Pages: Home, Services, Portfolio, Process, Contact
+- Renamed from `web-dev` to `webstudio` for cleaner URL
+- 005-I complete
 
 ### 2026-01-22 (data-analytics site)
 - Deployed data-analytics site (B2B SaaS marketing site for DataFlow Analytics)

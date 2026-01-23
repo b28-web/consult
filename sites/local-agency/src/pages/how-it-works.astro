@@ -1,0 +1,169 @@
+---
+/**
+ * How It Works Page
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+
+const steps = [
+  {
+    number: "1",
+    title: "Discovery Call",
+    description: "Tell us about your business",
+    details: "We'll have a quick 15-minute call to understand your business, goals, and what you need from your website. No technical jargon, just a conversation.",
+    icon: "phone",
+  },
+  {
+    number: "2",
+    title: "Design",
+    description: "We create your custom site",
+    details: "Our team designs a beautiful, professional website tailored to your business. You'll see mockups before we build anything.",
+    icon: "palette",
+  },
+  {
+    number: "3",
+    title: "Review",
+    description: "You provide feedback",
+    details: "We'll walk through the design together. Want changes? No problem. We refine until you're 100% happy.",
+    icon: "check",
+  },
+  {
+    number: "4",
+    title: "Launch",
+    description: "Go live in days, not months",
+    details: "Once approved, we build and launch your site. Most sites go live within 5-7 business days. You'll be online before you know it.",
+    icon: "rocket",
+  },
+  {
+    number: "5",
+    title: "Grow",
+    description: "We help you get found online",
+    details: "Your site is built with SEO best practices. We'll also set up analytics so you can see how visitors find and use your site.",
+    icon: "trending",
+  },
+];
+---
+
+<PageLayout title="How It Works">
+  <!-- Hero Section -->
+  <section class="py-12 sm:py-16 bg-primary text-primary-content">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">Getting Online Is Easy</h1>
+      <p class="text-lg sm:text-xl text-primary-content/80">
+        From first call to live website in as little as one week. Here's how we do it.
+      </p>
+    </div>
+  </section>
+
+  <!-- Steps Timeline -->
+  <section class="py-12 sm:py-16 px-4">
+    <div class="max-w-4xl mx-auto">
+      {steps.map((step, index) => (
+        <div class={`flex gap-6 mb-12 ${index === steps.length - 1 ? '' : 'pb-12 border-b border-base-200'}`}>
+          <!-- Step Number -->
+          <div class="flex-shrink-0">
+            <div class="w-16 h-16 rounded-full bg-primary text-primary-content flex items-center justify-center text-2xl font-bold">
+              {step.number}
+            </div>
+          </div>
+
+          <!-- Step Content -->
+          <div class="flex-1">
+            <h2 class="text-2xl sm:text-3xl font-bold mb-2">{step.title}</h2>
+            <p class="text-lg text-primary font-medium mb-3">{step.description}</p>
+            <p class="text-base-content/70">{step.details}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- What You Get -->
+  <section class="py-12 sm:py-16 bg-base-200 px-4">
+    <div class="max-w-6xl mx-auto">
+      <h2 class="text-2xl sm:text-3xl font-bold text-center mb-10">What's Included With Every Site</h2>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[
+          { title: "Mobile-Friendly Design", desc: "Looks great on every device" },
+          { title: "Fast Loading Speed", desc: "No one likes a slow website" },
+          { title: "Contact Forms", desc: "Capture leads 24/7" },
+          { title: "SSL Security", desc: "The padlock that builds trust" },
+          { title: "Google-Ready", desc: "Built for search engines" },
+          { title: "Easy Updates", desc: "We handle changes for you" },
+        ].map((item) => (
+          <div class="flex items-start gap-4 p-4 bg-base-100 rounded-lg">
+            <svg class="w-6 h-6 text-success flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+            <div>
+              <h3 class="font-bold">{item.title}</h3>
+              <p class="text-sm text-base-content/70">{item.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="py-12 sm:py-16 px-4">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-2xl sm:text-3xl font-bold text-center mb-10">Common Questions</h2>
+
+      <div class="space-y-4">
+        <div class="collapse collapse-arrow bg-base-100 shadow border border-base-200">
+          <input type="radio" name="faq" checked />
+          <div class="collapse-title text-lg font-medium">
+            How long does it take to build my website?
+          </div>
+          <div class="collapse-content">
+            <p>Most websites are completed within 5-7 business days after we receive your content. Larger sites or custom features may take a bit longer, but we'll give you a clear timeline upfront.</p>
+          </div>
+        </div>
+
+        <div class="collapse collapse-arrow bg-base-100 shadow border border-base-200">
+          <input type="radio" name="faq" />
+          <div class="collapse-title text-lg font-medium">
+            Do I need to provide content?
+          </div>
+          <div class="collapse-content">
+            <p>We'll need some basics from you: your business description, services, contact info, and any photos you'd like to use. We can help write professional copy if needed (included in Professional and Premium plans).</p>
+          </div>
+        </div>
+
+        <div class="collapse collapse-arrow bg-base-100 shadow border border-base-200">
+          <input type="radio" name="faq" />
+          <div class="collapse-title text-lg font-medium">
+            What if I want changes after launch?
+          </div>
+          <div class="collapse-content">
+            <p>No problem! All plans include 30 days of free revisions after launch. After that, we offer affordable monthly support plans, or you can request changes on an as-needed basis.</p>
+          </div>
+        </div>
+
+        <div class="collapse collapse-arrow bg-base-100 shadow border border-base-200">
+          <input type="radio" name="faq" />
+          <div class="collapse-title text-lg font-medium">
+            Do I own my website?
+          </div>
+          <div class="collapse-content">
+            <p>Absolutely. You own your website and all its content. We'll never hold your site hostage. If you ever want to move to a different provider, we'll help with the transition.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-12 sm:py-16 bg-primary text-primary-content">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold mb-4">Ready to Get Started?</h2>
+      <p class="text-lg mb-8 text-primary-content/80">
+        Book a free discovery call and let's talk about your business.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="/contact" class="btn btn-secondary btn-lg">Book Free Call</a>
+        <a href="/pricing" class="btn btn-outline border-primary-content text-primary-content hover:bg-primary-content hover:text-primary btn-lg">View Pricing</a>
+      </div>
+    </div>
+  </section>
+</PageLayout>

@@ -1,0 +1,205 @@
+---
+/**
+ * Process Page
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+
+const processSteps = [
+  {
+    number: "01",
+    title: "Discovery",
+    description: "Understand your goals and requirements",
+    details: [
+      "Initial consultation to understand your business",
+      "Define project scope, goals, and success metrics",
+      "Research your industry and competitors",
+      "Identify target audience and user needs",
+    ],
+    duration: "1-2 weeks",
+  },
+  {
+    number: "02",
+    title: "Design",
+    description: "Create wireframes and visual designs",
+    details: [
+      "Information architecture and sitemap",
+      "Wireframes for key pages and user flows",
+      "Visual design mockups with your brand",
+      "Interactive prototypes for feedback",
+    ],
+    duration: "2-3 weeks",
+  },
+  {
+    number: "03",
+    title: "Development",
+    description: "Build with modern technologies",
+    details: [
+      "Set up development environment and infrastructure",
+      "Build responsive, accessible front-end",
+      "Implement back-end functionality and APIs",
+      "Integrate third-party services and CMS",
+    ],
+    duration: "4-8 weeks",
+  },
+  {
+    number: "04",
+    title: "Testing",
+    description: "Ensure quality across devices",
+    details: [
+      "Cross-browser and device testing",
+      "Performance optimization and load testing",
+      "Accessibility audit (WCAG compliance)",
+      "Security review and penetration testing",
+    ],
+    duration: "1-2 weeks",
+  },
+  {
+    number: "05",
+    title: "Launch",
+    description: "Deploy and monitor",
+    details: [
+      "Final client review and sign-off",
+      "Production deployment and DNS setup",
+      "Analytics and monitoring configuration",
+      "Team training and documentation handoff",
+    ],
+    duration: "1 week",
+  },
+  {
+    number: "06",
+    title: "Support",
+    description: "Ongoing maintenance and updates",
+    details: [
+      "30-day warranty for bug fixes",
+      "Optional maintenance retainer",
+      "Performance monitoring and alerts",
+      "Feature iterations based on user feedback",
+    ],
+    duration: "Ongoing",
+  },
+];
+---
+
+<PageLayout title="Our Process">
+  <!-- Hero Section -->
+  <section class="py-12 sm:py-16 bg-gradient-to-br from-primary/10 via-secondary/10 to-base-200">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">How We Work</h1>
+      <p class="text-lg sm:text-xl text-base-content/70">
+        A proven process that delivers results. Transparent, collaborative, and focused on your success.
+      </p>
+    </div>
+  </section>
+
+  <!-- Timeline -->
+  <section class="py-12 sm:py-16 px-4">
+    <div class="max-w-4xl mx-auto">
+      <div class="relative">
+        <!-- Vertical line for desktop -->
+        <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-primary via-secondary to-accent"></div>
+
+        {processSteps.map((step, index) => (
+          <div class={`relative flex items-start gap-6 mb-12 ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
+            <!-- Step number (center on desktop) -->
+            <div class="hidden md:flex absolute left-1/2 transform -translate-x-1/2 w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary items-center justify-center text-white font-bold text-xl shadow-lg z-10">
+              {step.number}
+            </div>
+
+            <!-- Content card -->
+            <div class={`flex-1 ${index % 2 === 0 ? 'md:pr-12 md:text-right' : 'md:pl-12'}`}>
+              <div class="card bg-base-100 shadow-xl border border-base-200">
+                <div class="card-body p-6">
+                  <!-- Mobile number -->
+                  <div class="md:hidden w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold mb-4">
+                    {step.number}
+                  </div>
+
+                  <div class={`flex items-center gap-3 mb-2 ${index % 2 === 0 ? 'md:justify-end' : ''}`}>
+                    <h3 class="text-xl sm:text-2xl font-bold">{step.title}</h3>
+                    <span class="badge badge-secondary">{step.duration}</span>
+                  </div>
+
+                  <p class="text-base-content/70 text-lg mb-4">{step.description}</p>
+
+                  <ul class={`space-y-2 ${index % 2 === 0 ? 'md:text-right' : ''}`}>
+                    {step.details.map((detail) => (
+                      <li class={`flex items-start gap-2 ${index % 2 === 0 ? 'md:flex-row-reverse' : ''}`}>
+                        <svg class="w-5 h-5 text-success flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-sm sm:text-base">{detail}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Spacer for alternating layout -->
+            <div class="hidden md:block flex-1"></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="py-12 sm:py-16 bg-base-200 px-4">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-2xl sm:text-3xl font-bold text-center mb-10">Common Questions</h2>
+
+      <div class="space-y-4">
+        <div class="collapse collapse-arrow bg-base-100 shadow">
+          <input type="radio" name="faq" checked />
+          <div class="collapse-title text-lg font-medium">
+            How long does a typical project take?
+          </div>
+          <div class="collapse-content">
+            <p>Most projects take 8-16 weeks from kickoff to launch, depending on complexity. A simple marketing site might be 6-8 weeks, while a custom web application could be 12-20 weeks. We'll give you a detailed timeline after the discovery phase.</p>
+          </div>
+        </div>
+
+        <div class="collapse collapse-arrow bg-base-100 shadow">
+          <input type="radio" name="faq" />
+          <div class="collapse-title text-lg font-medium">
+            How much does a project cost?
+          </div>
+          <div class="collapse-content">
+            <p>Projects typically range from $15,000 to $150,000+ depending on scope. Marketing sites start around $15-30K, e-commerce at $30-60K, and custom web applications from $50K+. We'll provide a detailed proposal after understanding your needs.</p>
+          </div>
+        </div>
+
+        <div class="collapse collapse-arrow bg-base-100 shadow">
+          <input type="radio" name="faq" />
+          <div class="collapse-title text-lg font-medium">
+            What's your payment structure?
+          </div>
+          <div class="collapse-content">
+            <p>We typically work with a 40/30/30 structure: 40% at project start, 30% at design approval, and 30% at launch. For larger projects, we can discuss milestone-based payments. We accept bank transfer, credit card, or ACH.</p>
+          </div>
+        </div>
+
+        <div class="collapse collapse-arrow bg-base-100 shadow">
+          <input type="radio" name="faq" />
+          <div class="collapse-title text-lg font-medium">
+            Do you provide ongoing support?
+          </div>
+          <div class="collapse-content">
+            <p>Yes! All projects include a 30-day warranty. After that, we offer monthly maintenance retainers starting at $500/month that include hosting, updates, security patches, and a set number of change requests.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-12 sm:py-16 bg-gradient-to-r from-primary to-secondary text-white">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold mb-4">Ready to Get Started?</h2>
+      <p class="text-lg mb-8 text-white/80">
+        Let's discuss your project and create something amazing together.
+      </p>
+      <a href="/contact" class="btn btn-secondary btn-lg">Start Your Project</a>
+    </div>
+  </section>
+</PageLayout>

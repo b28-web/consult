@@ -1,0 +1,24 @@
+# Wrangler config for Cloudflare Pages
+# Site-specific: rename project for each client
+
+name = "consult-webstudio"
+compatibility_date = "2025-01-01"
+
+# Pages-specific settings
+pages_build_output_dir = "./dist"
+
+# Environment variables come from Doppler
+# Run with: doppler run -- wrangler pages deploy
+
+# For local dev with secrets:
+# doppler run -- wrangler pages dev ./dist
+
+# Bindings (if needed)
+# [[kv_namespaces]]
+# binding = "KV"
+# id = "xxx"
+
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "consult"
+# database_id = "xxx"

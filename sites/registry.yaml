@@ -73,3 +73,15 @@ sites:
     dev: {}
     # prod:
     #   domain: data-analytics.example.com
+
+  webstudio:
+    ready: true
+    dev: {}
+    # prod:
+    #   domain: webstudio.example.com
+
+  local-agency:
+    ready: true
+    dev: {}
+    # prod:
+    #   domain: local-agency.example.com

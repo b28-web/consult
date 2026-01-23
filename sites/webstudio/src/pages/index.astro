@@ -1,0 +1,135 @@
+---
+/**
+ * Home Page
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+import { config } from "@/config";
+---
+
+<PageLayout title="Home">
+  <!-- Hero Section with Gradient -->
+  <section class="hero min-h-[60vh] sm:min-h-[70vh] lg:min-h-[80vh] bg-gradient-to-br from-primary/20 via-secondary/20 to-base-200 relative overflow-hidden">
+    <!-- Decorative elements -->
+    <div class="absolute inset-0 overflow-hidden">
+      <div class="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl"></div>
+      <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-secondary/10 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="hero-content text-center px-4 relative z-10">
+      <div class="max-w-3xl">
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
+          <span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            {config.client.name}
+          </span>
+        </h1>
+        <p class="text-xl sm:text-2xl text-base-content/80 mb-8">{config.client.tagline}</p>
+        <p class="text-base sm:text-lg text-base-content/60 mb-8 max-w-2xl mx-auto">
+          We build beautiful, high-performance websites and web applications that help businesses grow.
+          From startups to enterprises, we're your partner in digital transformation.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href="/contact" class="btn btn-primary btn-lg">Start Your Project</a>
+          <a href="/portfolio" class="btn btn-outline btn-lg">View Our Work</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services Preview -->
+  <section class="py-16 sm:py-20 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-12">
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">What We Do</h2>
+        <p class="text-base-content/70 text-lg max-w-2xl mx-auto">
+          Full-service web development, from concept to launch and beyond.
+        </p>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {config.services.map((service, index) => (
+          <div class="card bg-base-100 shadow-xl border border-base-200 hover:border-primary transition-all hover:shadow-2xl group">
+            <div class="card-body p-6">
+              <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <span class="text-lg text-white font-bold">{String(index + 1).padStart(2, '0')}</span>
+              </div>
+              <h3 class="card-title text-lg sm:text-xl">{service.name}</h3>
+              <p class="text-sm sm:text-base text-base-content/70">{service.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div class="text-center mt-10">
+        <a href="/services" class="btn btn-outline btn-primary">All Services</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="py-16 sm:py-20 bg-neutral text-neutral-content">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+        <div>
+          <div class="text-4xl sm:text-5xl font-bold text-primary mb-2">50+</div>
+          <div class="text-sm sm:text-base text-neutral-content/70">Projects Delivered</div>
+        </div>
+        <div>
+          <div class="text-4xl sm:text-5xl font-bold text-secondary mb-2">98%</div>
+          <div class="text-sm sm:text-base text-neutral-content/70">Client Satisfaction</div>
+        </div>
+        <div>
+          <div class="text-4xl sm:text-5xl font-bold text-accent mb-2">5+</div>
+          <div class="text-sm sm:text-base text-neutral-content/70">Years Experience</div>
+        </div>
+        <div>
+          <div class="text-4xl sm:text-5xl font-bold text-success mb-2">24hr</div>
+          <div class="text-sm sm:text-base text-neutral-content/70">Response Time</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Process Preview -->
+  <section class="py-16 sm:py-20 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-12">
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">Our Process</h2>
+        <p class="text-base-content/70 text-lg max-w-2xl mx-auto">
+          A transparent, collaborative approach that keeps you in control.
+        </p>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[
+          { num: "01", title: "Discovery", desc: "We learn your business, goals, and target audience" },
+          { num: "02", title: "Design", desc: "Wireframes and mockups you can see and feel" },
+          { num: "03", title: "Develop", desc: "Modern code built for speed and scalability" },
+          { num: "04", title: "Test", desc: "Thorough QA across browsers and devices" },
+          { num: "05", title: "Launch", desc: "Deploy with confidence and analytics" },
+          { num: "06", title: "Support", desc: "Ongoing partnership as you grow" },
+        ].map((step) => (
+          <div class="flex items-start gap-4 p-4">
+            <div class="w-12 h-12 rounded-full border-2 border-primary flex items-center justify-center text-primary font-bold flex-shrink-0">
+              {step.num}
+            </div>
+            <div>
+              <h3 class="font-bold text-lg mb-1">{step.title}</h3>
+              <p class="text-base-content/70 text-sm">{step.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div class="text-center mt-10">
+        <a href="/process" class="btn btn-outline btn-secondary">Learn More</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-16 sm:py-20 bg-gradient-to-r from-primary to-secondary text-white">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">Ready to Build Something Great?</h2>
+      <p class="text-lg sm:text-xl mb-8 text-white/80">
+        Let's talk about your project. Free consultation, no strings attached.
+      </p>
+      <a href="/contact" class="btn btn-secondary btn-lg">Start Your Project</a>
+    </div>
+  </section>
+</PageLayout>

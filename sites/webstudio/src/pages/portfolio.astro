@@ -1,0 +1,169 @@
+---
+/**
+ * Portfolio Page
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+
+const portfolio = [
+  {
+    name: "E-commerce Platform",
+    client: "Fashion Brand",
+    description: "A high-performance e-commerce store with custom product configurator, real-time inventory sync, and seamless checkout experience.",
+    tech: ["Next.js", "Stripe", "Sanity"],
+    results: ["3x conversion rate", "40% faster load times", "50K monthly visitors"],
+  },
+  {
+    name: "SaaS Dashboard",
+    client: "FinTech Startup",
+    description: "Real-time analytics dashboard with interactive data visualizations, role-based access control, and automated reporting.",
+    tech: ["React", "D3.js", "Node.js"],
+    results: ["500+ daily users", "99.9% uptime", "Series A funded"],
+  },
+  {
+    name: "Corporate Website",
+    client: "Law Firm",
+    description: "Professional brand presence with attorney profiles, practice area pages, and integrated client portal for case updates.",
+    tech: ["Astro", "Tailwind", "Contentful"],
+    results: ["200% more inquiries", "4.9s → 1.2s load time", "Top 3 Google ranking"],
+  },
+  {
+    name: "Booking Platform",
+    client: "Wellness Studio",
+    description: "Multi-location booking system with class schedules, membership management, and instructor dashboards.",
+    tech: ["React", "Node.js", "PostgreSQL"],
+    results: ["30% more bookings", "Zero double-bookings", "5-star reviews"],
+  },
+  {
+    name: "B2B Marketplace",
+    client: "Manufacturing Co",
+    description: "Custom marketplace connecting suppliers with buyers, featuring RFQ system, bulk pricing, and order tracking.",
+    tech: ["Next.js", "Prisma", "AWS"],
+    results: ["$2M GMV in 6 months", "500+ suppliers", "Enterprise clients"],
+  },
+  {
+    name: "Mobile Web App",
+    client: "Food Delivery",
+    description: "Progressive web app with offline support, real-time order tracking, and push notifications for delivery updates.",
+    tech: ["React", "Firebase", "Stripe"],
+    results: ["4.8 app store rating", "10K downloads", "60% repeat orders"],
+  },
+];
+---
+
+<PageLayout title="Portfolio">
+  <!-- Hero Section -->
+  <section class="py-12 sm:py-16 bg-gradient-to-br from-primary/10 via-secondary/10 to-base-200">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">Our Work</h1>
+      <p class="text-lg sm:text-xl text-base-content/70">
+        A selection of projects we're proud to have built for clients across industries.
+      </p>
+    </div>
+  </section>
+
+  <!-- Portfolio Grid -->
+  <section class="py-12 sm:py-16 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        {portfolio.map((project, index) => (
+          <article class="card bg-base-100 shadow-xl border border-base-200 hover:border-primary transition-all hover:shadow-2xl group">
+            <!-- Placeholder image with gradient -->
+            <figure class="h-48 bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20 relative overflow-hidden">
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span class="text-6xl font-bold text-primary/20 group-hover:text-primary/30 transition-colors">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+              </div>
+              <div class="absolute top-4 right-4">
+                <span class="badge badge-neutral">{project.client}</span>
+              </div>
+            </figure>
+            <div class="card-body p-5">
+              <h3 class="card-title text-lg">{project.name}</h3>
+              <p class="text-sm text-base-content/70 line-clamp-2">{project.description}</p>
+
+              <!-- Tech Stack -->
+              <div class="flex flex-wrap gap-2 mt-3">
+                {project.tech.map((t) => (
+                  <span class="badge badge-outline badge-sm">{t}</span>
+                ))}
+              </div>
+
+              <!-- Results -->
+              <div class="mt-4 pt-4 border-t border-base-200">
+                <div class="grid grid-cols-3 gap-2 text-center">
+                  {project.results.slice(0, 3).map((result) => (
+                    <div class="text-xs">
+                      <span class="font-semibold text-primary block">{result.split(' ')[0]}</span>
+                      <span class="text-base-content/60">{result.split(' ').slice(1).join(' ')}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Client Logos -->
+  <section class="py-12 sm:py-16 bg-base-200">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <h2 class="text-xl sm:text-2xl font-bold mb-8">Trusted By</h2>
+      <div class="flex flex-wrap justify-center items-center gap-8 sm:gap-12 opacity-60">
+        {["Fashion Brand", "FinTech Startup", "Law Firm", "Wellness Studio", "Manufacturing Co", "Food Delivery"].map((company) => (
+          <div class="text-lg sm:text-xl font-semibold">{company}</div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="py-12 sm:py-16 px-4">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="text-2xl sm:text-3xl font-bold text-center mb-10">What Clients Say</h2>
+      <div class="grid md:grid-cols-2 gap-6">
+        <blockquote class="card bg-base-100 shadow-lg p-6">
+          <p class="text-lg italic mb-4">
+            "Pixel Perfect delivered our new site in half the time we expected. The attention to detail and performance optimization exceeded all our benchmarks."
+          </p>
+          <footer class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold">
+              JM
+            </div>
+            <div>
+              <div class="font-semibold">Jessica Martinez</div>
+              <div class="text-sm text-base-content/70">CEO, Fashion Brand</div>
+            </div>
+          </footer>
+        </blockquote>
+        <blockquote class="card bg-base-100 shadow-lg p-6">
+          <p class="text-lg italic mb-4">
+            "Working with Pixel Perfect felt like having an in-house team. They understood our vision immediately and brought ideas we hadn't even considered."
+          </p>
+          <footer class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-secondary to-accent flex items-center justify-center text-white font-bold">
+              DK
+            </div>
+            <div>
+              <div class="font-semibold">David Kim</div>
+              <div class="text-sm text-base-content/70">CTO, FinTech Startup</div>
+            </div>
+          </footer>
+        </blockquote>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-12 sm:py-16 bg-gradient-to-r from-primary to-secondary text-white">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold mb-4">Ready to Be Our Next Success Story?</h2>
+      <p class="text-lg mb-8 text-white/80">
+        Let's discuss how we can bring your vision to life.
+      </p>
+      <a href="/contact" class="btn btn-secondary btn-lg">Start Your Project</a>
+    </div>
+  </section>
+</PageLayout>

@@ -1,0 +1,195 @@
+---
+/**
+ * Pricing Page
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+
+const plans = [
+  {
+    name: "Starter",
+    price: "$999",
+    description: "Perfect for new businesses that need a simple, professional online presence.",
+    features: [
+      "5-page website",
+      "Mobile responsive design",
+      "Contact form",
+      "Basic SEO setup",
+      "SSL security certificate",
+      "30 days of revisions",
+    ],
+    highlighted: false,
+    cta: "Get Started",
+  },
+  {
+    name: "Professional",
+    price: "$1,999",
+    description: "For growing businesses that want to capture leads and book customers online.",
+    features: [
+      "10-page website",
+      "Online booking integration",
+      "Advanced lead capture forms",
+      "Local SEO optimization",
+      "Google Analytics setup",
+      "Social media integration",
+      "60 days of revisions",
+      "Professional copywriting",
+    ],
+    highlighted: true,
+    cta: "Most Popular",
+  },
+  {
+    name: "Premium",
+    price: "$3,499",
+    description: "Full-service solution for established businesses that want the best.",
+    features: [
+      "Unlimited pages",
+      "Custom features & integrations",
+      "Priority support",
+      "Monthly content updates",
+      "Performance optimization",
+      "Conversion rate optimization",
+      "90 days of revisions",
+      "Quarterly strategy calls",
+    ],
+    highlighted: false,
+    cta: "Go Premium",
+  },
+];
+---
+
+<PageLayout title="Pricing">
+  <!-- Hero Section -->
+  <section class="py-12 sm:py-16 bg-base-200">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">Simple, Transparent Pricing</h1>
+      <p class="text-lg sm:text-xl text-base-content/70">
+        One-time payment. No hidden fees. No monthly hosting costs for the first year.
+      </p>
+    </div>
+  </section>
+
+  <!-- Pricing Cards -->
+  <section class="py-12 sm:py-16 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid md:grid-cols-3 gap-6 sm:gap-8">
+        {plans.map((plan) => (
+          <div class={`card bg-base-100 shadow-xl border-2 ${plan.highlighted ? 'border-primary scale-105' : 'border-base-200'}`}>
+            {plan.highlighted && (
+              <div class="bg-primary text-primary-content text-center py-2 text-sm font-medium">
+                Most Popular
+              </div>
+            )}
+            <div class="card-body p-6 sm:p-8">
+              <h2 class="text-2xl font-bold">{plan.name}</h2>
+              <div class="my-4">
+                <span class="text-4xl sm:text-5xl font-bold">{plan.price}</span>
+                <span class="text-base-content/60 ml-2">one-time</span>
+              </div>
+              <p class="text-base-content/70 mb-6">{plan.description}</p>
+
+              <ul class="space-y-3 mb-8">
+                {plan.features.map((feature) => (
+                  <li class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-success flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-sm">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <a
+                href="/contact"
+                class={`btn btn-block ${plan.highlighted ? 'btn-primary' : 'btn-outline btn-primary'}`}
+              >
+                {plan.cta}
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- What's Included -->
+  <section class="py-12 sm:py-16 bg-neutral text-neutral-content">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <h2 class="text-2xl sm:text-3xl font-bold mb-8">Every Plan Includes</h2>
+      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
+        {[
+          { title: "Free Hosting", desc: "First year included" },
+          { title: "Domain Setup", desc: "We handle the tech" },
+          { title: "SSL Certificate", desc: "Secure by default" },
+          { title: "Launch Support", desc: "We're with you" },
+        ].map((item) => (
+          <div class="text-center">
+            <div class="text-3xl mb-2">✓</div>
+            <h3 class="font-bold">{item.title}</h3>
+            <p class="text-sm text-neutral-content/70">{item.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Ongoing Support -->
+  <section class="py-12 sm:py-16 px-4">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-2xl sm:text-3xl font-bold text-center mb-10">Optional Monthly Support</h2>
+      <div class="overflow-x-auto">
+        <table class="table table-zebra bg-base-100 shadow-lg">
+          <thead>
+            <tr>
+              <th>Plan</th>
+              <th>Monthly</th>
+              <th>What's Included</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="font-medium">Basic Care</td>
+              <td>$49/mo</td>
+              <td>Hosting, security updates, 1 content change/month</td>
+            </tr>
+            <tr>
+              <td class="font-medium">Growth</td>
+              <td>$99/mo</td>
+              <td>Everything in Basic + unlimited content changes, analytics reports</td>
+            </tr>
+            <tr>
+              <td class="font-medium">Partner</td>
+              <td>$199/mo</td>
+              <td>Everything in Growth + priority support, monthly strategy call</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-center text-base-content/60 mt-4 text-sm">
+        Support plans are optional. First year of basic hosting included with all packages.
+      </p>
+    </div>
+  </section>
+
+  <!-- Guarantee -->
+  <section class="py-12 sm:py-16 bg-base-200 px-4">
+    <div class="max-w-3xl mx-auto text-center">
+      <div class="text-5xl mb-4">🛡️</div>
+      <h2 class="text-2xl sm:text-3xl font-bold mb-4">100% Satisfaction Guarantee</h2>
+      <p class="text-lg text-base-content/70">
+        If you're not completely happy with your website before launch, we'll refund your money.
+        No questions asked. We want you to love your new site as much as we do.
+      </p>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-12 sm:py-16 bg-primary text-primary-content">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold mb-4">Ready to Get Your Business Online?</h2>
+      <p class="text-lg mb-8 text-primary-content/80">
+        Let's talk about which plan is right for you. Free consultation, no pressure.
+      </p>
+      <a href="/contact" class="btn btn-secondary btn-lg">Book Free Consultation</a>
+    </div>
+  </section>
+</PageLayout>

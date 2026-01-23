@@ -1,0 +1,179 @@
+---
+/**
+ * Home Page
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+import { config } from "@/config";
+
+const testimonials = [
+  {
+    quote: "Had my coffee shop website up in 3 days! Customers love being able to see our menu online.",
+    author: "Maria S.",
+    business: "The Daily Grind",
+  },
+  {
+    quote: "The booking integration changed our business. We went from phone tag to fully booked weekends.",
+    author: "James T.",
+    business: "Quick Haul Co",
+  },
+  {
+    quote: "Finally a website that looks professional. My clients take me more seriously now.",
+    author: "Derek M.",
+    business: "Classic Cuts Barbershop",
+  },
+];
+---
+
+<PageLayout title="Home">
+  <!-- Hero Section -->
+  <section class="hero min-h-[60vh] sm:min-h-[70vh] bg-primary text-primary-content">
+    <div class="hero-content text-center px-4">
+      <div class="max-w-3xl">
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
+          {config.client.tagline}
+        </h1>
+        <p class="text-xl sm:text-2xl text-primary-content/80 mb-8">
+          Professional websites for local businesses. No tech skills needed.
+          We handle everything so you can focus on what you do best.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href="/contact" class="btn btn-secondary btn-lg">Get Your Free Quote</a>
+          <a href="/how-it-works" class="btn btn-outline border-primary-content text-primary-content hover:bg-primary-content hover:text-primary btn-lg">See How It Works</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust Badges -->
+  <section class="py-8 bg-base-200">
+    <div class="max-w-4xl mx-auto px-4">
+      <div class="flex flex-wrap justify-center items-center gap-8 text-center text-base-content/60">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">⚡</span>
+          <span class="font-medium">Launch in Days</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">💰</span>
+          <span class="font-medium">One-Time Payment</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🛡️</span>
+          <span class="font-medium">Money-Back Guarantee</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📱</span>
+          <span class="font-medium">Mobile-Friendly</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Problem / Solution -->
+  <section class="py-12 sm:py-16 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid md:grid-cols-2 gap-8 items-center">
+        <div>
+          <h2 class="text-2xl sm:text-3xl font-bold mb-4">
+            Your Business Deserves to Be Found Online
+          </h2>
+          <p class="text-lg text-base-content/70 mb-6">
+            Every day, potential customers search for businesses like yours. Without a website,
+            you're invisible to them. But building a website shouldn't be complicated or expensive.
+          </p>
+          <ul class="space-y-3">
+            {[
+              "No coding or tech skills required",
+              "We write the content for you",
+              "Launch in as little as 5 days",
+              "Affordable one-time pricing",
+            ].map((item) => (
+              <li class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-success" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div class="bg-base-200 rounded-2xl p-8 text-center">
+          <div class="text-5xl mb-4">📊</div>
+          <div class="text-4xl font-bold text-primary mb-2">97%</div>
+          <p class="text-base-content/70">of consumers search online for local businesses</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services Preview -->
+  <section class="py-12 sm:py-16 bg-base-200 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-10">
+        <h2 class="text-2xl sm:text-3xl font-bold mb-4">Everything You Need to Succeed Online</h2>
+        <p class="text-base-content/70 text-lg max-w-2xl mx-auto">
+          We don't just build websites. We build complete solutions that help you get found,
+          capture leads, and grow your business.
+        </p>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {config.services.map((service) => (
+          <div class="card bg-base-100 shadow-xl">
+            <div class="card-body p-6">
+              <h3 class="card-title text-lg">{service.name}</h3>
+              <p class="text-base-content/70">{service.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div class="text-center mt-8">
+        <a href="/services" class="btn btn-outline btn-primary">View All Services</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="py-12 sm:py-16 px-4">
+    <div class="max-w-6xl mx-auto">
+      <h2 class="text-2xl sm:text-3xl font-bold text-center mb-10">What Our Clients Say</h2>
+      <div class="grid md:grid-cols-3 gap-6">
+        {testimonials.map((t) => (
+          <div class="card bg-base-100 shadow-xl border border-base-200">
+            <div class="card-body p-6">
+              <div class="text-4xl text-primary/20 mb-2">"</div>
+              <p class="text-lg mb-4">{t.quote}</p>
+              <div class="mt-auto">
+                <div class="font-bold">{t.author}</div>
+                <div class="text-sm text-base-content/60">{t.business}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Simple Pricing Preview -->
+  <section class="py-12 sm:py-16 bg-neutral text-neutral-content">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <h2 class="text-2xl sm:text-3xl font-bold mb-4">Pricing That Makes Sense</h2>
+      <p class="text-lg text-neutral-content/80 mb-8">
+        One-time payment starting at $999. No monthly fees. No surprises.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="/pricing" class="btn btn-secondary btn-lg">View Pricing</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-12 sm:py-16 bg-primary text-primary-content">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold mb-4">Ready to Get Your Business Online?</h2>
+      <p class="text-lg mb-8 text-primary-content/80">
+        Book a free 15-minute call. We'll discuss your needs and give you an honest quote.
+        No pressure, no obligations.
+      </p>
+      <a href="/contact" class="btn btn-secondary btn-lg">Book Your Free Call</a>
+    </div>
+  </section>
+</PageLayout>

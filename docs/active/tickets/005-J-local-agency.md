@@ -1,7 +1,7 @@
-# 005-I: Deploy local-agency Site
+# 005-J: Deploy local-agency Site
 
 **EP:** [EP-005-client-sites](../enhancement_proposals/EP-005-client-sites.md)
-**Status:** pending
+**Status:** complete
 
 ## Summary
 
@@ -9,13 +9,13 @@ Deploy local marketing agency site (meta/self-referential - showcases Consult pl
 
 ## Acceptance Criteria
 
-- [ ] Site created at `sites/local-agency/`
-- [ ] Config: Consult Local, professional blue/slate theme
-- [ ] Pages: Home, Services, How It Works, Pricing, Contact
-- [ ] Showcases the Consult platform itself
-- [ ] Client testimonials
-- [ ] Onboarding inquiry form
-- [ ] Deployed to Cloudflare Pages
+- [x] Site created at `sites/local-agency/`
+- [x] Config: Consult Local, professional blue/slate theme
+- [x] Pages: Home, Services, How It Works, Pricing, Contact
+- [x] Showcases the Consult platform itself
+- [x] Client testimonials
+- [x] Onboarding inquiry form
+- [x] Deployed to Cloudflare Pages
 
 ## Implementation Notes
 
@@ -34,59 +34,21 @@ Services:
 - SEO Fundamentals
 - Ongoing Support
 
-How It Works:
-1. Discovery Call - Tell us about your business
-2. Design - We create your custom site
-3. Review - You provide feedback
-4. Launch - Go live in days, not months
-5. Grow - We help you get found online
-
 Pricing Tiers:
-```typescript
-pricing: [
-  {
-    name: "Starter",
-    price: "$999",
-    setup: "one-time",
-    features: ["5-page website", "Mobile responsive", "Contact form", "Basic SEO"],
-  },
-  {
-    name: "Professional",
-    price: "$1,999",
-    setup: "one-time",
-    features: ["10-page website", "Booking integration", "Lead capture", "Local SEO", "Analytics"],
-    highlighted: true,
-  },
-  {
-    name: "Premium",
-    price: "$3,499",
-    setup: "one-time",
-    features: ["Unlimited pages", "Custom features", "Priority support", "Monthly updates"],
-  },
-]
-```
-
-Testimonials:
-- "Had my coffee shop website up in 3 days!" - The Daily Grind
-- "Booking integration changed our business" - Quick Haul Co
-- "Finally a website that looks professional" - Classic Cuts
-
-DaisyUI theme:
-```javascript
-daisyui: {
-  themes: [{
-    client: {
-      primary: "#1e40af",      // Blue
-      secondary: "#475569",    // Slate
-      accent: "#0ea5e9",       // Sky blue
-      neutral: "#1e293b",      // Dark slate
-      "base-100": "#ffffff",
-      "base-content": "#1e293b",
-    }
-  }]
-}
-```
+- Starter: $999 (5-page website, basic features)
+- Professional: $1,999 (10-page website, booking, SEO)
+- Premium: $3,499 (unlimited pages, priority support)
 
 ## Progress
 
-(Not started)
+### 2026-01-22
+- Created site using scaffolding script with `--industry agency`
+- Customized config.ts with 6 services for local businesses
+- Updated DaisyUI theme with blue/slate colors
+- Created How It Works page with 5-step process
+- Created Pricing page with 3 tiers + monthly support options
+- Created Services page with feature list
+- Updated Home page with testimonials and trust badges
+- Updated Contact page for quote requests
+- Deployed to https://consult-local-agency-dev.pages.dev
+- 005-J complete
