@@ -1,7 +1,7 @@
 # 008-F: Toast Adapter Implementation
 
 **EP:** [EP-008-restaurant-pos-integration](../enhancement_proposals/EP-008-restaurant-pos-integration.md)
-**Status:** pending
+**Status:** complete
 **Phase:** 2 (POS Read Integration)
 
 ## Summary
@@ -10,19 +10,20 @@ Implement the Toast POS adapter following the `POSAdapter` protocol. This includ
 
 ## Acceptance Criteria
 
-- [ ] `ToastAdapter` class implementing `POSAdapter` protocol
-- [ ] OAuth 2.0 client credentials authentication
-- [ ] Token refresh handling
-- [ ] `get_menus()` - Fetch all menus for a location
-- [ ] `get_menu()` - Fetch single menu with items and modifiers
-- [ ] `get_item_availability()` - Fetch current 86'd status
-- [ ] `verify_webhook_signature()` - HMAC validation
-- [ ] `parse_webhook()` - Convert Toast events to internal format
-- [ ] Rate limiting (1 req/sec per location)
-- [ ] Error handling for API failures
-- [ ] Retry logic with exponential backoff
-- [ ] Unit tests with mocked HTTP responses
-- [ ] Integration test with Toast sandbox (if available)
+- [x] `ToastAdapter` class implementing `POSAdapter` protocol
+- [x] OAuth 2.0 client credentials authentication
+- [x] Token refresh handling (raises error - Toast doesn't support refresh tokens)
+- [x] `get_menus()` - Fetch all menus for a location
+- [x] `get_menu()` - Fetch single menu with items and modifiers
+- [x] `get_item_availability()` - Fetch current 86'd status
+- [x] `verify_webhook_signature()` - HMAC validation
+- [x] `parse_webhook()` - Convert Toast events to internal format
+- [x] Rate limiting (1 req/sec per location)
+- [x] Error handling for API failures
+- [x] Retry logic with exponential backoff
+- [x] Unit tests with mocked HTTP responses (35 tests)
+- [x] Adapter registry (`get_adapter()`) for drop-in provider selection
+- [ ] Integration test with Toast sandbox (deferred - no dev access)
 
 ## Implementation Notes
 
@@ -245,4 +246,27 @@ class ToastAPIError(POSAPIError):
 
 ## Progress
 
-*To be updated during implementation*
+### 2026-01-23: Implementation Complete
+
+**Files created/modified:**
+- `apps/web/pos/adapters/toast.py` - Full ToastAdapter implementation
+- `apps/web/pos/adapters/__init__.py` - Added `get_adapter()` factory function
+- `apps/web/pos/tests/test_toast_adapter.py` - 35 comprehensive tests
+- `packages/schemas/consult_schemas/py.typed` - Added for mypy compatibility
+
+**Implementation highlights:**
+- Full `POSAdapter` protocol implementation with Toast API structure
+- `RateLimiter` class for per-location request throttling (1 req/sec)
+- HTTP retry logic with exponential backoff (3 attempts)
+- Menu parsing with dietary flags extraction from Toast tags
+- HMAC-SHA256 webhook signature verification
+- Drop-in adapter registry: `get_adapter(POSProvider.TOAST)` or `get_adapter(POSProvider.MOCK)`
+
+**Test coverage:**
+- Authentication (success, invalid credentials, server error)
+- Menu operations (menus, categories, items, modifiers, dietary flags, 86'd status)
+- Error handling (rate limits, session expired, retries)
+- Webhook parsing (menu_updated, item_availability_changed)
+- Protocol compliance and adapter registry
+
+**Note:** Order creation (`create_order`, `get_order_status`) raises `POSAPIError` - requires Toast Partner API access (Phase 4).

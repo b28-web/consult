@@ -15,13 +15,13 @@ Add restaurants as a first-class client type with POS integration.
 | 008-C | Menu API endpoints | ✓ |
 | 008-D | Restaurant site template (menu display) | ✓ |
 
-**Phase 2: POS Read Integration** (in progress)
+**Phase 2: POS Read Integration** (complete)
 | Ticket | Title | Status |
 |--------|-------|--------|
 | 008-E | 86'd item webhook handler and availability polling | ✓ |
-| 008-F | Toast adapter implementation | pending |
+| 008-F | Toast adapter implementation | ✓ |
 
-**Phase 2 progress**: 1/2 tickets complete
+**Phase 2 progress**: 2/2 tickets complete
 
 ---
 
@@ -234,7 +234,7 @@ Add restaurants as a client type with POS sync (Toast, Clover, Square) and onlin
 | Ticket | Title | Status |
 |--------|-------|--------|
 | 008-E | 86'd item webhook handler and availability polling | ✓ |
-| 008-F | Toast adapter implementation | pending |
+| 008-F | Toast adapter implementation | ✓ |
 
 **Phase 3: Additional POS Providers** - Clover and Square support
 | Ticket | Title | Status |
