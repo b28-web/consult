@@ -164,6 +164,8 @@ jobs:
         id: deploy
         working-directory: sites/${{ matrix.site }}
         run: |
+          set +e  # Don't exit on error so we can capture output
+
           # Determine environment and branch for deployment
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             DOPPLER_CONFIG="dev"
@@ -176,9 +178,17 @@ jobs:
             BRANCH="main"
           fi
 
+          echo "Deploying with DOPPLER_CONFIG=$DOPPLER_CONFIG BRANCH=$BRANCH"
+
           # Deploy with Doppler-provided secrets
           OUTPUT=$(doppler run --config "$DOPPLER_CONFIG" -- pnpm wrangler pages deploy dist --branch="$BRANCH" 2>&1)
+          EXIT_CODE=$?
           echo "$OUTPUT"
+
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "::error::Deployment failed with exit code $EXIT_CODE"
+            exit $EXIT_CODE
+          fi
 
           # Extract URL from output
           URL=$(echo "$OUTPUT" | grep -oE 'https://[^ ]+\.pages\.dev' | head -1 || echo "")
