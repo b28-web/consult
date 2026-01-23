@@ -1,7 +1,7 @@
 # 010-C: Verify Deploy Sites Workflow
 
 **EP:** [EP-010-doppler-ci-config](../enhancement_proposals/EP-010-doppler-ci-config.md)
-**Status:** pending
+**Status:** complete
 
 ## Summary
 
@@ -9,10 +9,10 @@ Verify the Deploy Sites CI/CD workflow works end-to-end after Doppler configurat
 
 ## Acceptance Criteria
 
-- [ ] `just sites-ci-trigger coffee-shop dev` completes successfully
-- [ ] Site deploys to Cloudflare Pages
-- [ ] Deployment URL is accessible
-- [ ] Workflow summary shows success
+- [x] `just sites-ci-trigger coffee-shop dev` completes successfully
+- [x] Site deploys to Cloudflare Pages
+- [x] Deployment URL is accessible
+- [x] Workflow summary shows success
 
 ## Implementation Notes
 
@@ -38,4 +38,8 @@ If successful, also verify:
 
 ## Progress
 
-(Not started)
+### 2026-01-22
+- Initial trigger failed: Cloudflare Pages project didn't exist
+- Created `consult-coffee-shop` project via `wrangler pages project create`
+- Re-triggered workflow: run #21272963174 succeeded
+- Site deployed to https://dev.consult-coffee-shop.pages.dev

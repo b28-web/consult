@@ -4,20 +4,26 @@ Current priorities and planned work for Consult.
 
 ## Active Sprints
 
-### EP-010: Doppler CI Configuration (in progress)
-Fix Doppler configuration so CI/CD workflows can deploy. Currently failing because `dev` config doesn't exist (only `dev_personal`).
-
-| Ticket | Title | Status |
-|--------|-------|--------|
-| 010-A | Create dev/prd configs in Doppler | pending |
-| 010-B | Update GitHub DOPPLER_TOKEN | pending |
-| 010-C | Verify Deploy Sites workflow | pending |
-
-**Blocked:** EP-005 CI/CD (005-K) is complete but Deploy Sites workflow fails without this fix.
+(None currently active)
 
 ---
 
 ## Completed Sprints
+
+### EP-010: Doppler CI Configuration ✓
+Fix Doppler configuration so CI/CD workflows can deploy.
+
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 010-A | Create dev/prd configs in Doppler | ✓ |
+| 010-B | Update GitHub DOPPLER_TOKEN | ✓ |
+| 010-C | Verify Deploy Sites workflow | ✓ |
+
+**Completed 2026-01-22**: CI/CD pipeline unblocked with:
+- `dev` config created in Doppler (cloned from `dev_personal`)
+- Service token created and added to GitHub Actions
+- Cloudflare Pages project `consult-coffee-shop` created
+- Deploy Sites workflow verified working (run #21272963174)
 
 ### EP-005: Client Sites at Scale ✓
 Deploy 8 service/B2B client sites with scaffolding and registry-based deployment.

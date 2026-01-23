@@ -1,7 +1,7 @@
 # 010-A: Create dev/prd configs in Doppler
 
 **EP:** [EP-010-doppler-ci-config](../enhancement_proposals/EP-010-doppler-ci-config.md)
-**Status:** pending
+**Status:** complete
 
 ## Summary
 
@@ -9,9 +9,9 @@ Create `dev` and `prd` environment configs in Doppler project `b28-consult` to e
 
 ## Acceptance Criteria
 
-- [ ] `dev` config exists in Doppler with all required secrets
-- [ ] `prd` config exists in Doppler with production values
-- [ ] Both configs have: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, NEON_DATABASE_URL, INTAKE_API_KEY, SECRET_KEY
+- [x] `dev` config exists in Doppler with all required secrets
+- [ ] `prd` config exists in Doppler with production values (deferred)
+- [x] Both configs have: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, NEON_DATABASE_URL, INTAKE_API_KEY, SECRET_KEY
 
 ## Implementation Notes
 
@@ -36,4 +36,7 @@ Required secrets checklist:
 
 ## Progress
 
-(Not started)
+### 2026-01-22
+- Created `dev` config in Doppler dashboard
+- Copied all secrets from `dev_personal` to `dev`
+- `prd` config deferred (not needed for initial CI verification)

@@ -1,6 +1,6 @@
 # EP-010: Doppler CI Configuration
 
-**Status:** active
+**Status:** complete
 **Last Updated:** 2026-01-22
 
 ## Problem
@@ -24,9 +24,9 @@ Set up proper Doppler configurations for CI/CD:
 
 | ID | Title | Status |
 |----|-------|--------|
-| 010-A | Create dev/prd configs in Doppler | pending |
-| 010-B | Update GitHub DOPPLER_TOKEN | pending |
-| 010-C | Verify Deploy Sites workflow | pending |
+| 010-A | Create dev/prd configs in Doppler | ✓ |
+| 010-B | Update GitHub DOPPLER_TOKEN | ✓ |
+| 010-C | Verify Deploy Sites workflow | ✓ |
 
 ## Design Decisions
 
@@ -98,3 +98,8 @@ Doppler Project: b28-consult
 - EP created after Deploy Sites workflow failed with Doppler access error
 - Identified root cause: `dev_personal` config exists but `dev` config missing
 - CI workflows hardcoded to expect `dev` and `prd` config names
+- Created `dev` config in Doppler, copied secrets from `dev_personal`
+- Created service token for `dev`, updated GitHub Actions secret
+- Created Cloudflare Pages project `consult-coffee-shop`
+- Workflow run #21272963174 succeeded, site deployed to https://dev.consult-coffee-shop.pages.dev
+- **EP complete** - CI/CD pipeline unblocked
