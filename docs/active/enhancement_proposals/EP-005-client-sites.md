@@ -1,6 +1,6 @@
 # EP-005: Client Sites at Scale
 
-**Status:** active
+**Status:** complete
 **Last Updated:** 2026-01-22
 
 ## Goal
@@ -21,7 +21,7 @@ Deploy all 8 planned client sites, establish tooling for rapid site creation, an
 | 005-H | Deploy data-analytics site | complete |
 | 005-I | Deploy webstudio site | complete |
 | 005-J | Deploy local-agency site | complete |
-| 005-K | CI/CD pipeline for sites | pending |
+| 005-K | CI/CD pipeline for sites | complete |
 
 > **Note:** 005-F inserted to consolidate template fixes before deploying more sites.
 > Reduces O(n) maintenance burden by fixing issues once in template.
@@ -101,6 +101,15 @@ The `coffee-shop` site in this EP is a **simple cafe** (static menu page, hours 
 | local-agency | B2B Services | Meta/self-referential | |
 
 ## Progress Log
+
+### 2026-01-22 (CI/CD pipeline)
+- Created `.github/workflows/deploy-sites.yml`
+- Auto-triggers on push to main affecting `sites/**`
+- Detects changed sites via git diff, builds only those
+- Deploys to Cloudflare Pages using Doppler for secrets
+- Manual trigger supports specific site or "all"
+- PR preview deploys with comment integration
+- 005-K complete, EP-005 complete
 
 ### 2026-01-22 (local-agency site)
 - Deployed local-agency site (Consult Local - meta/self-referential agency site)

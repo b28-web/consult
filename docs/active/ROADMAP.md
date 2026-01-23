@@ -4,40 +4,35 @@ Current priorities and planned work for Consult.
 
 ## Active Sprints
 
-### EP-005: Client Sites at Scale (in progress)
-Deploy 8 service/B2B client sites with scaffolding and registry-based deployment.
-
-*Note: Full restaurant sites with POS integration are in EP-008 (planned).*
-
-**Completed so far:**
-- Site scaffolding script with industry presets
-- Site registry system (`sites/registry.yaml`)
-- Deploy wizard (`just deploy-wizard`)
-- Pulumi integration (reads registry for CF Pages projects)
-- 8 sites deployed: coffee-shop, hauler, cleaning, landscaper, barber, data-analytics, webstudio, local-agency
-- Fixed Tailwind v4 + DaisyUI CSS integration
-- Template hardening: mobile responsiveness, README documentation
-
-| Ticket | Title | Status |
-|--------|-------|--------|
-| 005-A | Site scaffolding + registry system | complete |
-| 005-B | Deploy coffee-shop site (cafe) | complete |
-| 005-C | Deploy hauler site (+ Cal.com) | complete |
-| 005-D | Deploy cleaning site | complete |
-| 005-E | Deploy landscaper site | complete |
-| 005-F | Template hardening (mobile, CSS) | complete |
-| 005-G | Deploy barber site | complete |
-| 005-H | Deploy data-analytics site | complete |
-| 005-I | Deploy webstudio site | complete |
-| 005-J | Deploy local-agency site | complete |
-| **005-K** | **CI/CD pipeline for sites** | **next** |
-
-> 005-F inserted to fix mobile responsiveness and consolidate template improvements
-> before deploying remaining sites. Reduces O(n) maintenance overhead.
+(No active sprints - pick from Planned Sprints below)
 
 ---
 
 ## Completed Sprints
+
+### EP-005: Client Sites at Scale ✓
+Deploy 8 service/B2B client sites with scaffolding and registry-based deployment.
+
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 005-A | Site scaffolding + registry system | ✓ |
+| 005-B | Deploy coffee-shop site (cafe) | ✓ |
+| 005-C | Deploy hauler site (+ Cal.com) | ✓ |
+| 005-D | Deploy cleaning site | ✓ |
+| 005-E | Deploy landscaper site | ✓ |
+| 005-F | Template hardening (mobile, CSS) | ✓ |
+| 005-G | Deploy barber site | ✓ |
+| 005-H | Deploy data-analytics site | ✓ |
+| 005-I | Deploy webstudio site | ✓ |
+| 005-J | Deploy local-agency site | ✓ |
+| 005-K | CI/CD pipeline for sites | ✓ |
+
+**Completed 2026-01-22**: Full site deployment pipeline with:
+- Site scaffolding script with industry presets
+- Site registry system (`sites/registry.yaml`)
+- Deploy wizard (`just deploy-wizard`)
+- CI/CD pipeline (`.github/workflows/deploy-sites.yml`)
+- 8 sites deployed: coffee-shop, hauler, cleaning, landscaper, barber, data-analytics, webstudio, local-agency
 
 ### EP-004: External Integrations (Cal.com + Jobber) ✓
 Connect scheduling and CRM tools.

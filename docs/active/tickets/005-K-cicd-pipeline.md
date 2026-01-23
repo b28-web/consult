@@ -1,7 +1,7 @@
-# 005-J: CI/CD Pipeline for Sites
+# 005-K: CI/CD Pipeline for Sites
 
 **EP:** [EP-005-client-sites](../enhancement_proposals/EP-005-client-sites.md)
-**Status:** pending
+**Status:** complete
 
 ## Summary
 
@@ -9,13 +9,13 @@ Set up GitHub Actions to automatically build and deploy sites on push.
 
 ## Acceptance Criteria
 
-- [ ] Workflow triggers on push to main affecting `sites/**`
-- [ ] Detects which sites changed
-- [ ] Builds only changed sites
-- [ ] Deploys to Cloudflare Pages via wrangler
-- [ ] Uses Doppler for secrets
-- [ ] Supports manual deploy of specific site
-- [ ] Preview deploys for PRs
+- [x] Workflow triggers on push to main affecting `sites/**`
+- [x] Detects which sites changed
+- [x] Builds only changed sites
+- [x] Deploys to Cloudflare Pages via wrangler
+- [x] Uses Doppler for secrets
+- [x] Supports manual deploy of specific site
+- [x] Preview deploys for PRs
 
 ## Implementation Notes
 
@@ -81,4 +81,13 @@ Doppler integration for runtime secrets:
 
 ## Progress
 
-(Not started)
+### 2026-01-22
+- Created `.github/workflows/deploy-sites.yml`
+- Implemented change detection using git diff
+- Matrix build deploys only changed sites in parallel
+- Cloudflare Pages deployment via wrangler with Doppler secrets
+- Manual trigger (`workflow_dispatch`) with site selector and environment choice
+- PR preview deploys with branch naming `pr-{number}`
+- PR comments with preview URLs (updates existing comment or creates new)
+- Deployment summary in GitHub Actions UI
+- Excludes `_template/`, `registry.yaml`, and `.gitkeep` from triggering builds

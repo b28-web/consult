@@ -1,0 +1,265 @@
+# Deploy Sites to Cloudflare Pages
+# Triggers automatically on push to main when sites change
+# Also supports manual deployment and PR previews
+
+name: Deploy Sites
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'sites/**'
+      - '!sites/_template/**'
+      - '!sites/registry.yaml'
+      - '!sites/.gitkeep'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'sites/**'
+      - '!sites/_template/**'
+      - '!sites/registry.yaml'
+      - '!sites/.gitkeep'
+  workflow_dispatch:
+    inputs:
+      site:
+        description: 'Site to deploy (slug or "all")'
+        required: true
+        default: 'all'
+        type: string
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prd
+
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '9'
+  DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+
+concurrency:
+  group: deploy-sites-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ==========================================================================
+  # Detect Changes - Find which sites need deployment
+  # ==========================================================================
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      sites: ${{ steps.changes.outputs.sites }}
+      has_changes: ${{ steps.changes.outputs.has_changes }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed sites
+        id: changes
+        run: |
+          # Manual trigger with specific site
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ "${{ inputs.site }}" == "all" ]]; then
+              # Deploy all registered sites
+              SITES=$(ls -d sites/*/ 2>/dev/null | xargs -n1 basename | grep -v '^_' | jq -R -s -c 'split("\n") | map(select(. != ""))')
+            else
+              # Deploy specific site
+              SITES='["${{ inputs.site }}"]'
+            fi
+          else
+            # Auto-detect changed sites from git diff
+            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+              BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            else
+              BASE_SHA="${{ github.event.before }}"
+            fi
+
+            # Handle initial commit or force push
+            if [[ "$BASE_SHA" == "0000000000000000000000000000000000000000" ]] || ! git cat-file -e "$BASE_SHA" 2>/dev/null; then
+              BASE_SHA=$(git rev-parse HEAD~1 2>/dev/null || echo "")
+            fi
+
+            if [[ -n "$BASE_SHA" ]]; then
+              CHANGED=$(git diff --name-only "$BASE_SHA" HEAD | grep '^sites/' | grep -v '^sites/_template' | grep -v '^sites/registry.yaml' | cut -d'/' -f2 | sort -u | grep -v '^\.' || true)
+            else
+              # Fallback: deploy all sites
+              CHANGED=$(ls -d sites/*/ 2>/dev/null | xargs -n1 basename | grep -v '^_')
+            fi
+
+            if [[ -z "$CHANGED" ]]; then
+              SITES='[]'
+            else
+              SITES=$(echo "$CHANGED" | jq -R -s -c 'split("\n") | map(select(. != ""))')
+            fi
+          fi
+
+          echo "sites=$SITES" >> $GITHUB_OUTPUT
+
+          # Check if there are sites to deploy
+          if [[ "$SITES" == "[]" ]]; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No sites to deploy"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Sites to deploy: $SITES"
+          fi
+
+  # ==========================================================================
+  # Build & Deploy Sites
+  # ==========================================================================
+  deploy:
+    name: Deploy ${{ matrix.site }}
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        site: ${{ fromJson(needs.detect-changes.outputs.sites) }}
+      fail-fast: false
+    environment:
+      name: ${{ github.event_name == 'pull_request' && 'preview' || (github.event.inputs.environment || 'dev') }}
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build site
+        working-directory: sites/${{ matrix.site }}
+        run: pnpm build
+
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        working-directory: sites/${{ matrix.site }}
+        run: |
+          # Determine environment and branch for deployment
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            DOPPLER_CONFIG="dev"
+            BRANCH="pr-${{ github.event.pull_request.number }}"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            DOPPLER_CONFIG="${{ inputs.environment }}"
+            BRANCH="${{ inputs.environment }}"
+          else
+            DOPPLER_CONFIG="dev"
+            BRANCH="main"
+          fi
+
+          # Deploy with Doppler-provided secrets
+          OUTPUT=$(doppler run --config "$DOPPLER_CONFIG" -- pnpm wrangler pages deploy dist --branch="$BRANCH" 2>&1)
+          echo "$OUTPUT"
+
+          # Extract URL from output
+          URL=$(echo "$OUTPUT" | grep -oE 'https://[^ ]+\.pages\.dev' | head -1 || echo "")
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "Deployed to: $URL"
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const site = '${{ matrix.site }}';
+            const url = '${{ steps.deploy.outputs.url }}';
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('## 🚀 Preview Deployments')
+            );
+
+            const newEntry = `| ${site} | ${url ? `[Preview](${url})` : '❌ Failed'} |`;
+
+            if (botComment) {
+              // Update existing comment
+              const existingBody = botComment.body;
+              const siteRegex = new RegExp(`\\| ${site} \\|.*\\|`, 'g');
+
+              let newBody;
+              if (existingBody.match(siteRegex)) {
+                newBody = existingBody.replace(siteRegex, newEntry);
+              } else {
+                newBody = existingBody.replace(/(\| Site \| Preview \|\n\|.*\|.*\|)/, `$1\n${newEntry}`);
+              }
+
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: newBody,
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `## 🚀 Preview Deployments\n\n| Site | Preview |\n|------|---------|${newEntry}`,
+              });
+            }
+
+  # ==========================================================================
+  # Summary
+  # ==========================================================================
+  summary:
+    name: Deployment Summary
+    needs: [detect-changes, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          echo "## Sites Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Sites detected:** ${{ needs.detect-changes.outputs.sites }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ needs.detect-changes.outputs.has_changes }}" == "false" ]]; then
+            echo "ℹ️ No sites needed deployment" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Status | Details |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|---------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Detection | ${{ needs.detect-changes.result }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Deploy | ${{ needs.deploy.result }} |" >> $GITHUB_STEP_SUMMARY
+          fi
