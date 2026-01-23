@@ -1,0 +1,148 @@
+---
+/**
+ * Home Page - B2B SaaS Landing
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+import { config } from "@/config";
+
+const stats = [
+  { value: "500+", label: "Companies" },
+  { value: "10M+", label: "Daily Queries" },
+  { value: "99.9%", label: "Uptime" },
+  { value: "<1s", label: "Avg Response" },
+];
+---
+
+<PageLayout title="Home">
+  <!-- Hero Section -->
+  <section class="hero min-h-[50vh] sm:min-h-[60vh] lg:min-h-[70vh] bg-gradient-to-br from-primary to-secondary">
+    <div class="hero-content text-center px-4">
+      <div class="max-w-3xl">
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary-content">{config.client.name}</h1>
+        <p class="py-4 sm:py-6 text-lg sm:text-2xl text-primary-content/90">{config.client.tagline}</p>
+        <p class="text-base sm:text-lg text-primary-content/70 mb-6 sm:mb-8 max-w-xl mx-auto">
+          Connect your data sources, build dashboards in minutes, and let AI surface the insights that matter.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+          <a href="/contact" class="btn btn-secondary btn-lg">Start Free Trial</a>
+          <a href="/features" class="btn btn-outline border-primary-content text-primary-content hover:bg-primary-content hover:text-primary btn-lg">See Features</a>
+        </div>
+        <p class="text-sm text-primary-content/60 mt-4">No credit card required · 14-day free trial</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Social Proof -->
+  <section class="py-8 sm:py-12 bg-base-200">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <p class="text-sm text-base-content/70 mb-6">Trusted by data teams at</p>
+      <div class="flex flex-wrap justify-center items-center gap-6 sm:gap-10 opacity-60">
+        {["Acme Corp", "TechStart", "Nexus Labs", "DataVault", "Quantum"].map((company) => (
+          <span class="text-base sm:text-lg font-semibold">{company}</span>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section class="py-12 sm:py-16 px-4">
+    <div class="max-w-4xl mx-auto">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+        {stats.map((stat) => (
+          <div class="text-center">
+            <div class="text-3xl sm:text-4xl font-bold text-primary">{stat.value}</div>
+            <div class="text-sm sm:text-base text-base-content/70">{stat.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Preview -->
+  <section class="py-12 sm:py-16 px-4 bg-base-100">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-8 sm:mb-12">
+        <h2 class="text-2xl sm:text-3xl font-bold mb-4">Everything You Need for Data Analytics</h2>
+        <p class="text-base-content/70 max-w-2xl mx-auto">
+          From real-time dashboards to AI-powered insights, DataFlow has the tools to turn your data into decisions.
+        </p>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {config.services.slice(0, 6).map((feature) => (
+          <div class="card bg-base-100 border border-base-200 hover:border-primary hover:shadow-lg transition-all">
+            <div class="card-body p-4 sm:p-6">
+              <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                <svg class="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <h3 class="card-title text-lg">{feature.name}</h3>
+              <p class="text-sm text-base-content/70">{feature.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div class="text-center mt-8">
+        <a href="/features" class="btn btn-primary">Explore All Features</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="py-12 sm:py-16 px-4 bg-base-200">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-8 sm:mb-12">
+        <h2 class="text-2xl sm:text-3xl font-bold mb-4">Get Started in Minutes</h2>
+        <p class="text-base-content/70">From signup to insights in three simple steps.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="text-center">
+          <div class="w-12 h-12 rounded-full bg-primary text-primary-content flex items-center justify-center text-xl font-bold mx-auto mb-4">1</div>
+          <h3 class="font-bold text-lg mb-2">Connect Your Data</h3>
+          <p class="text-sm text-base-content/70">Link your databases, APIs, and SaaS tools with our 100+ pre-built connectors.</p>
+        </div>
+        <div class="text-center">
+          <div class="w-12 h-12 rounded-full bg-primary text-primary-content flex items-center justify-center text-xl font-bold mx-auto mb-4">2</div>
+          <h3 class="font-bold text-lg mb-2">Build Dashboards</h3>
+          <p class="text-sm text-base-content/70">Drag and drop to create beautiful visualizations. No SQL required.</p>
+        </div>
+        <div class="text-center">
+          <div class="w-12 h-12 rounded-full bg-primary text-primary-content flex items-center justify-center text-xl font-bold mx-auto mb-4">3</div>
+          <h3 class="font-bold text-lg mb-2">Get Insights</h3>
+          <p class="text-sm text-base-content/70">AI automatically surfaces anomalies and trends so you never miss what matters.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonial -->
+  <section class="py-12 sm:py-16 px-4">
+    <div class="max-w-3xl mx-auto text-center">
+      <blockquote class="text-xl sm:text-2xl italic mb-6">
+        "DataFlow transformed how we handle data. What used to take days now takes minutes."
+      </blockquote>
+      <div>
+        <p class="font-semibold">Sarah Chen</p>
+        <p class="text-sm text-base-content/70">CFO, Acme Corp</p>
+      </div>
+      <a href="/case-studies" class="link link-primary text-sm mt-4 inline-block">Read more customer stories →</a>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-12 sm:py-16 bg-gradient-to-br from-primary to-secondary">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold text-primary-content mb-4">Ready to Transform Your Data?</h2>
+      <p class="text-lg text-primary-content/80 mb-8">
+        Join 500+ companies making smarter decisions with DataFlow.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="/contact" class="btn btn-secondary btn-lg">Start Free Trial</a>
+        <a href="/pricing" class="btn btn-outline border-primary-content text-primary-content hover:bg-primary-content hover:text-primary btn-lg">View Pricing</a>
+      </div>
+    </div>
+  </section>
+</PageLayout>

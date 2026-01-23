@@ -1,0 +1,176 @@
+---
+/**
+ * Pricing Page
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+
+const pricingTiers = [
+  {
+    name: "Starter",
+    price: "$49",
+    period: "/mo",
+    description: "Perfect for small teams getting started with data analytics.",
+    features: [
+      "5 dashboards",
+      "10 data sources",
+      "Email support",
+      "7-day data retention",
+      "Basic visualizations",
+    ],
+    cta: "Start Free Trial",
+    highlighted: false,
+  },
+  {
+    name: "Professional",
+    price: "$149",
+    period: "/mo",
+    description: "For growing teams that need advanced analytics capabilities.",
+    features: [
+      "Unlimited dashboards",
+      "50 data sources",
+      "AI-powered insights",
+      "Priority support",
+      "90-day data retention",
+      "Custom visualizations",
+      "Team collaboration",
+    ],
+    cta: "Start Free Trial",
+    highlighted: true,
+  },
+  {
+    name: "Enterprise",
+    price: "Custom",
+    period: "",
+    description: "For organizations with advanced security and scale requirements.",
+    features: [
+      "Everything in Professional",
+      "Unlimited data sources",
+      "SSO / SAML authentication",
+      "Dedicated support",
+      "Custom SLA",
+      "Unlimited data retention",
+      "Audit logs",
+      "On-premise deployment option",
+    ],
+    cta: "Contact Sales",
+    highlighted: false,
+  },
+];
+---
+
+<PageLayout title="Pricing">
+  <!-- Hero Section -->
+  <section class="py-12 sm:py-16 bg-base-200">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">Simple, Transparent Pricing</h1>
+      <p class="text-lg sm:text-xl text-base-content/70">
+        Start free, scale as you grow. No hidden fees.
+      </p>
+    </div>
+  </section>
+
+  <!-- Pricing Cards -->
+  <section class="py-12 sm:py-16 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid md:grid-cols-3 gap-6 sm:gap-8">
+        {pricingTiers.map((tier) => (
+          <div class={`card bg-base-100 shadow-xl border-2 ${tier.highlighted ? 'border-primary relative' : 'border-base-200'}`}>
+            {tier.highlighted && (
+              <div class="absolute -top-4 left-1/2 -translate-x-1/2">
+                <span class="badge badge-primary badge-lg">Most Popular</span>
+              </div>
+            )}
+            <div class="card-body p-6 sm:p-8">
+              <h3 class="text-xl font-bold">{tier.name}</h3>
+              <div class="mt-4">
+                <span class="text-4xl font-bold">{tier.price}</span>
+                <span class="text-base-content/70">{tier.period}</span>
+              </div>
+              <p class="text-sm text-base-content/70 mt-2">{tier.description}</p>
+
+              <ul class="mt-6 space-y-3">
+                {tier.features.map((feature) => (
+                  <li class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-success flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-sm">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div class="card-actions mt-8">
+                <a
+                  href="/contact"
+                  class={`btn w-full ${tier.highlighted ? 'btn-primary' : 'btn-outline'}`}
+                >
+                  {tier.cta}
+                </a>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="py-12 sm:py-16 bg-base-200">
+    <div class="max-w-3xl mx-auto px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold text-center mb-8 sm:mb-12">Frequently Asked Questions</h2>
+
+      <div class="space-y-4">
+        <div class="collapse collapse-arrow bg-base-100">
+          <input type="radio" name="faq" checked />
+          <div class="collapse-title text-lg font-medium">
+            Can I change plans later?
+          </div>
+          <div class="collapse-content">
+            <p>Yes! You can upgrade or downgrade your plan at any time. When upgrading, you'll get immediate access to new features. When downgrading, changes take effect at the next billing cycle.</p>
+          </div>
+        </div>
+
+        <div class="collapse collapse-arrow bg-base-100">
+          <input type="radio" name="faq" />
+          <div class="collapse-title text-lg font-medium">
+            What's included in the free trial?
+          </div>
+          <div class="collapse-content">
+            <p>The 14-day free trial includes full access to the Professional plan features. No credit card required to start.</p>
+          </div>
+        </div>
+
+        <div class="collapse collapse-arrow bg-base-100">
+          <input type="radio" name="faq" />
+          <div class="collapse-title text-lg font-medium">
+            Do you offer discounts for annual billing?
+          </div>
+          <div class="collapse-content">
+            <p>Yes! Annual billing gives you 2 months free (save ~17%). Contact us for annual pricing details.</p>
+          </div>
+        </div>
+
+        <div class="collapse collapse-arrow bg-base-100">
+          <input type="radio" name="faq" />
+          <div class="collapse-title text-lg font-medium">
+            What payment methods do you accept?
+          </div>
+          <div class="collapse-content">
+            <p>We accept all major credit cards (Visa, MasterCard, American Express) and can arrange invoicing for Enterprise customers.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-12 sm:py-16 bg-primary text-primary-content">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold mb-4">Not Sure Which Plan Is Right?</h2>
+      <p class="text-lg mb-8 text-primary-content/80">
+        Talk to our team and we'll help you find the perfect fit for your needs.
+      </p>
+      <a href="/contact" class="btn btn-secondary btn-lg">Talk to Sales</a>
+    </div>
+  </section>
+</PageLayout>

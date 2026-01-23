@@ -18,7 +18,7 @@ Deploy all 8 planned client sites, establish tooling for rapid site creation, an
 | 005-E | Deploy landscaper site | complete |
 | 005-F | Template hardening (mobile, CSS) | complete |
 | 005-G | Deploy barber site | complete |
-| 005-H | Deploy data-analytics site | pending |
+| 005-H | Deploy data-analytics site | complete |
 | 005-I | Deploy web-dev site | pending |
 | 005-J | Deploy local-agency site | pending |
 | 005-K | CI/CD pipeline for sites | pending |
@@ -101,6 +101,13 @@ The `coffee-shop` site in this EP is a **simple cafe** (static menu page, hours 
 | local-agency | B2B Services | Meta/self-referential | |
 
 ## Progress Log
+
+### 2026-01-22 (data-analytics site)
+- Deployed data-analytics site (B2B SaaS marketing site for DataFlow Analytics)
+- Live at https://consult-data-analytics-dev.pages.dev
+- Features: Tech blue/purple theme, 3-tier pricing, case studies with metrics
+- Pages: Home, Features, Pricing, Case Studies, Contact (demo request)
+- 005-H complete
 
 ### 2026-01-22 (barber site)
 - Deployed barber site with black/gold theme

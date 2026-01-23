@@ -1,7 +1,7 @@
-# 005-G: Deploy data-analytics Site
+# 005-H: Deploy data-analytics Site
 
 **EP:** [EP-005-client-sites](../enhancement_proposals/EP-005-client-sites.md)
-**Status:** pending
+**Status:** complete
 
 ## Summary
 
@@ -9,13 +9,13 @@ Deploy B2B data analytics SaaS marketing site with case studies and pricing tier
 
 ## Acceptance Criteria
 
-- [ ] Site created at `sites/data-analytics/`
-- [ ] Config: DataFlow Analytics, modern tech blue/purple theme
-- [ ] Pages: Home, Features, Pricing, Case Studies, Contact
-- [ ] Pricing tiers displayed
-- [ ] Case studies with metrics
-- [ ] Demo request form
-- [ ] Deployed to Cloudflare Pages
+- [x] Site created at `sites/data-analytics/`
+- [x] Config: DataFlow Analytics, modern tech blue/purple theme
+- [x] Pages: Home, Features, Pricing, Case Studies, Contact
+- [x] Pricing tiers displayed (Starter $49/mo, Professional $149/mo, Enterprise Custom)
+- [x] Case studies with metrics (Acme Corp, TechStart, Global Logistics)
+- [x] Demo request form
+- [x] Deployed to Cloudflare Pages
 
 ## Implementation Notes
 
@@ -77,4 +77,14 @@ daisyui: {
 
 ## Progress
 
-(Not started)
+### 2026-01-22
+- Created site using `pnpm new-site --slug data-analytics --industry saas --register`
+- Customized config.ts with 6 features: Real-time Dashboards, Custom Reports, Data Integration, AI-Powered Insights, Team Collaboration, Enterprise Security
+- Set up tech blue/purple DaisyUI theme (#2563eb primary, #7c3aed secondary)
+- Created Features page with integration highlights
+- Created Pricing page with 3 tiers and FAQ accordion
+- Created Case Studies page with 3 customer stories and metrics
+- Updated Home page with B2B SaaS landing design (hero, stats, testimonials)
+- Updated Contact page to be a demo request form
+- Deployed via Pulumi (infrastructure) + Wrangler (site)
+- Live at https://consult-data-analytics-dev.pages.dev

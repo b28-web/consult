@@ -1,0 +1,97 @@
+---
+/**
+ * Features Page
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+import { config } from "@/config";
+---
+
+<PageLayout title="Features">
+  <!-- Hero Section -->
+  <section class="py-12 sm:py-16 bg-base-200">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">Powerful Analytics Made Simple</h1>
+      <p class="text-lg sm:text-xl text-base-content/70">
+        Everything you need to turn raw data into actionable insights.
+      </p>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section class="py-12 sm:py-16 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        {config.services.map((feature, index) => (
+          <div class="card bg-base-100 shadow-xl border border-base-200 hover:border-primary transition-colors" id={feature.slug}>
+            <div class="card-body p-6">
+              <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                <span class="text-2xl text-primary font-bold">{index + 1}</span>
+              </div>
+              <h3 class="card-title text-xl">{feature.name}</h3>
+              <p class="text-base-content/70">{feature.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Integration Highlight -->
+  <section class="py-12 sm:py-16 bg-neutral text-neutral-content">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="grid md:grid-cols-2 gap-8 items-center">
+        <div>
+          <h2 class="text-2xl sm:text-3xl font-bold mb-4">Connect Your Entire Stack</h2>
+          <p class="text-lg mb-6 text-neutral-content/80">
+            DataFlow integrates with 100+ data sources out of the box. From databases to SaaS tools,
+            we've got you covered.
+          </p>
+          <ul class="space-y-3">
+            <li class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-success" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+              <span>PostgreSQL, MySQL, MongoDB, Snowflake</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-success" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+              <span>Salesforce, HubSpot, Stripe, Shopify</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-success" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+              <span>Google Analytics, Mixpanel, Amplitude</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-success" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+              <span>REST APIs, GraphQL, Webhooks</span>
+            </li>
+          </ul>
+        </div>
+        <div class="grid grid-cols-3 gap-4">
+          {["PostgreSQL", "MongoDB", "Snowflake", "Salesforce", "HubSpot", "Stripe", "Shopify", "Mixpanel", "REST API"].map((name) => (
+            <div class="bg-neutral-content/10 rounded-lg p-4 flex items-center justify-center text-center">
+              <span class="text-sm font-medium">{name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-12 sm:py-16 bg-primary text-primary-content">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold mb-4">Ready to See It in Action?</h2>
+      <p class="text-lg mb-8 text-primary-content/80">
+        Schedule a personalized demo and see how DataFlow can transform your data workflow.
+      </p>
+      <a href="/contact" class="btn btn-secondary btn-lg">Request a Demo</a>
+    </div>
+  </section>
+</PageLayout>

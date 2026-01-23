@@ -1,0 +1,134 @@
+---
+/**
+ * Case Studies Page
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+
+const caseStudies = [
+  {
+    company: "Acme Corp",
+    industry: "Manufacturing",
+    title: "How Acme Corp reduced reporting time by 80%",
+    challenge: "Acme's finance team spent 40+ hours per month manually compiling reports from multiple systems.",
+    solution: "DataFlow automated data collection from their ERP, CRM, and inventory systems into unified dashboards.",
+    results: [
+      { metric: "80%", label: "Reduction in reporting time" },
+      { metric: "40hrs", label: "Saved per month" },
+      { metric: "3x", label: "Faster decision making" },
+    ],
+    quote: "DataFlow transformed how we handle data. What used to take days now takes minutes.",
+    quotee: "Sarah Chen, CFO",
+  },
+  {
+    company: "TechStart",
+    industry: "SaaS Startup",
+    title: "TechStart's journey to data-driven decisions",
+    challenge: "As a fast-growing startup, TechStart struggled to track KPIs across their product, sales, and marketing teams.",
+    solution: "DataFlow provided real-time dashboards with AI-powered anomaly detection to catch issues before they became problems.",
+    results: [
+      { metric: "50%", label: "Faster anomaly detection" },
+      { metric: "15%", label: "Increase in conversion" },
+      { metric: "100%", label: "Team adoption" },
+    ],
+    quote: "The AI insights have caught issues we would have missed. It's like having an extra analyst on the team.",
+    quotee: "Marcus Johnson, VP Product",
+  },
+  {
+    company: "Global Logistics Inc",
+    industry: "Logistics",
+    title: "Enterprise scale: 10M rows processed daily",
+    challenge: "Global Logistics needed to process massive amounts of shipping data in real-time to optimize routes and reduce costs.",
+    solution: "DataFlow's enterprise deployment handles their data volume while maintaining sub-second query performance.",
+    results: [
+      { metric: "10M", label: "Rows processed daily" },
+      { metric: "<1s", label: "Query response time" },
+      { metric: "$2.3M", label: "Annual cost savings" },
+    ],
+    quote: "DataFlow scales with us. We went from thousands to millions of records without missing a beat.",
+    quotee: "David Park, CTO",
+  },
+];
+---
+
+<PageLayout title="Case Studies">
+  <!-- Hero Section -->
+  <section class="py-12 sm:py-16 bg-base-200">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">Customer Success Stories</h1>
+      <p class="text-lg sm:text-xl text-base-content/70">
+        See how companies like yours are transforming their data workflows with DataFlow.
+      </p>
+    </div>
+  </section>
+
+  <!-- Case Studies -->
+  <section class="py-12 sm:py-16 px-4">
+    <div class="max-w-5xl mx-auto space-y-12 sm:space-y-16">
+      {caseStudies.map((study, index) => (
+        <article class={`card bg-base-100 shadow-xl overflow-hidden ${index % 2 === 1 ? 'md:flex-row-reverse' : ''}`}>
+          <div class="card-body p-6 sm:p-8">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="badge badge-secondary">{study.industry}</span>
+            </div>
+
+            <h2 class="card-title text-2xl sm:text-3xl mb-4">{study.title}</h2>
+
+            <div class="space-y-4">
+              <div>
+                <h3 class="font-semibold text-base-content/70 uppercase text-sm tracking-wide mb-2">The Challenge</h3>
+                <p>{study.challenge}</p>
+              </div>
+
+              <div>
+                <h3 class="font-semibold text-base-content/70 uppercase text-sm tracking-wide mb-2">The Solution</h3>
+                <p>{study.solution}</p>
+              </div>
+            </div>
+
+            <!-- Results -->
+            <div class="grid grid-cols-3 gap-4 my-8 py-6 border-y border-base-200">
+              {study.results.map((result) => (
+                <div class="text-center">
+                  <div class="text-2xl sm:text-3xl font-bold text-primary">{result.metric}</div>
+                  <div class="text-sm text-base-content/70">{result.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <!-- Quote -->
+            <blockquote class="border-l-4 border-secondary pl-4 italic">
+              <p class="text-lg">"{study.quote}"</p>
+              <footer class="mt-2 text-sm text-base-content/70 not-italic">— {study.quotee}, {study.company}</footer>
+            </blockquote>
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <!-- Logos Section -->
+  <section class="py-12 sm:py-16 bg-base-200">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <h2 class="text-xl sm:text-2xl font-bold mb-8">Trusted by Industry Leaders</h2>
+      <div class="flex flex-wrap justify-center items-center gap-8 sm:gap-12 opacity-60">
+        {["Acme Corp", "TechStart", "Global Logistics", "Nexus Labs", "Quantum Systems", "DataVault"].map((company) => (
+          <div class="text-lg sm:text-xl font-semibold">{company}</div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-12 sm:py-16 bg-primary text-primary-content">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold mb-4">Ready to Write Your Success Story?</h2>
+      <p class="text-lg mb-8 text-primary-content/80">
+        Join hundreds of companies making smarter decisions with DataFlow.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="/contact" class="btn btn-secondary btn-lg">Start Free Trial</a>
+        <a href="/pricing" class="btn btn-outline border-primary-content text-primary-content hover:bg-primary-content hover:text-primary btn-lg">View Pricing</a>
+      </div>
+    </div>
+  </section>
+</PageLayout>

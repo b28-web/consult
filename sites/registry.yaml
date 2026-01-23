@@ -67,3 +67,9 @@ sites:
     dev: {}
     # prod:
     #   domain: barber.example.com
+
+  data-analytics:
+    ready: true
+    dev: {}
+    # prod:
+    #   domain: data-analytics.example.com
