@@ -1,7 +1,7 @@
 # 008-C: Menu API Endpoints
 
 **EP:** [EP-008-restaurant-pos-integration](../enhancement_proposals/EP-008-restaurant-pos-integration.md)
-**Status:** pending
+**Status:** complete
 **Phase:** 1 (Foundation)
 
 ## Summary
@@ -10,16 +10,16 @@ Create REST API endpoints for retrieving menu data. These endpoints are used by 
 
 ## Acceptance Criteria
 
-- [ ] `GET /api/clients/{slug}/menu` - Returns full menu structure
-- [ ] `GET /api/clients/{slug}/menu/{menu_id}` - Returns single menu with items
-- [ ] `GET /api/clients/{slug}/availability` - Returns item availability map
-- [ ] Responses include nested categories, items, and modifiers
-- [ ] Proper serialization with DRF or Pydantic
-- [ ] Static fallback: Returns `static_menu_json` if no POS and no Menu records
-- [ ] Caching headers for CDN (menu: 5min, availability: 30s)
-- [ ] CORS enabled for Astro sites
-- [ ] OpenAPI schema generated
-- [ ] Integration tests
+- [x] `GET /api/clients/{slug}/menu` - Returns full menu structure
+- [x] `GET /api/clients/{slug}/menu/{menu_id}` - Returns single menu with items
+- [x] `GET /api/clients/{slug}/availability` - Returns item availability map
+- [x] Responses include nested categories, items, and modifiers
+- [x] Proper serialization with DRF or Pydantic
+- [x] Static fallback: Returns `static_menu_json` if no POS and no Menu records
+- [x] Caching headers for CDN (menu: 5min, availability: 30s)
+- [x] CORS enabled for Astro sites
+- [x] OpenAPI schema generated (via Pydantic model_json_schema)
+- [x] Integration tests
 
 ## Implementation Notes
 
@@ -126,4 +126,25 @@ path("api/clients/<slug:slug>/", include("restaurant.urls")),
 
 ## Progress
 
-*To be updated during implementation*
+### 2026-01-23
+- **Complete**: All acceptance criteria met
+- Created `apps/web/restaurant/serializers.py` with Pydantic schemas:
+  - `ModifierSchema`, `ModifierGroupSchema`, `MenuItemSchema`
+  - `MenuCategorySchema`, `MenuSchema`
+  - `MenuListResponse`, `SingleMenuResponse`, `AvailabilityResponse`
+- Created `apps/web/restaurant/views.py` with three endpoints:
+  - `menu_list()` - GET /api/clients/{slug}/menu (5min cache)
+  - `menu_detail()` - GET /api/clients/{slug}/menu/{menu_id} (5min cache)
+  - `availability()` - GET /api/clients/{slug}/availability (30s cache)
+- Created `apps/web/restaurant/urls.py` with URL routing
+- Updated `apps/web/config/urls.py` to include restaurant API routes
+- Implemented CORS headers for Astro site access
+- Static fallback works via `RestaurantProfile.static_menu_json`
+- 18 integration tests covering:
+  - Full menu structure serialization
+  - CORS and cache headers
+  - 404 handling for unknown clients/menus
+  - Static fallback
+  - Multi-tenant isolation
+  - Time-based menu availability
+- All quality checks pass: ruff, mypy, pytest

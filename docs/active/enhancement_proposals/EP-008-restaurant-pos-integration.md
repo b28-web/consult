@@ -454,7 +454,7 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
 |----|-------|-------|--------|
 | [008-A](../tickets/008-A-pos-adapter-interface.md) | POS adapter interface and mock implementation | 1 | complete |
 | [008-B](../tickets/008-B-restaurant-domain-models.md) | Restaurant domain models and migrations | 1 | complete |
-| [008-C](../tickets/008-C-menu-api-endpoints.md) | Menu API endpoints | 1 | pending |
+| [008-C](../tickets/008-C-menu-api-endpoints.md) | Menu API endpoints | 1 | complete |
 | [008-D](../tickets/008-D-restaurant-site-template.md) | Restaurant site template (menu display) | 1 | pending |
 | [008-E](../tickets/008-E-availability-webhook-polling.md) | 86'd item webhook handler and availability polling | 2 | pending |
 | [008-F](../tickets/008-F-toast-adapter.md) | Toast adapter implementation | 2 | pending |
@@ -611,8 +611,18 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
   - Factory classes for testing
   - 26 unit tests, all passing
 
+- **008-C complete**: Menu API endpoints
+  - Pydantic schemas for nested menu serialization in `apps/web/restaurant/serializers.py`
+  - Three public API endpoints in `apps/web/restaurant/views.py`:
+    - `GET /api/clients/{slug}/menu` - Full menu structure (5min cache)
+    - `GET /api/clients/{slug}/menu/{menu_id}` - Single menu (5min cache)
+    - `GET /api/clients/{slug}/availability` - Item/modifier availability (30s cache)
+  - CORS enabled for Astro site access
+  - Static fallback via `RestaurantProfile.static_menu_json`
+  - 18 integration tests, all passing
+
 **Next steps:**
-- Continue Phase 1: 008-C (Menu API endpoints)
+- Continue Phase 1: 008-D (Restaurant site template)
 - Apply for Toast Partner API access (needed for order creation in Phase 4)
 
 ## Retrospective
