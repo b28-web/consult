@@ -4,7 +4,17 @@ Current priorities and planned work for Consult.
 
 ## Active Sprints
 
-(None currently active)
+### EP-008: Restaurant Client Type with POS Integration
+Add restaurants as a first-class client type with POS integration.
+
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 008-A | POS adapter interface and mock implementation | ✓ |
+| 008-B | Restaurant domain models and migrations | pending |
+| 008-C | Menu API endpoints | pending |
+| 008-D | Restaurant site template (menu display) | pending |
+
+**Phase 1 in progress** - Foundation work (1/4 tickets complete)
 
 ---
 

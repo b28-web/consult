@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "apps.web.inbox",
     "apps.web.crm",
     "apps.web.integrations",
+    "apps.web.pos",
 ]
 
 MIDDLEWARE = [

@@ -1,6 +1,6 @@
 # EP-008: Restaurant Client Type with POS Integration
 
-**Status:** planning
+**Status:** active
 **Last Updated:** 2026-01-21
 **Tickets:** [View all tickets](../tickets/) (008-A through 008-M)
 
@@ -452,7 +452,7 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
 
 | ID | Title | Phase | Status |
 |----|-------|-------|--------|
-| [008-A](../tickets/008-A-pos-adapter-interface.md) | POS adapter interface and mock implementation | 1 | pending |
+| [008-A](../tickets/008-A-pos-adapter-interface.md) | POS adapter interface and mock implementation | 1 | complete |
 | [008-B](../tickets/008-B-restaurant-domain-models.md) | Restaurant domain models and migrations | 1 | pending |
 | [008-C](../tickets/008-C-menu-api-endpoints.md) | Menu API endpoints | 1 | pending |
 | [008-D](../tickets/008-D-restaurant-site-template.md) | Restaurant site template (menu display) | 1 | pending |
@@ -596,8 +596,16 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
 - Tickets organized into 5 phases
 - Roadmap updated with phase structure
 
+### 2026-01-23
+- **008-A complete**: POS adapter interface and mock implementation
+  - POSAdapter protocol in `apps/web/pos/adapters/base.py`
+  - MockPOSAdapter with configurable menus, 86'd items, order simulation
+  - POS schemas in `packages/schemas/consult_schemas/pos.py`
+  - 27 unit tests, all passing
+  - Added pytest-asyncio for async test support
+
 **Next steps:**
-- Begin Phase 1 implementation (008-A: POS adapter interface)
+- Continue Phase 1: 008-B (Restaurant domain models)
 - Apply for Toast Partner API access (needed for order creation in Phase 4)
 
 ## Retrospective
