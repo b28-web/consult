@@ -19,6 +19,10 @@ interface Env {
   TWILIO_AUTH_TOKEN?: string;
   CALCOM_WEBHOOK_SECRET?: string;
   JOBBER_WEBHOOK_SECRET?: string;
+  // POS webhook secrets (per-provider)
+  POS_TOAST_WEBHOOK_SECRET?: string;
+  POS_CLOVER_WEBHOOK_SECRET?: string;
+  POS_SQUARE_WEBHOOK_SECRET?: string;
 }
 
 interface FormSubmission {
@@ -280,6 +284,16 @@ export default {
       }
       const [, clientSlug] = jobberMatch;
       return await handleJobberWebhook(request, env, clientSlug);
+    }
+
+    // Route: /intake/{client_slug}/pos/{provider}
+    const posMatch = path.match(/^\/intake\/([a-z0-9-]+)\/pos\/(toast|clover|square)$/);
+    if (posMatch) {
+      if (request.method !== "POST") {
+        return new Response("Method Not Allowed", { status: 405 });
+      }
+      const [, clientSlug, provider] = posMatch;
+      return await handlePOSWebhook(request, env, clientSlug, provider);
     }
 
     // Route: /intake/{client_slug}/{channel}
@@ -826,4 +840,149 @@ async function writeSubmission(env: Env, submission: SubmissionRecord): Promise<
       ''
     )
   `;
+}
+
+/**
+ * Get the signature header name for a POS provider.
+ */
+function getPOSSignatureHeader(provider: string): string {
+  switch (provider) {
+    case "toast":
+      return "X-Toast-Signature";
+    case "clover":
+      return "X-Clover-Signature";
+    case "square":
+      return "X-Square-Signature";
+    default:
+      return "";
+  }
+}
+
+/**
+ * Extract event ID from POS webhook payload for idempotency.
+ * Each provider has a different format for event IDs.
+ */
+function extractPOSEventId(provider: string, payload: Record<string, unknown>): string {
+  switch (provider) {
+    case "toast":
+      // Toast uses "eventId" or "eventGuid"
+      return (payload.eventId || payload.eventGuid || "") as string;
+    case "clover":
+      // Clover uses "id" in the event
+      return (payload.id || "") as string;
+    case "square":
+      // Square uses "event_id"
+      return (payload.event_id || "") as string;
+    default:
+      return "";
+  }
+}
+
+/**
+ * Extract event type from POS webhook payload.
+ */
+function extractPOSEventType(provider: string, payload: Record<string, unknown>): string {
+  switch (provider) {
+    case "toast":
+      // Toast uses "eventType"
+      return (payload.eventType || "unknown") as string;
+    case "clover":
+      // Clover uses "type"
+      return (payload.type || "unknown") as string;
+    case "square":
+      // Square uses "type"
+      return (payload.type || "unknown") as string;
+    default:
+      return "unknown";
+  }
+}
+
+/**
+ * Handle POS webhook from Toast, Clover, or Square.
+ *
+ * Writes webhook to pos_poswebhookevent table for later processing.
+ * Returns 202 Accepted immediately (signature verified in Django).
+ */
+async function handlePOSWebhook(
+  request: Request,
+  env: Env,
+  clientSlug: string,
+  provider: string
+): Promise<Response> {
+  const sql = neon(env.NEON_DATABASE_URL);
+
+  // Read body once
+  const body = await request.text();
+
+  // Parse JSON payload
+  let payload: Record<string, unknown>;
+  try {
+    payload = JSON.parse(body);
+  } catch {
+    console.error("Invalid JSON in POS webhook");
+    return new Response("Bad Request", { status: 400 });
+  }
+
+  // Get signature header
+  const signatureHeader = getPOSSignatureHeader(provider);
+  const signature = signatureHeader ? request.headers.get(signatureHeader) || "" : "";
+
+  // Extract event ID for idempotency
+  const externalEventId = extractPOSEventId(provider, payload);
+
+  // Extract event type
+  const eventType = extractPOSEventType(provider, payload);
+
+  // Look up client by slug
+  const clientResult = await sql`
+    SELECT id FROM core_client WHERE slug = ${clientSlug} LIMIT 1
+  `;
+
+  if (clientResult.length === 0) {
+    console.error(`Client not found: ${clientSlug}`);
+    return new Response("Not Found", { status: 404 });
+  }
+
+  const clientId = clientResult[0].id;
+  const webhookId = crypto.randomUUID();
+
+  // Write to pos_poswebhookevent table
+  // Use ON CONFLICT to handle duplicate events (idempotency)
+  try {
+    await sql`
+      INSERT INTO pos_poswebhookevent (
+        id, client_id, provider, event_type, payload, signature,
+        external_event_id, status, received_at, error
+      )
+      VALUES (
+        ${webhookId}::uuid,
+        ${clientId}::uuid,
+        ${provider},
+        ${eventType},
+        ${body}::jsonb,
+        ${signature},
+        ${externalEventId},
+        'pending',
+        NOW(),
+        ''
+      )
+      ON CONFLICT (client_id, provider, external_event_id)
+        WHERE external_event_id != ''
+      DO NOTHING
+    `;
+  } catch (error) {
+    console.error("Failed to write POS webhook:", error);
+    return new Response("Internal Server Error", { status: 500 });
+  }
+
+  return new Response(
+    JSON.stringify({
+      status: "accepted",
+      webhook_id: webhookId,
+    }),
+    {
+      status: 202,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 }

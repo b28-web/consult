@@ -1,7 +1,7 @@
 # 008-E: 86'd Item Webhook Handler and Availability Polling
 
 **EP:** [EP-008-restaurant-pos-integration](../enhancement_proposals/EP-008-restaurant-pos-integration.md)
-**Status:** pending
+**Status:** complete
 **Phase:** 2 (POS Read Integration)
 
 ## Summary
@@ -10,17 +10,17 @@ Implement the webhook handler for POS inventory/availability events and the poll
 
 ## Acceptance Criteria
 
-- [ ] Intake worker route: `POST /intake/{slug}/pos/{provider}`
-- [ ] Webhook signature verification per provider
-- [ ] `pos_webhook_event` table for webhook audit trail
-- [ ] Django task to process availability webhooks
-- [ ] `MenuItem.is_available` updated on webhook receipt
-- [ ] `MenuItem.availability_updated_at` timestamp updated
-- [ ] Availability API endpoint returns fresh data (low cache TTL)
-- [ ] Fallback: Manual sync endpoint `POST /api/clients/{slug}/sync-availability`
-- [ ] Webhook replay/retry handling (idempotent)
-- [ ] Monitoring: Log webhook processing latency
-- [ ] Integration tests with mock webhooks
+- [x] Intake worker route: `POST /intake/{slug}/pos/{provider}`
+- [x] Webhook signature verification per provider
+- [x] `pos_webhook_event` table for webhook audit trail
+- [x] Django task to process availability webhooks
+- [x] `MenuItem.is_available` updated on webhook receipt
+- [x] `MenuItem.availability_updated_at` timestamp updated
+- [x] Availability API endpoint returns fresh data (low cache TTL)
+- [x] Fallback: Manual sync endpoint `POST /api/clients/{slug}/sync-availability`
+- [x] Webhook replay/retry handling (idempotent)
+- [x] Monitoring: Log webhook processing latency
+- [x] Integration tests with mock webhooks
 
 ## Implementation Notes
 
@@ -234,4 +234,21 @@ def sync_availability(request, slug: str) -> Response:
 
 ## Progress
 
-*To be updated during implementation*
+### 2026-01-23: Implementation Complete
+
+**Files created/modified:**
+- `apps/web/pos/models.py` - POSWebhookEvent model with idempotency constraint
+- `apps/web/pos/admin.py` - Admin registration for POSWebhookEvent
+- `apps/web/pos/migrations/0001_add_poswebhookevent.py` - Database migration
+- `apps/web/pos/services/__init__.py` - Service exports
+- `apps/web/pos/services/webhook_processor.py` - Webhook processing service
+- `workers/intake/src/index.ts` - POS webhook route handler
+- `apps/web/restaurant/views.py` - Manual sync endpoint
+- `apps/web/restaurant/urls.py` - URL routing for sync endpoint
+- `apps/web/pos/tests/test_webhook_processor.py` - Integration tests
+
+**Key design decisions:**
+1. Webhook writes are idempotent via `external_event_id` unique constraint
+2. Transaction commits failed status before re-raising exception
+3. Late imports used to avoid circular dependencies
+4. Currently uses MockPOSAdapter for all providers (real adapters in 008-F+)

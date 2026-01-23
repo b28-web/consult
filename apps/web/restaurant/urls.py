@@ -16,4 +16,6 @@ urlpatterns = [
     path("menu/<int:menu_id>", views.menu_detail, name="menu_detail"),
     # Availability endpoint (for 86'd polling)
     path("availability", views.availability, name="availability"),
+    # Manual sync endpoint (authenticated)
+    path("sync-availability", views.sync_availability, name="sync_availability"),
 ]

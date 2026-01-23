@@ -282,7 +282,7 @@ class MockPOSAdapter:
         self,
         session: POSSession,
         location_id: str,
-        menu_id: str,  # noqa: ARG002
+        menu_id: str,
     ) -> POSMenu:
         """Get a specific menu by ID."""
         if self._api_delay_ms > 0:
@@ -338,7 +338,7 @@ class MockPOSAdapter:
         self,
         session: POSSession,
         location_id: str,
-        order: POSOrder,  # noqa: ARG002
+        order: POSOrder,
     ) -> POSOrderResult:
         """Create a new order in the mock POS system."""
         if self._api_delay_ms > 0:
@@ -381,7 +381,7 @@ class MockPOSAdapter:
         self,
         session: POSSession,
         location_id: str,
-        order_id: str,  # noqa: ARG002
+        order_id: str,
     ) -> POSOrderStatus:
         """Get current status of an order."""
         if self._api_delay_ms > 0:

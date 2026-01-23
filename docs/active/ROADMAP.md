@@ -7,6 +7,7 @@ Current priorities and planned work for Consult.
 ### EP-008: Restaurant Client Type with POS Integration
 Add restaurants as a first-class client type with POS integration.
 
+**Phase 1: Foundation** (complete)
 | Ticket | Title | Status |
 |--------|-------|--------|
 | 008-A | POS adapter interface and mock implementation | ✓ |
@@ -14,7 +15,13 @@ Add restaurants as a first-class client type with POS integration.
 | 008-C | Menu API endpoints | ✓ |
 | 008-D | Restaurant site template (menu display) | ✓ |
 
-**Phase 1 complete** - Foundation work (4/4 tickets complete)
+**Phase 2: POS Read Integration** (in progress)
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 008-E | 86'd item webhook handler and availability polling | ✓ |
+| 008-F | Toast adapter implementation | pending |
+
+**Phase 2 progress**: 1/2 tickets complete
 
 ---
 
@@ -226,7 +233,7 @@ Add restaurants as a client type with POS sync (Toast, Clover, Square) and onlin
 **Phase 2: POS Read Integration** - Live menu sync with Toast
 | Ticket | Title | Status |
 |--------|-------|--------|
-| 008-E | 86'd item webhook handler and availability polling | pending |
+| 008-E | 86'd item webhook handler and availability polling | ✓ |
 | 008-F | Toast adapter implementation | pending |
 
 **Phase 3: Additional POS Providers** - Clover and Square support

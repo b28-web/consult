@@ -9,9 +9,12 @@ These endpoints are used by Astro frontends:
 from datetime import UTC, datetime
 from typing import Any
 
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpRequest, JsonResponse
 from django.views.decorators.cache import cache_control
-from django.views.decorators.http import require_GET
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET, require_POST
 
 from apps.web.core.models import Client
 from apps.web.restaurant.models import (
@@ -267,3 +270,65 @@ def options_handler(_request: HttpRequest, _slug: str) -> JsonResponse:
     for key, value in _cors_headers().items():
         response[key] = value
     return response
+
+
+@csrf_exempt
+@require_POST
+@login_required
+def sync_availability(request: HttpRequest, slug: str) -> JsonResponse:
+    """
+    POST /api/clients/{slug}/sync-availability
+
+    Manually trigger availability sync from POS.
+    Requires authenticated staff user with access to this client.
+
+    This is a fallback for when webhooks are delayed or failing.
+    """
+    client = _get_client_or_404(slug)
+
+    # Check user has access to this client
+    user = request.user
+    if not user.is_staff and getattr(user, "client", None) != client:
+        raise PermissionDenied("You don't have permission to sync this client")
+
+    # Get restaurant profile
+    profile = _get_restaurant_profile(client)
+    if not profile:
+        return _json_response(
+            {"error": "No restaurant profile configured"},
+            status=400,
+        )
+
+    if not profile.pos_provider:
+        return _json_response(
+            {"error": "No POS provider configured"},
+            status=400,
+        )
+
+    # Process any pending webhooks for this client
+    # Late imports to avoid circular dependency
+    from apps.web.pos.models import POSWebhookEvent, WebhookStatus  # noqa: PLC0415
+    from apps.web.pos.services import process_webhook  # noqa: PLC0415
+
+    pending_webhooks = POSWebhookEvent.objects.filter(
+        client=client,
+        status=WebhookStatus.PENDING,
+    ).order_by("received_at")
+
+    processed_count = 0
+    errors = []
+
+    for webhook in pending_webhooks[:50]:  # Limit to 50 per sync
+        try:
+            process_webhook(str(webhook.id))
+            processed_count += 1
+        except Exception as e:
+            errors.append(str(e))
+
+    return _json_response(
+        {
+            "status": "sync_complete",
+            "webhooks_processed": processed_count,
+            "errors": errors[:5] if errors else [],  # Limit error messages
+        }
+    )
