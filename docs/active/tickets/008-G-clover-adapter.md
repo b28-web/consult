@@ -1,7 +1,7 @@
 # 008-G: Clover Adapter Implementation
 
 **EP:** [EP-008-restaurant-pos-integration](../enhancement_proposals/EP-008-restaurant-pos-integration.md)
-**Status:** pending
+**Status:** complete
 **Phase:** 3 (Additional POS Providers)
 
 ## Summary
@@ -10,18 +10,18 @@ Implement the Clover POS adapter following the `POSAdapter` protocol. Clover use
 
 ## Acceptance Criteria
 
-- [ ] `CloverAdapter` class implementing `POSAdapter` protocol
-- [ ] OAuth 2.0 merchant authorization flow
-- [ ] Token refresh handling
-- [ ] `get_menus()` - Fetch categories and items
-- [ ] `get_menu()` - Fetch single category with items
-- [ ] `get_item_availability()` - Fetch inventory stock status
-- [ ] `verify_webhook_signature()` - Clover webhook validation
-- [ ] `parse_webhook()` - Convert Clover events to internal format
-- [ ] `create_order()` - Create order in Clover (stub for Phase 4)
-- [ ] Environment switching (sandbox vs production)
-- [ ] Unit tests with mocked HTTP responses
-- [ ] Integration test with Clover sandbox
+- [x] `CloverAdapter` class implementing `POSAdapter` protocol
+- [x] OAuth 2.0 merchant authorization flow
+- [x] Token refresh handling
+- [x] `get_menus()` - Fetch categories and items
+- [x] `get_menu()` - Fetch single category with items
+- [x] `get_item_availability()` - Fetch inventory stock status
+- [x] `verify_webhook_signature()` - Clover webhook validation
+- [x] `parse_webhook()` - Convert Clover events to internal format
+- [x] `create_order()` - Create order in Clover (stub for Phase 4)
+- [x] Environment switching (sandbox vs production)
+- [x] Unit tests with mocked HTTP responses
+- [ ] Integration test with Clover sandbox (deferred - requires Clover developer account)
 
 ## Implementation Notes
 
@@ -254,4 +254,26 @@ Clover has a developer-friendly sandbox:
 
 ## Progress
 
-*To be updated during implementation*
+### 2026-01-23
+- **Complete**: Full CloverAdapter implementation in `apps/web/pos/adapters/clover.py`
+  - OAuth 2.0 merchant authorization flow (auth code exchange)
+  - Token refresh returns same session (Clover tokens don't expire)
+  - `get_menus()` fetches categories and items in parallel, groups by category
+  - `get_menu()` supports single "main" menu concept (Clover has no menu hierarchy)
+  - `get_item_availability()` via item_stocks endpoint with stock tracking detection
+  - `verify_webhook_signature()` with HMAC-SHA256
+  - `parse_webhook()` handles ITEM, CATEGORY, and inventory (I) events
+  - Order operations stubbed for Phase 4
+  - Environment switching (sandbox/production)
+  - Rate limiting (10 req/sec) with retry logic (3 attempts with exponential backoff)
+- **Tests**: 38 unit tests in `apps/web/pos/tests/test_clover_adapter.py`
+  - Authentication (5 tests)
+  - Menu operations (10 tests)
+  - Error handling (4 tests)
+  - Webhooks (9 tests)
+  - Order operations (2 tests)
+  - Protocol compliance (2 tests)
+  - Adapter registry (3 tests)
+  - Environment switching (3 tests)
+- **Registry**: Updated `apps/web/pos/adapters/__init__.py` to include CloverAdapter
+- All quality checks pass (ruff, mypy, 100 adapter tests)

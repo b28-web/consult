@@ -710,7 +710,7 @@ class TestAdapterRegistry:
     def test_unsupported_provider_raises_error(self):
         """Test that unsupported provider raises ValueError."""
         with pytest.raises(ValueError) as exc_info:
-            get_adapter(POSProvider.CLOVER)
+            get_adapter(POSProvider.SQUARE)
 
         assert "Unsupported POS provider" in str(exc_info.value)
-        assert "CLOVER" in str(exc_info.value)
+        assert "SQUARE" in str(exc_info.value)

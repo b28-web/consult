@@ -21,7 +21,13 @@ Add restaurants as a first-class client type with POS integration.
 | 008-E | 86'd item webhook handler and availability polling | ✓ |
 | 008-F | Toast adapter implementation | ✓ |
 
-**Phase 2 progress**: 2/2 tickets complete
+**Phase 3: Additional POS Providers** (in progress)
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 008-G | Clover adapter implementation | ✓ |
+| 008-H | Square adapter implementation | pending |
+
+**Phase 3 progress**: 1/2 tickets complete
 
 ---
 

@@ -458,7 +458,7 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
 | [008-D](../tickets/008-D-restaurant-site-template.md) | Restaurant site template (menu display) | 1 | complete |
 | [008-E](../tickets/008-E-availability-webhook-polling.md) | 86'd item webhook handler and availability polling | 2 | pending |
 | [008-F](../tickets/008-F-toast-adapter.md) | Toast adapter implementation | 2 | pending |
-| [008-G](../tickets/008-G-clover-adapter.md) | Clover adapter implementation | 3 | pending |
+| [008-G](../tickets/008-G-clover-adapter.md) | Clover adapter implementation | 3 | complete |
 | [008-H](../tickets/008-H-square-adapter.md) | Square adapter implementation | 3 | pending |
 | [008-I](../tickets/008-I-cart-checkout-components.md) | Cart and checkout frontend components | 4 | pending |
 | [008-J](../tickets/008-J-order-api-endpoints.md) | Order API endpoints | 4 | pending |
@@ -634,9 +634,21 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
 
 **Phase 1 complete!** All foundation tickets done (008-A through 008-D).
 
+- **008-G complete**: Clover adapter implementation
+  - Full `CloverAdapter` in `apps/web/pos/adapters/clover.py`
+  - OAuth 2.0 merchant authorization flow
+  - Menu operations via categories/items endpoints
+  - Item availability via item_stocks endpoint
+  - Webhook handling (ITEM, CATEGORY, inventory events)
+  - Environment switching (sandbox/production)
+  - 38 unit tests, all passing
+  - Adapter registry updated
+
+**Phase 3 in progress**: 008-G complete, 008-H (Square) pending
+
 **Next steps:**
-- Continue Phase 2: 008-E (Availability webhook/polling), 008-F (Toast adapter)
-- Apply for Toast Partner API access (needed for order creation in Phase 4)
+- Complete Phase 3: 008-H (Square adapter)
+- Continue to Phase 4: Online ordering (cart, checkout, payments)
 
 ## Retrospective
 
