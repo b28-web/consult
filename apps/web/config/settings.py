@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "apps.web.crm",
     "apps.web.integrations",
     "apps.web.pos",
+    "apps.web.restaurant",
 ]
 
 MIDDLEWARE = [

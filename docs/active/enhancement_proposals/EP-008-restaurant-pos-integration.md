@@ -453,7 +453,7 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
 | ID | Title | Phase | Status |
 |----|-------|-------|--------|
 | [008-A](../tickets/008-A-pos-adapter-interface.md) | POS adapter interface and mock implementation | 1 | complete |
-| [008-B](../tickets/008-B-restaurant-domain-models.md) | Restaurant domain models and migrations | 1 | pending |
+| [008-B](../tickets/008-B-restaurant-domain-models.md) | Restaurant domain models and migrations | 1 | complete |
 | [008-C](../tickets/008-C-menu-api-endpoints.md) | Menu API endpoints | 1 | pending |
 | [008-D](../tickets/008-D-restaurant-site-template.md) | Restaurant site template (menu display) | 1 | pending |
 | [008-E](../tickets/008-E-availability-webhook-polling.md) | 86'd item webhook handler and availability polling | 2 | pending |
@@ -604,8 +604,15 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
   - 27 unit tests, all passing
   - Added pytest-asyncio for async test support
 
+- **008-B complete**: Restaurant domain models and migrations
+  - 8 models: RestaurantProfile, Menu, MenuCategory, MenuItem, ModifierGroup, Modifier, Order, OrderItem
+  - All inherit from ClientScopedModel with proper indexes
+  - Admin registration with inline editing
+  - Factory classes for testing
+  - 26 unit tests, all passing
+
 **Next steps:**
-- Continue Phase 1: 008-B (Restaurant domain models)
+- Continue Phase 1: 008-C (Menu API endpoints)
 - Apply for Toast Partner API access (needed for order creation in Phase 4)
 
 ## Retrospective
