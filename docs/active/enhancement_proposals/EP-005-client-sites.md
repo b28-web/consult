@@ -26,6 +26,9 @@ Deploy all 8 planned client sites, establish tooling for rapid site creation, an
 > **Note:** 005-F inserted to consolidate template fixes before deploying more sites.
 > Reduces O(n) maintenance burden by fixing issues once in template.
 
+> **CI/CD Blocked:** 005-K workflow is complete but fails due to Doppler misconfiguration.
+> See [EP-010-doppler-ci-config](EP-010-doppler-ci-config.md) for fix.
+
 ## Design Decisions
 
 | Decision | Choice | Rationale |
@@ -109,7 +112,10 @@ The `coffee-shop` site in this EP is a **simple cafe** (static menu page, hours 
 - Deploys to Cloudflare Pages using Doppler for secrets
 - Manual trigger supports specific site or "all"
 - PR preview deploys with comment integration
+- Added justfile commands: `ci-status`, `sites-ci-trigger`, `sites-ci-watch`, etc.
+- Fixed pnpm version mismatch in workflows
 - 005-K complete, EP-005 complete
+- **Blocked:** Workflow fails - Doppler `dev` config missing (see EP-010)
 
 ### 2026-01-22 (local-agency site)
 - Deployed local-agency site (Consult Local - meta/self-referential agency site)

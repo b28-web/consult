@@ -79,6 +79,24 @@ Doppler integration for runtime secrets:
 - Build-time: Not needed (static sites)
 - Runtime secrets: Injected via Cloudflare env vars or Doppler integration
 
+## Monitoring Commands
+
+Added to justfile for CI/CD monitoring:
+
+```bash
+just ci-status              # Show recent workflow runs
+just ci-watch RUN_ID        # Watch a running workflow
+just ci-logs RUN_ID         # Show logs for a workflow
+just ci-logs-failed RUN_ID  # Show failed job logs
+just sites-ci-status        # Check Deploy Sites workflow runs
+just sites-ci-trigger SITE ENV  # Manually trigger deploy
+just sites-ci-watch         # Watch latest Deploy Sites run
+```
+
+## Known Issues
+
+**Blocked by EP-010:** Workflow is complete but fails because Doppler config `dev` doesn't exist (only `dev_personal`). See [EP-010-doppler-ci-config](../enhancement_proposals/EP-010-doppler-ci-config.md).
+
 ## Progress
 
 ### 2026-01-22
@@ -91,3 +109,7 @@ Doppler integration for runtime secrets:
 - PR comments with preview URLs (updates existing comment or creates new)
 - Deployment summary in GitHub Actions UI
 - Excludes `_template/`, `registry.yaml`, and `.gitkeep` from triggering builds
+- Added CI/CD monitoring commands to justfile
+- Fixed pnpm version mismatch (removed hardcoded v9, reads from package.json)
+- Fixed error handling to show deploy errors
+- **Blocked:** Doppler token lacks access to `dev` config (tracked in EP-010)
