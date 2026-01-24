@@ -25,7 +25,11 @@ from pydantic import ValidationError as PydanticValidationError
 
 from apps.web.core.decorators import idempotency_key_required
 from apps.web.core.models import Client
-from apps.web.payments.services import create_payment_intent, verify_payment_intent
+from apps.web.payments.services import (
+    PaymentError,
+    create_payment_intent,
+    verify_payment_intent,
+)
 from apps.web.restaurant.models import (
     Menu,
     MenuCategory,
@@ -664,58 +668,65 @@ def create_order(request: HttpRequest, slug: str) -> JsonResponse:  # noqa: PLR0
     )
 
     # Create order and items in a transaction
-    with transaction.atomic():
-        confirmation_code = _generate_confirmation_code()
+    try:
+        with transaction.atomic():
+            confirmation_code = _generate_confirmation_code()
 
-        order = Order.objects.create(
-            client=client,
-            customer_name=order_request.customer.name,
-            customer_email=order_request.customer.email,
-            customer_phone=order_request.customer.phone,
-            order_type=order_request.order_type,
-            scheduled_time=order_request.scheduled_time,
-            special_instructions=order_request.special_instructions,
-            delivery_address=order_request.delivery_address,
-            subtotal=subtotal,
-            tax=tax,
-            delivery_fee=delivery_fee,
-            tip=order_request.tip,
-            total=total,
-            status=OrderStatus.PENDING,
-            payment_status=PaymentStatus.PENDING,
-            confirmation_code=confirmation_code,
-        )
-
-        # Create order items
-        for menu_item, item_data, unit_price, modifier_snapshot in priced_items:
-            quantity = item_data.get("quantity", 1)
-            line_total = unit_price * quantity
-
-            OrderItem.objects.create(
+            order = Order.objects.create(
                 client=client,
-                order=order,
-                menu_item=menu_item,
-                item_name=menu_item.name,
-                quantity=quantity,
-                unit_price=unit_price,
-                modifiers=modifier_snapshot,
-                special_instructions=item_data.get("special_instructions", ""),
-                line_total=line_total,
+                customer_name=order_request.customer.name,
+                customer_email=order_request.customer.email,
+                customer_phone=order_request.customer.phone,
+                order_type=order_request.order_type,
+                scheduled_time=order_request.scheduled_time,
+                special_instructions=order_request.special_instructions,
+                delivery_address=order_request.delivery_address,
+                subtotal=subtotal,
+                tax=tax,
+                delivery_fee=delivery_fee,
+                tip=order_request.tip,
+                total=total,
+                status=OrderStatus.PENDING,
+                payment_status=PaymentStatus.PENDING,
+                confirmation_code=confirmation_code,
             )
 
-        # Create Stripe PaymentIntent
-        payment_intent = create_payment_intent(
-            amount=total,
-            metadata={
-                "order_id": str(order.pk),
-                "client_slug": slug,
-                "confirmation_code": confirmation_code,
-            },
-        )
+            # Create order items
+            for menu_item, item_data, unit_price, modifier_snapshot in priced_items:
+                quantity = item_data.get("quantity", 1)
+                line_total = unit_price * quantity
 
-        # Save payment intent ID
-        order.stripe_payment_intent_id = payment_intent.id
-        order.save(update_fields=["stripe_payment_intent_id"])
+                OrderItem.objects.create(
+                    client=client,
+                    order=order,
+                    menu_item=menu_item,
+                    item_name=menu_item.name,
+                    quantity=quantity,
+                    unit_price=unit_price,
+                    modifiers=modifier_snapshot,
+                    special_instructions=item_data.get("special_instructions", ""),
+                    line_total=line_total,
+                )
+
+            # Create Stripe PaymentIntent
+            payment_intent = create_payment_intent(
+                amount=total,
+                metadata={
+                    "order_id": str(order.pk),
+                    "client_slug": slug,
+                    "confirmation_code": confirmation_code,
+                },
+            )
+
+            # Save payment intent ID
+            order.stripe_payment_intent_id = payment_intent.id
+            order.save(update_fields=["stripe_payment_intent_id"])
+
+    except PaymentError as e:
+        return _json_response(
+            {"error": "Payment processing failed", "details": e.message},
+            status=500,
+        )
 
     # Build response
     order_response = OrderCreateResponse(

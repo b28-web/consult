@@ -1,7 +1,7 @@
 # 008-K: Stripe Payment Integration
 
 **EP:** [EP-008-restaurant-pos-integration](../enhancement_proposals/EP-008-restaurant-pos-integration.md)
-**Status:** pending
+**Status:** complete
 **Phase:** 4 (Online Ordering)
 
 ## Summary
@@ -10,20 +10,20 @@ Integrate Stripe for payment processing in the online ordering flow. This includ
 
 ## Acceptance Criteria
 
-- [ ] Stripe Python SDK installed and configured
-- [ ] `create_payment_intent()` service function
-- [ ] Stripe client secret returned in order creation response
-- [ ] Stripe Elements embedded on checkout page
-- [ ] Payment form with card input
-- [ ] Client-side payment confirmation
-- [ ] Stripe webhook handler for `payment_intent.succeeded`
-- [ ] Stripe webhook handler for `payment_intent.payment_failed`
-- [ ] Order status updated on payment events
-- [ ] Webhook signature verification
-- [ ] Refund support (for cancelled orders)
-- [ ] Test mode support for development
-- [ ] Unit tests with Stripe mocks
-- [ ] Integration tests with Stripe test mode
+- [x] Stripe Python SDK installed and configured
+- [x] `create_payment_intent()` service function
+- [x] Stripe client secret returned in order creation response
+- [x] Stripe Elements embedded on checkout page
+- [x] Payment form with card input
+- [x] Client-side payment confirmation
+- [x] Stripe webhook handler for `payment_intent.succeeded`
+- [x] Stripe webhook handler for `payment_intent.payment_failed`
+- [x] Order status updated on payment events
+- [x] Webhook signature verification
+- [x] Refund support (for cancelled orders)
+- [x] Test mode support for development
+- [x] Unit tests with Stripe mocks
+- [x] Integration tests with Stripe test mode
 
 ## Implementation Notes
 
@@ -417,4 +417,59 @@ class StripeWebhookTests(TestCase):
 
 ## Progress
 
-*To be updated during implementation*
+### 2026-01-23: Implementation Complete
+
+**Backend:**
+- Added stripe SDK v14.2.0 and types-stripe to dependencies
+- Created `apps/web/payments/services.py` with:
+  - `create_payment_intent()` - creates Stripe PaymentIntent with metadata
+  - `retrieve_payment_intent()` - retrieves existing PaymentIntent
+  - `verify_payment_intent()` - checks if payment succeeded
+  - `create_refund()` - creates full or partial refunds
+  - `cancel_payment_intent()` - cancels unpaid PaymentIntents
+  - `PaymentError` exception class for error handling
+- Created `apps/web/payments/webhooks.py` with:
+  - `stripe_webhook()` view with signature verification
+  - Handlers for `payment_intent.succeeded` and `payment_intent.payment_failed`
+  - Idempotent order status updates
+- Added webhook URL at `/payments/webhooks/stripe`
+- Updated Django settings with `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`
+
+**Frontend:**
+- Added @stripe/stripe-js v5.5.0 to restaurant template
+- Created `PaymentForm.astro` component with:
+  - Stripe Elements integration
+  - Payment Element mounting
+  - Error handling and display
+  - Global functions for payment initialization and confirmation
+- Updated `checkout.astro` with:
+  - Two-stage flow: "Continue to Payment" → "Place Order"
+  - Order creation via API
+  - Stripe client secret handling
+  - Payment confirmation with redirect
+- Created `order-confirmation.astro` page with:
+  - Payment status polling
+  - Success/pending/error states
+  - Order details display
+
+**Tests:**
+- 23 tests passing in `apps/web/payments/tests/`
+- `test_services.py`: Unit tests for all payment service functions
+- `test_webhooks.py`: Integration tests for webhook handler
+
+**Files created/modified:**
+- `apps/web/payments/services.py`
+- `apps/web/payments/webhooks.py`
+- `apps/web/payments/urls.py`
+- `apps/web/payments/__init__.py`
+- `apps/web/payments/tests/__init__.py`
+- `apps/web/payments/tests/test_services.py`
+- `apps/web/payments/tests/test_webhooks.py`
+- `apps/web/config/settings.py`
+- `apps/web/config/urls.py`
+- `sites/_template-restaurant/package.json`
+- `sites/_template-restaurant/src/env.d.ts`
+- `sites/_template-restaurant/src/components/checkout/PaymentForm.astro`
+- `sites/_template-restaurant/src/pages/checkout.astro`
+- `sites/_template-restaurant/src/pages/order-confirmation.astro`
+- `pyproject.toml`

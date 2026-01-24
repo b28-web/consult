@@ -16,6 +16,7 @@
   "dependencies": {
     "@consult/shared-ui": "workspace:*",
     "@nanostores/persistent": "^0.10.2",
+    "@stripe/stripe-js": "^5.5.0",
     "astro": "^5.0.0",
     "nanostores": "^0.11.3"
   },

@@ -3,7 +3,7 @@
  * Checkout Page - Complete your order
  *
  * Collects customer info, order type, pickup time, and tip.
- * Payment handled in 008-K with Stripe Elements.
+ * Integrates with Stripe Elements for payment processing.
  */
 import PageLayout from "@/layouts/PageLayout.astro";
 import CustomerForm from "@/components/checkout/CustomerForm.astro";
@@ -11,6 +11,7 @@ import OrderTypeSelector from "@/components/checkout/OrderTypeSelector.astro";
 import PickupTimeSelector from "@/components/checkout/PickupTimeSelector.astro";
 import TipSelector from "@/components/checkout/TipSelector.astro";
 import OrderSummary from "@/components/checkout/OrderSummary.astro";
+import PaymentForm from "@/components/checkout/PaymentForm.astro";
 import { config } from "@/config";
 ---
 
@@ -34,6 +35,14 @@ import { config } from "@/config";
       <span>Your cart is empty. <a href="/menu" class="link link-primary">Add some items</a> to continue.</span>
     </div>
 
+    <!-- Order Error Alert -->
+    <div id="order-error" class="alert alert-error mb-6 hidden">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+      </svg>
+      <span id="order-error-message"></span>
+    </div>
+
     <!-- Main Content -->
     <div id="checkout-content" class="grid lg:grid-cols-5 gap-6">
       <!-- Left Column: Forms -->
@@ -44,28 +53,41 @@ import { config } from "@/config";
         <TipSelector />
       </div>
 
-      <!-- Right Column: Summary -->
+      <!-- Right Column: Summary & Payment -->
       <div class="lg:col-span-2">
         <div class="lg:sticky lg:top-4 space-y-4">
           <OrderSummary />
 
-          <!-- Payment Placeholder - Will be replaced in 008-K -->
+          <!-- Payment Section -->
           <div id="payment-section" class="card bg-base-100 shadow-sm">
             <div class="card-body">
               <h2 class="card-title text-lg">Payment</h2>
-              <div id="payment-element" class="py-4">
-                <!-- Stripe Elements will be mounted here in 008-K -->
-                <div class="text-center text-base-content/60 py-8">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
-                  <p class="text-sm">Payment integration coming soon</p>
-                </div>
+
+              <!-- Payment Form (initially hidden until order created) -->
+              <div id="payment-container" class="hidden">
+                <PaymentForm />
               </div>
 
+              <!-- Pre-order state: shows message before payment is initialized -->
+              <div id="pre-payment-state" class="py-4">
+                <p class="text-sm text-base-content/70 text-center">
+                  Fill out your information above, then click "Continue to Payment" to enter your payment details.
+                </p>
+              </div>
+
+              <!-- Continue to Payment button (shown before order is created) -->
+              <button
+                id="continue-to-payment-btn"
+                class="btn btn-primary w-full"
+              >
+                <span id="continue-btn-text">Continue to Payment</span>
+                <span id="continue-btn-loading" class="loading loading-spinner hidden"></span>
+              </button>
+
+              <!-- Place Order button (shown after Stripe is initialized) -->
               <button
                 id="submit-order-btn"
-                class="btn btn-primary w-full"
+                class="btn btn-primary w-full hidden"
                 disabled
               >
                 <span id="submit-btn-text">Place Order</span>
@@ -97,88 +119,305 @@ import { config } from "@/config";
   </div>
 </PageLayout>
 
-<script>
-  import { cart, isCartEmpty, formatPrice, cartTotal } from "@/lib/cart";
+<script define:vars={{ clientSlug: config.client.slug }}>
+  // Client slug passed from Astro
+  window.__CLIENT_SLUG__ = clientSlug;
+</script>
 
+<script>
+  import { cart, isCartEmpty, formatPrice, cartTotal, clearCart } from "@/lib/cart";
+  import { prepareOrderSubmission, isValidEmail, isValidPhone } from "@/lib/checkout";
+
+  // Get elements
   const emptyWarning = document.getElementById("empty-cart-warning") as HTMLElement;
-  const checkoutContent = document.getElementById("checkout-content") as HTMLElement;
+  const orderError = document.getElementById("order-error") as HTMLElement;
+  const orderErrorMessage = document.getElementById("order-error-message") as HTMLElement;
+  const paymentContainer = document.getElementById("payment-container") as HTMLElement;
+  const prePaymentState = document.getElementById("pre-payment-state") as HTMLElement;
+
+  // Buttons
+  const continueBtn = document.getElementById("continue-to-payment-btn") as HTMLButtonElement;
+  const continueBtnText = document.getElementById("continue-btn-text") as HTMLElement;
+  const continueBtnLoading = document.getElementById("continue-btn-loading") as HTMLElement;
   const submitBtn = document.getElementById("submit-order-btn") as HTMLButtonElement;
   const submitBtnText = document.getElementById("submit-btn-text") as HTMLElement;
   const submitBtnLoading = document.getElementById("submit-btn-loading") as HTMLElement;
 
+  // State
+  let orderId: number | null = null;
+  let confirmationCode: string | null = null;
+  let stripeReady = false;
+
+  // Get API URL
+  const apiUrl = import.meta.env.PUBLIC_API_URL || "";
+  const clientSlug = (window as any).__CLIENT_SLUG__;
+
   // Check if cart is empty
-  function checkCartEmpty() {
+  function checkCartEmpty(): boolean {
     const empty = isCartEmpty();
     emptyWarning.classList.toggle("hidden", !empty);
-
-    // Disable submit if empty
-    if (empty) {
-      submitBtn.disabled = true;
-    }
+    continueBtn.disabled = empty;
+    return empty;
   }
 
-  // Update submit button with total
-  function updateSubmitButton() {
+  // Update button with total
+  function updateButtons() {
     const total = cartTotal.get();
     if (total > 0) {
       submitBtnText.textContent = `Place Order - ${formatPrice(total)}`;
-      // Enable button only when payment is ready (handled in 008-K)
-      // For now, show as disabled with "coming soon" payment
     }
   }
 
-  // Subscribe to cart changes
-  cart.subscribe(() => {
-    checkCartEmpty();
-    updateSubmitButton();
-  });
+  // Show error message
+  function showError(message: string) {
+    orderErrorMessage.textContent = message;
+    orderError.classList.remove("hidden");
+    orderError.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
 
-  // Initial checks
-  checkCartEmpty();
-  updateSubmitButton();
+  // Hide error message
+  function hideError() {
+    orderError.classList.add("hidden");
+  }
 
-  // Form validation - will be connected to Stripe in 008-K
-  submitBtn.addEventListener("click", async (e) => {
-    e.preventDefault();
-
-    // This will be replaced with actual payment flow in 008-K
-    // For now, just show validation
-
-    // Validate customer form
+  // Validate form fields
+  function validateForm(): { valid: boolean; customer: { name: string; email: string; phone: string } | null } {
     const nameInput = document.getElementById("customer-name") as HTMLInputElement;
     const emailInput = document.getElementById("customer-email") as HTMLInputElement;
     const phoneInput = document.getElementById("customer-phone") as HTMLInputElement;
 
     let valid = true;
 
+    // Clear previous errors
+    [nameInput, emailInput, phoneInput].forEach(input => {
+      input.classList.remove("input-error");
+    });
+    document.querySelectorAll("[id$='-error']").forEach(el => {
+      if (el.id.startsWith("customer-")) {
+        el.classList.add("hidden");
+      }
+    });
+
+    // Validate name
     if (!nameInput.value.trim()) {
       nameInput.classList.add("input-error");
       document.getElementById("customer-name-error")?.classList.remove("hidden");
       valid = false;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailInput.value)) {
+    // Validate email
+    if (!isValidEmail(emailInput.value)) {
       emailInput.classList.add("input-error");
       document.getElementById("customer-email-error")?.classList.remove("hidden");
       valid = false;
     }
 
-    const phoneRegex = /^[\d\s\-\(\)\+]{10,}$/;
-    if (!phoneRegex.test(phoneInput.value)) {
+    // Validate phone
+    if (!isValidPhone(phoneInput.value)) {
       phoneInput.classList.add("input-error");
       document.getElementById("customer-phone-error")?.classList.remove("hidden");
       valid = false;
     }
 
     if (!valid) {
-      // Scroll to first error
       const firstError = document.querySelector(".input-error");
       firstError?.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
+      return { valid: false, customer: null };
     }
 
-    // Show alert that payment is coming soon
-    alert("Payment integration will be added in ticket 008-K. Form validation passed!");
+    return {
+      valid: true,
+      customer: {
+        name: nameInput.value.trim(),
+        email: emailInput.value.trim(),
+        phone: phoneInput.value.trim(),
+      },
+    };
+  }
+
+  // Create order and get Stripe client secret
+  async function createOrder(): Promise<{ clientSecret: string; orderId: number; confirmationCode: string } | null> {
+    const { valid, customer } = validateForm();
+    if (!valid || !customer) {
+      return null;
+    }
+
+    // Prepare order data
+    const orderData = prepareOrderSubmission(customer);
+
+    // Build request body matching API schema
+    const requestBody = {
+      customer: {
+        name: orderData.customer_name,
+        email: orderData.customer_email,
+        phone: orderData.customer_phone,
+      },
+      order_type: orderData.order_type,
+      scheduled_time: orderData.scheduled_time,
+      special_instructions: orderData.special_instructions,
+      items: orderData.items.map(item => ({
+        menu_item_id: item.menu_item_id,
+        quantity: item.quantity,
+        modifiers: item.modifiers.map(mod => ({
+          group_id: mod.group_id,
+          selections: mod.selections.map(s => s.id),
+        })),
+        special_instructions: item.special_instructions,
+      })),
+      tip: orderData.tip,
+    };
+
+    try {
+      const response = await fetch(`${apiUrl}/api/clients/${clientSlug}/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": crypto.randomUUID(),
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle validation errors
+        if (data.details && Array.isArray(data.details)) {
+          const messages = data.details.map((d: { message: string }) => d.message).join(", ");
+          throw new Error(messages);
+        }
+        throw new Error(data.error || "Failed to create order");
+      }
+
+      return {
+        clientSecret: data.stripe_client_secret,
+        orderId: data.order_id,
+        confirmationCode: data.confirmation_code,
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to create order";
+      showError(message);
+      return null;
+    }
+  }
+
+  // Handle "Continue to Payment" click
+  async function handleContinueToPayment() {
+    hideError();
+
+    // Show loading state
+    continueBtn.disabled = true;
+    continueBtnText.classList.add("hidden");
+    continueBtnLoading.classList.remove("hidden");
+
+    try {
+      // Create order
+      const result = await createOrder();
+      if (!result) {
+        continueBtn.disabled = false;
+        continueBtnText.classList.remove("hidden");
+        continueBtnLoading.classList.add("hidden");
+        return;
+      }
+
+      orderId = result.orderId;
+      confirmationCode = result.confirmationCode;
+
+      // Initialize Stripe with client secret
+      const initializePayment = (window as any).initializePayment;
+      if (!initializePayment) {
+        throw new Error("Payment system not loaded");
+      }
+
+      const success = await initializePayment(result.clientSecret);
+      if (!success) {
+        showError("Failed to initialize payment. Please refresh and try again.");
+        continueBtn.disabled = false;
+        continueBtnText.classList.remove("hidden");
+        continueBtnLoading.classList.add("hidden");
+        return;
+      }
+
+      // Show payment form, hide pre-payment state
+      prePaymentState.classList.add("hidden");
+      paymentContainer.classList.remove("hidden");
+
+      // Switch to submit button
+      continueBtn.classList.add("hidden");
+      submitBtn.classList.remove("hidden");
+
+      // Button will be enabled when Stripe is ready
+
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to process";
+      showError(message);
+      continueBtn.disabled = false;
+      continueBtnText.classList.remove("hidden");
+      continueBtnLoading.classList.add("hidden");
+    }
+  }
+
+  // Handle "Place Order" click
+  async function handlePlaceOrder() {
+    hideError();
+
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtnText.classList.add("hidden");
+    submitBtnLoading.classList.remove("hidden");
+
+    try {
+      const confirmPayment = (window as any).confirmPayment;
+      if (!confirmPayment) {
+        throw new Error("Payment system not loaded");
+      }
+
+      // Build return URL
+      const returnUrl = `${window.location.origin}/order-confirmation?order_id=${orderId}`;
+
+      const result = await confirmPayment(returnUrl);
+
+      if (!result.success) {
+        // Payment failed - show error but keep button enabled
+        if (result.error) {
+          showError(result.error);
+        }
+        submitBtn.disabled = false;
+        submitBtnText.classList.remove("hidden");
+        submitBtnLoading.classList.add("hidden");
+        return;
+      }
+
+      // Success - Stripe will redirect to confirmation page
+      // Clear cart since order is complete
+      clearCart();
+
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Payment failed";
+      showError(message);
+      submitBtn.disabled = false;
+      submitBtnText.classList.remove("hidden");
+      submitBtnLoading.classList.add("hidden");
+    }
+  }
+
+  // Listen for Stripe ready event
+  window.addEventListener("stripe-ready", () => {
+    stripeReady = true;
+    submitBtn.disabled = false;
+    updateButtons();
   });
+
+  // Subscribe to cart changes
+  cart.subscribe(() => {
+    checkCartEmpty();
+    updateButtons();
+  });
+
+  // Initial setup
+  checkCartEmpty();
+  updateButtons();
+
+  // Event listeners
+  continueBtn.addEventListener("click", handleContinueToPayment);
+  submitBtn.addEventListener("click", handlePlaceOrder);
 </script>

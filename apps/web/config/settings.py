@@ -98,6 +98,10 @@ RESEND_API_KEY = env("RESEND_API_KEY", default="")
 JOBBER_CLIENT_ID = env("JOBBER_CLIENT_ID", default="")
 JOBBER_CLIENT_SECRET = env("JOBBER_CLIENT_SECRET", default="")
 
+# Stripe (payments)
+STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY", default="")
+STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", default="")
+
 # Password validation
 _V = "django.contrib.auth.password_validation"
 AUTH_PASSWORD_VALIDATORS = [

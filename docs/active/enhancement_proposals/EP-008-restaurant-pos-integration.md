@@ -462,7 +462,7 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
 | [008-H](../tickets/008-H-square-adapter.md) | Square adapter implementation | 3 | complete |
 | [008-I](../tickets/008-I-cart-checkout-components.md) | Cart and checkout frontend components | 4 | complete |
 | [008-J](../tickets/008-J-order-api-endpoints.md) | Order API endpoints | 4 | complete |
-| [008-K](../tickets/008-K-stripe-payment-integration.md) | Stripe payment integration | 4 | pending |
+| [008-K](../tickets/008-K-stripe-payment-integration.md) | Stripe payment integration | 4 | complete |
 | [008-L](../tickets/008-L-order-submission-pos.md) | Order submission to POS | 4 | pending |
 | [008-M](../tickets/008-M-first-restaurant-deployment.md) | First restaurant client deployment | 5 | pending |
 
@@ -681,10 +681,16 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
   - Item/modifier validation, price calculation, tax calculation
   - 18 integration tests, all passing
 
+- **008-K complete**: Stripe payment integration
+  - Backend: `apps/web/payments/services.py` with create/retrieve/verify/refund/cancel functions
+  - Backend: `apps/web/payments/webhooks.py` with signature verification and handlers
+  - Frontend: `PaymentForm.astro` component with Stripe Elements
+  - Frontend: Updated `checkout.astro` with two-stage payment flow
+  - Frontend: New `order-confirmation.astro` page with status polling
+  - 23 unit tests for payments module, all passing
+
 **Next steps:**
-- Phase 4: Online ordering (008-K and 008-L)
-  - Stripe payment integration
-  - Order submission to POS
+- 008-L: Order submission to POS
 
 ## Retrospective
 

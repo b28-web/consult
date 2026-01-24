@@ -13,4 +13,6 @@ urlpatterns = [
     path("dashboard/integrations/", include("apps.web.integrations.urls")),
     # Public API endpoints
     path("api/clients/<slug:slug>/", include("apps.web.restaurant.urls")),
+    # Payment webhooks
+    path("payments/", include("apps.web.payments.urls")),
 ]
