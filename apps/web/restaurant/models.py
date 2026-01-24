@@ -329,6 +329,7 @@ class OrderStatus(models.TextChoices):
     READY = "ready", "Ready"
     COMPLETED = "completed", "Completed"
     CANCELLED = "cancelled", "Cancelled"
+    POS_FAILED = "pos_failed", "POS Submission Failed"
 
 
 class OrderType(models.TextChoices):

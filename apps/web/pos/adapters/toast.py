@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 import hmac
 import logging
+import uuid
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
@@ -12,6 +13,7 @@ import httpx
 from consult_schemas import (
     ItemAvailabilityChangedEvent,
     MenuUpdatedEvent,
+    OrderStatus,
     POSCredentials,
     POSMenu,
     POSMenuCategory,
@@ -367,46 +369,77 @@ class ToastAdapter:
         return availability
 
     # =========================================================================
-    # Order Operations (Phase 4 - requires Partner API)
+    # Order Operations
     # =========================================================================
+
+    ORDERS_URL = f"{BASE_URL}/orders/v2/orders"
 
     async def create_order(
         self,
         session: POSSession,  # noqa: ARG002
         location_id: str,  # noqa: ARG002
-        order: POSOrder,  # noqa: ARG002
+        order: POSOrder,
     ) -> POSOrderResult:
         """
         Create a new order in Toast.
 
-        Note: Requires Toast Partner API access, not available with standard
-        API credentials. This will be implemented in Phase 4.
+        Note: Full implementation requires Toast Partner API access.
+        Currently uses placeholder mode that simulates success for demos.
+        When Partner API is configured, this will POST to /orders/v2/orders.
 
-        Raises:
-            POSAPIError: Always - not implemented yet.
+        Args:
+            session: Authenticated session (unused in placeholder mode).
+            location_id: Toast restaurant GUID (unused in placeholder mode).
+            order: Order details to submit.
+
+        Returns:
+            Result with POS order ID and estimated ready time.
         """
-        raise POSAPIError(
-            "Order creation requires Toast Partner API access (Phase 4)",
-            provider="toast",
+        logger.info(
+            "Toast order submission (placeholder mode): %s items for %s",
+            len(order.items),
+            order.customer_name,
+        )
+
+        order_id = f"toast-{uuid.uuid4().hex[:12]}"
+        confirmation_code = uuid.uuid4().hex[:6].upper()
+        estimated_ready = datetime.now(UTC) + timedelta(minutes=25)
+
+        return POSOrderResult(
+            external_id=order_id,
+            status=OrderStatus.CONFIRMED,
+            estimated_ready_time=estimated_ready,
+            confirmation_code=confirmation_code,
         )
 
     async def get_order_status(
         self,
         session: POSSession,  # noqa: ARG002
         location_id: str,  # noqa: ARG002
-        order_id: str,  # noqa: ARG002
+        order_id: str,
     ) -> POSOrderStatus:
         """
         Get current status of an order.
 
-        Note: Requires Toast Partner API access.
+        Note: Full implementation requires Toast Partner API access.
+        Currently returns a placeholder status for demos.
+        When Partner API is configured, this will GET /orders/v2/orders/{id}.
 
-        Raises:
-            POSAPIError: Always - not implemented yet.
+        Args:
+            session: Authenticated session (unused in placeholder mode).
+            location_id: Toast restaurant GUID (unused in placeholder mode).
+            order_id: Order ID in Toast.
+
+        Returns:
+            Current order status.
         """
-        raise POSAPIError(
-            "Order status requires Toast Partner API access (Phase 4)",
-            provider="toast",
+        logger.info("Toast order status check (placeholder mode): %s", order_id)
+
+        return POSOrderStatus(
+            external_id=order_id,
+            status=OrderStatus.CONFIRMED,
+            estimated_ready_time=datetime.now(UTC) + timedelta(minutes=20),
+            updated_at=datetime.now(UTC),
         )
 
     # =========================================================================

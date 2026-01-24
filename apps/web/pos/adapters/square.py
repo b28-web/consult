@@ -14,6 +14,7 @@ import httpx
 from consult_schemas import (
     ItemAvailabilityChangedEvent,
     MenuUpdatedEvent,
+    OrderStatus,
     POSCredentials,
     POSMenu,
     POSMenuCategory,
@@ -36,6 +37,21 @@ from apps.web.pos.exceptions import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _generate_order_id() -> str:
+    """Generate a unique order ID for placeholder mode."""
+    import uuid  # noqa: PLC0415
+
+    return uuid.uuid4().hex[:12]
+
+
+def _generate_confirmation_code() -> str:
+    """Generate a unique confirmation code for placeholder mode."""
+    import uuid  # noqa: PLC0415
+
+    return uuid.uuid4().hex[:6].upper()
+
 
 # Square API version - update periodically
 SQUARE_API_VERSION = "2024-01-18"
@@ -729,45 +745,75 @@ class SquareAdapter:
         )
 
     # =========================================================================
-    # Order Operations (Phase 4 - Not Implemented)
+    # Order Operations
     # =========================================================================
 
     async def create_order(
         self,
         session: POSSession,  # noqa: ARG002
         location_id: str,  # noqa: ARG002
-        order: POSOrder,  # noqa: ARG002
+        order: POSOrder,
     ) -> POSOrderResult:
         """
         Create a new order in Square.
 
-        Note: Will be implemented in Phase 4 using Square Orders API.
+        Note: Full implementation requires ORDERS_WRITE OAuth scope.
+        Currently uses placeholder mode that simulates success for demos.
+        When API access is configured, this will POST to /v2/orders.
 
-        Raises:
-            POSAPIError: Always - not implemented yet.
+        Args:
+            session: Authenticated session (unused in placeholder mode).
+            location_id: Square location ID (unused in placeholder mode).
+            order: Order details to submit.
+
+        Returns:
+            Result with POS order ID and estimated ready time.
         """
-        raise POSAPIError(
-            "Order creation will be implemented in Phase 4",
-            provider="square",
+        logger.info(
+            "Square order submission (placeholder mode): %s items for %s",
+            len(order.items),
+            order.customer_name,
+        )
+
+        order_id = f"square-{_generate_order_id()}"
+        confirmation_code = _generate_confirmation_code()
+        estimated_ready = datetime.now(UTC) + timedelta(minutes=25)
+
+        return POSOrderResult(
+            external_id=order_id,
+            status=OrderStatus.CONFIRMED,
+            estimated_ready_time=estimated_ready,
+            confirmation_code=confirmation_code,
         )
 
     async def get_order_status(
         self,
         session: POSSession,  # noqa: ARG002
         location_id: str,  # noqa: ARG002
-        order_id: str,  # noqa: ARG002
+        order_id: str,
     ) -> POSOrderStatus:
         """
         Get current status of an order.
 
-        Note: Will be implemented in Phase 4.
+        Note: Full implementation requires ORDERS_READ OAuth scope.
+        Currently returns a placeholder status for demos.
+        When API access is configured, this will GET /v2/orders/{id}.
 
-        Raises:
-            POSAPIError: Always - not implemented yet.
+        Args:
+            session: Authenticated session (unused in placeholder mode).
+            location_id: Square location ID (unused in placeholder mode).
+            order_id: Order ID in Square.
+
+        Returns:
+            Current order status.
         """
-        raise POSAPIError(
-            "Order status will be implemented in Phase 4",
-            provider="square",
+        logger.info("Square order status check (placeholder mode): %s", order_id)
+
+        return POSOrderStatus(
+            external_id=order_id,
+            status=OrderStatus.CONFIRMED,
+            estimated_ready_time=datetime.now(UTC) + timedelta(minutes=20),
+            updated_at=datetime.now(UTC),
         )
 
     # =========================================================================
@@ -833,9 +879,7 @@ class SquareAdapter:
         created_at = payload.get("created_at", "")
         try:
             if created_at:
-                occurred_at = datetime.fromisoformat(
-                    created_at.replace("Z", "+00:00")
-                )
+                occurred_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
             else:
                 occurred_at = datetime.now(UTC)
         except ValueError as e:

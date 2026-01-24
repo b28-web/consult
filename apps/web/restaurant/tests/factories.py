@@ -129,7 +129,7 @@ class OrderFactory(factory.django.DjangoModelFactory):
     client = factory.SubFactory(ClientFactory)
     customer_name = factory.Faker("name")
     customer_email = factory.Faker("email")
-    customer_phone = factory.Faker("phone_number")
+    customer_phone = factory.LazyFunction(lambda: "555-123-4567")
     status = OrderStatus.PENDING
     order_type = OrderType.PICKUP
     subtotal = factory.LazyFunction(lambda: Decimal("25.00"))

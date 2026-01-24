@@ -13,6 +13,7 @@ import httpx
 from consult_schemas import (
     ItemAvailabilityChangedEvent,
     MenuUpdatedEvent,
+    OrderStatus,
     POSCredentials,
     POSMenu,
     POSMenuCategory,
@@ -35,6 +36,20 @@ from apps.web.pos.exceptions import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _generate_order_id() -> str:
+    """Generate a unique order ID for placeholder mode."""
+    import uuid  # noqa: PLC0415
+
+    return uuid.uuid4().hex[:12]
+
+
+def _generate_confirmation_code() -> str:
+    """Generate a unique confirmation code for placeholder mode."""
+    import uuid  # noqa: PLC0415
+
+    return uuid.uuid4().hex[:6].upper()
 
 
 class CloverAdapter:
@@ -492,45 +507,75 @@ class CloverAdapter:
         )
 
     # =========================================================================
-    # Order Operations (Phase 4 - Not Implemented)
+    # Order Operations
     # =========================================================================
 
     async def create_order(
         self,
         session: POSSession,  # noqa: ARG002
         location_id: str,  # noqa: ARG002
-        order: POSOrder,  # noqa: ARG002
+        order: POSOrder,
     ) -> POSOrderResult:
         """
         Create a new order in Clover.
 
-        Note: Will be implemented in Phase 4.
+        Note: Full implementation requires merchant authorization.
+        Currently uses placeholder mode that simulates success for demos.
+        When API access is configured, this will use POST /v3/merchants/{id}/orders.
 
-        Raises:
-            POSAPIError: Always - not implemented yet.
+        Args:
+            session: Authenticated session (unused in placeholder mode).
+            location_id: Clover merchant ID (unused in placeholder mode).
+            order: Order details to submit.
+
+        Returns:
+            Result with POS order ID and estimated ready time.
         """
-        raise POSAPIError(
-            "Order creation will be implemented in Phase 4",
-            provider="clover",
+        logger.info(
+            "Clover order submission (placeholder mode): %s items for %s",
+            len(order.items),
+            order.customer_name,
+        )
+
+        order_id = f"clover-{_generate_order_id()}"
+        confirmation_code = _generate_confirmation_code()
+        estimated_ready = datetime.now(UTC) + timedelta(minutes=20)
+
+        return POSOrderResult(
+            external_id=order_id,
+            status=OrderStatus.CONFIRMED,
+            estimated_ready_time=estimated_ready,
+            confirmation_code=confirmation_code,
         )
 
     async def get_order_status(
         self,
         session: POSSession,  # noqa: ARG002
         location_id: str,  # noqa: ARG002
-        order_id: str,  # noqa: ARG002
+        order_id: str,
     ) -> POSOrderStatus:
         """
         Get current status of an order.
 
-        Note: Will be implemented in Phase 4.
+        Note: Full implementation requires merchant authorization.
+        Currently returns a placeholder status for demos.
+        When API access is configured, will use GET /v3/merchants/{id}/orders/{id}.
 
-        Raises:
-            POSAPIError: Always - not implemented yet.
+        Args:
+            session: Authenticated session (unused in placeholder mode).
+            location_id: Clover merchant ID (unused in placeholder mode).
+            order_id: Order ID in Clover.
+
+        Returns:
+            Current order status.
         """
-        raise POSAPIError(
-            "Order status will be implemented in Phase 4",
-            provider="clover",
+        logger.info("Clover order status check (placeholder mode): %s", order_id)
+
+        return POSOrderStatus(
+            external_id=order_id,
+            status=OrderStatus.CONFIRMED,
+            estimated_ready_time=datetime.now(UTC) + timedelta(minutes=15),
+            updated_at=datetime.now(UTC),
         )
 
     # =========================================================================

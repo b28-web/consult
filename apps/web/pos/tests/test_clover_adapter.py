@@ -97,9 +97,7 @@ def clover_items_response() -> dict:
                 "alternateName": "Lightly fried with marinara",
                 "price": 1499,  # Clover uses cents
                 "hidden": False,
-                "categories": {
-                    "elements": [{"id": "cat-001"}]
-                },
+                "categories": {"elements": [{"id": "cat-001"}]},
                 "modifierGroups": {
                     "elements": [
                         {
@@ -133,9 +131,7 @@ def clover_items_response() -> dict:
                 "alternateName": "Fresh mixed greens",
                 "price": 999,
                 "hidden": False,
-                "categories": {
-                    "elements": [{"id": "cat-001"}]
-                },
+                "categories": {"elements": [{"id": "cat-001"}]},
                 "modifierGroups": {"elements": []},
             },
             {
@@ -144,9 +140,7 @@ def clover_items_response() -> dict:
                 "alternateName": "Atlantic salmon with lemon butter",
                 "price": 2899,
                 "hidden": False,
-                "categories": {
-                    "elements": [{"id": "cat-002"}]
-                },
+                "categories": {"elements": [{"id": "cat-002"}]},
                 "modifierGroups": {"elements": []},
             },
             {
@@ -155,9 +149,7 @@ def clover_items_response() -> dict:
                 "alternateName": "12oz USDA Prime",
                 "price": 4599,
                 "hidden": True,  # 86'd item
-                "categories": {
-                    "elements": [{"id": "cat-002"}]
-                },
+                "categories": {"elements": [{"id": "cat-002"}]},
                 "modifierGroups": {"elements": []},
             },
             {
@@ -284,13 +276,13 @@ class TestCloverMenuOperations:
         self, adapter, session, clover_categories_response, clover_items_response
     ):
         """Test fetching all menus from Clover."""
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/categories"
-        ).mock(return_value=httpx.Response(200, json=clover_categories_response))
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/categories").mock(
+            return_value=httpx.Response(200, json=clover_categories_response)
+        )
 
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/items"
-        ).mock(return_value=httpx.Response(200, json=clover_items_response))
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/items").mock(
+            return_value=httpx.Response(200, json=clover_items_response)
+        )
 
         menus = await adapter.get_menus(session, "merchant-12345")
 
@@ -307,13 +299,13 @@ class TestCloverMenuOperations:
         self, adapter, session, clover_categories_response, clover_items_response
     ):
         """Test that menu categories are correctly parsed."""
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/categories"
-        ).mock(return_value=httpx.Response(200, json=clover_categories_response))
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/categories").mock(
+            return_value=httpx.Response(200, json=clover_categories_response)
+        )
 
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/items"
-        ).mock(return_value=httpx.Response(200, json=clover_items_response))
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/items").mock(
+            return_value=httpx.Response(200, json=clover_items_response)
+        )
 
         menus = await adapter.get_menus(session, "merchant-12345")
         appetizers = menus[0].categories[0]
@@ -328,13 +320,13 @@ class TestCloverMenuOperations:
         self, adapter, session, clover_categories_response, clover_items_response
     ):
         """Test that menu items are correctly parsed with all fields."""
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/categories"
-        ).mock(return_value=httpx.Response(200, json=clover_categories_response))
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/categories").mock(
+            return_value=httpx.Response(200, json=clover_categories_response)
+        )
 
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/items"
-        ).mock(return_value=httpx.Response(200, json=clover_items_response))
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/items").mock(
+            return_value=httpx.Response(200, json=clover_items_response)
+        )
 
         menus = await adapter.get_menus(session, "merchant-12345")
         calamari = menus[0].categories[0].items[0]
@@ -351,13 +343,13 @@ class TestCloverMenuOperations:
         self, adapter, session, clover_categories_response, clover_items_response
     ):
         """Test that 86'd items (hidden=True) are marked unavailable."""
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/categories"
-        ).mock(return_value=httpx.Response(200, json=clover_categories_response))
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/categories").mock(
+            return_value=httpx.Response(200, json=clover_categories_response)
+        )
 
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/items"
-        ).mock(return_value=httpx.Response(200, json=clover_items_response))
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/items").mock(
+            return_value=httpx.Response(200, json=clover_items_response)
+        )
 
         menus = await adapter.get_menus(session, "merchant-12345")
         entrees = menus[0].categories[1]  # Second category
@@ -371,13 +363,13 @@ class TestCloverMenuOperations:
         self, adapter, session, clover_categories_response, clover_items_response
     ):
         """Test that items without categories are grouped in 'Other Items'."""
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/categories"
-        ).mock(return_value=httpx.Response(200, json=clover_categories_response))
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/categories").mock(
+            return_value=httpx.Response(200, json=clover_categories_response)
+        )
 
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/items"
-        ).mock(return_value=httpx.Response(200, json=clover_items_response))
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/items").mock(
+            return_value=httpx.Response(200, json=clover_items_response)
+        )
 
         menus = await adapter.get_menus(session, "merchant-12345")
         other_category = menus[0].categories[-1]  # Last category
@@ -393,13 +385,13 @@ class TestCloverMenuOperations:
         self, adapter, session, clover_categories_response, clover_items_response
     ):
         """Test that modifier groups are correctly parsed."""
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/categories"
-        ).mock(return_value=httpx.Response(200, json=clover_categories_response))
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/categories").mock(
+            return_value=httpx.Response(200, json=clover_categories_response)
+        )
 
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/items"
-        ).mock(return_value=httpx.Response(200, json=clover_items_response))
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/items").mock(
+            return_value=httpx.Response(200, json=clover_items_response)
+        )
 
         menus = await adapter.get_menus(session, "merchant-12345")
         calamari = menus[0].categories[0].items[0]
@@ -417,13 +409,13 @@ class TestCloverMenuOperations:
         self, adapter, session, clover_categories_response, clover_items_response
     ):
         """Test that individual modifiers are correctly parsed."""
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/categories"
-        ).mock(return_value=httpx.Response(200, json=clover_categories_response))
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/categories").mock(
+            return_value=httpx.Response(200, json=clover_categories_response)
+        )
 
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/items"
-        ).mock(return_value=httpx.Response(200, json=clover_items_response))
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/items").mock(
+            return_value=httpx.Response(200, json=clover_items_response)
+        )
 
         menus = await adapter.get_menus(session, "merchant-12345")
         calamari = menus[0].categories[0].items[0]
@@ -440,13 +432,13 @@ class TestCloverMenuOperations:
         self, adapter, session, clover_categories_response, clover_items_response
     ):
         """Test fetching the main menu by ID."""
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/categories"
-        ).mock(return_value=httpx.Response(200, json=clover_categories_response))
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/categories").mock(
+            return_value=httpx.Response(200, json=clover_categories_response)
+        )
 
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/items"
-        ).mock(return_value=httpx.Response(200, json=clover_items_response))
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/items").mock(
+            return_value=httpx.Response(200, json=clover_items_response)
+        )
 
         menu = await adapter.get_menu(session, "merchant-12345", "main")
 
@@ -466,9 +458,9 @@ class TestCloverMenuOperations:
     @respx.mock
     async def test_get_item_availability(self, adapter, session, clover_stock_response):
         """Test fetching item availability from stock API."""
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/item_stocks"
-        ).mock(return_value=httpx.Response(200, json=clover_stock_response))
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/item_stocks").mock(
+            return_value=httpx.Response(200, json=clover_stock_response)
+        )
 
         availability = await adapter.get_item_availability(session, "merchant-12345")
 
@@ -490,9 +482,7 @@ class TestCloverErrorHandling:
     @respx.mock
     async def test_rate_limit_error(self, adapter, session):
         """Test that rate limit errors are handled correctly."""
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/categories"
-        ).mock(
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/categories").mock(
             return_value=httpx.Response(
                 429,
                 headers={"Retry-After": "60"},
@@ -508,9 +498,9 @@ class TestCloverErrorHandling:
     @respx.mock
     async def test_session_invalid_error(self, adapter, session):
         """Test that invalid session triggers auth error."""
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/categories"
-        ).mock(return_value=httpx.Response(401, json={"error": "Invalid token"}))
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/categories").mock(
+            return_value=httpx.Response(401, json={"error": "Invalid token"})
+        )
 
         with pytest.raises(POSAuthError) as exc_info:
             await adapter.get_menus(session, "merchant-12345")
@@ -532,9 +522,9 @@ class TestCloverErrorHandling:
             httpx.Response(200, json=clover_categories_response),
         ]
 
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/items"
-        ).mock(return_value=httpx.Response(200, json=clover_items_response))
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/items").mock(
+            return_value=httpx.Response(200, json=clover_items_response)
+        )
 
         menus = await adapter.get_menus(session, "merchant-12345")
 
@@ -546,14 +536,10 @@ class TestCloverErrorHandling:
     async def test_max_retries_exceeded(self, adapter, session):
         """Test that API error is raised after max retries."""
         # Mock both endpoints that get_menus() calls in parallel
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/categories"
-        ).mock(
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/categories").mock(
             return_value=httpx.Response(503, json={"error": "Service unavailable"})
         )
-        respx.get(
-            f"{adapter._base_url}/v3/merchants/merchant-12345/items"
-        ).mock(
+        respx.get(f"{adapter._base_url}/v3/merchants/merchant-12345/items").mock(
             return_value=httpx.Response(503, json={"error": "Service unavailable"})
         )
 
@@ -710,11 +696,7 @@ class TestCloverWebhooks:
         payload = {
             "appId": "app-12345",
             "ts": 1706025600000,
-            "merchants": {
-                "merchant-123": {
-                    "UNKNOWN_TYPE": [{"objectId": "obj-001"}]
-                }
-            },
+            "merchants": {"merchant-123": {"UNKNOWN_TYPE": [{"objectId": "obj-001"}]}},
         }
 
         with pytest.raises(POSWebhookError) as exc_info:

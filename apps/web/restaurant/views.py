@@ -811,7 +811,7 @@ def confirm_order(request: HttpRequest, slug: str, order_id: int) -> JsonRespons
     """
     POST /api/clients/{slug}/orders/{order_id}/confirm
 
-    Confirm order after successful payment.
+    Confirm order after successful payment and submit to POS.
 
     Request body: OrderConfirmRequest schema
     Response: OrderConfirmResponse schema (200) or error
@@ -879,6 +879,14 @@ def confirm_order(request: HttpRequest, slug: str, order_id: int) -> JsonRespons
         ]
     )
 
+    # Submit order to POS system
+    from apps.web.pos.tasks import submit_order_to_pos_task  # noqa: PLC0415
+
+    pos_result = submit_order_to_pos_task(order.pk)
+
+    # Reload order to get any updates from POS submission
+    order.refresh_from_db()
+
     response = OrderConfirmResponse(
         order_id=order.pk,
         confirmation_code=order.confirmation_code,
@@ -886,7 +894,14 @@ def confirm_order(request: HttpRequest, slug: str, order_id: int) -> JsonRespons
         estimated_ready_time=order.estimated_ready_time,
     )
 
-    return _json_response(response.model_dump(mode="json"))
+    # Add POS submission info to response if relevant
+    response_data = response.model_dump(mode="json")
+    if pos_result.get("external_id"):
+        response_data["pos_order_id"] = pos_result["external_id"]
+    if not pos_result.get("success") and pos_result.get("error"):
+        response_data["pos_warning"] = pos_result["error"]
+
+    return _json_response(response_data)
 
 
 @require_GET
@@ -928,3 +943,71 @@ def order_options_handler(
     for key, value in _cors_headers().items():
         response[key] = value
     return response
+
+
+@csrf_exempt
+@require_POST
+@login_required
+def retry_pos_submission(
+    request: HttpRequest, slug: str, order_id: int
+) -> JsonResponse:
+    """
+    POST /api/clients/{slug}/orders/{order_id}/retry-pos
+
+    Manually retry POS submission for a failed order.
+    Requires authenticated staff user with access to this client.
+
+    Response: Dict with retry result
+    """
+    client = _get_client_or_404(slug)
+
+    # Check user has access to this client
+    user = request.user
+    if not user.is_staff and getattr(user, "client", None) != client:
+        raise PermissionDenied("You don't have permission to retry this order")
+
+    try:
+        order = Order.objects.get(
+            client=client,
+            pk=order_id,
+        )
+    except Order.DoesNotExist as exc:
+        raise Http404(f"Order {order_id} not found") from exc
+
+    # Only allow retry for failed orders
+    if order.status != "pos_failed":
+        return _json_response(
+            {
+                "error": f"Order is not in failed state (current: {order.status})",
+                "hint": "Only orders with status 'pos_failed' can be retried",
+            },
+            status=400,
+        )
+
+    # Retry POS submission
+    from apps.web.pos.tasks import retry_failed_order  # noqa: PLC0415
+
+    result = retry_failed_order(order_id)
+
+    if result.get("success"):
+        # Reload order to get updates
+        order.refresh_from_db()
+        return _json_response(
+            {
+                "status": "success",
+                "order_id": order.pk,
+                "order_status": order.status,
+                "external_id": result.get("external_id"),
+                "confirmation_code": order.confirmation_code,
+            }
+        )
+    else:
+        return _json_response(
+            {
+                "status": "failed",
+                "order_id": order_id,
+                "error": result.get("error"),
+                "is_retryable": result.get("is_retryable", False),
+            },
+            status=500,
+        )

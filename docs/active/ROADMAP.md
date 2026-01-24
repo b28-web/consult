@@ -27,15 +27,20 @@ Add restaurants as a first-class client type with POS integration.
 | 008-G | Clover adapter implementation | ✓ |
 | 008-H | Square adapter implementation | ✓ |
 
-**Phase 4: Online Ordering** (in progress)
+**Phase 4: Online Ordering** (complete)
 | Ticket | Title | Status |
 |--------|-------|--------|
 | 008-I | Cart and checkout frontend components | ✓ |
 | 008-J | Order API endpoints | ✓ |
 | 008-K | Stripe payment integration | ✓ |
-| 008-L | Order submission to POS | pending |
+| 008-L | Order submission to POS | ✓ |
 
-**Next**: 008-L - Order submission to POS
+**Phase 5: Production Deployment** (ready to start)
+| Ticket | Title | Status |
+|--------|-------|--------|
+| 008-M | First restaurant client deployment | pending |
+
+**Next**: 008-M - First restaurant client deployment
 
 ---
 

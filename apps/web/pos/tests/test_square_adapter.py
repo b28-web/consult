@@ -482,9 +482,7 @@ class TestSquareMenuOperations:
 
     @pytest.mark.asyncio
     @respx.mock
-    async def test_get_menu_by_id_main(
-        self, adapter, session, square_catalog_response
-    ):
+    async def test_get_menu_by_id_main(self, adapter, session, square_catalog_response):
         """Test fetching the main menu by ID."""
         respx.post(f"{adapter._base_url}/v2/catalog/search").mock(
             return_value=httpx.Response(200, json=square_catalog_response)
@@ -578,9 +576,9 @@ class TestSquareMenuOperations:
         respx.post(f"{adapter._base_url}/v2/catalog/search").mock(
             return_value=httpx.Response(200, json=square_catalog_response)
         )
-        respx.post(
-            f"{adapter._base_url}/v2/inventory/counts/batch-retrieve"
-        ).mock(return_value=httpx.Response(200, json=square_inventory_response))
+        respx.post(f"{adapter._base_url}/v2/inventory/counts/batch-retrieve").mock(
+            return_value=httpx.Response(200, json=square_inventory_response)
+        )
 
         availability = await adapter.get_item_availability(session, "location-12345")
 
@@ -681,9 +679,7 @@ class TestSquareWebhooks:
             hmac.new(secret.encode(), combined, hashlib.sha256).digest()
         ).decode()
 
-        assert (
-            adapter.verify_webhook_signature(payload, signature, secret, url) is True
-        )
+        assert adapter.verify_webhook_signature(payload, signature, secret, url) is True
 
     def test_verify_webhook_signature_invalid(self, adapter):
         """Test invalid webhook signature rejection."""
