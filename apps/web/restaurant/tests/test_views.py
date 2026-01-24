@@ -2,6 +2,7 @@
 Integration tests for restaurant API views.
 """
 
+import uuid
 from datetime import time
 from decimal import Decimal
 
@@ -9,6 +10,7 @@ from django.test import Client as DjangoClient
 
 import pytest
 
+from apps.web.restaurant.models import RestaurantProfile
 from apps.web.restaurant.tests.factories import (
     ClientFactory,
     MenuCategoryFactory,
@@ -388,3 +390,501 @@ class TestTimeBasedMenuAvailability:
         data = response.json()
         assert data["menus"][0]["available_start"] == "06:00"
         assert data["menus"][0]["available_end"] == "11:00"
+
+
+# =============================================================================
+# Order Endpoint Tests
+# =============================================================================
+
+
+@pytest.fixture
+def restaurant_with_ordering(restaurant_with_menu):
+    """A restaurant with ordering enabled."""
+    # Update the existing profile created by restaurant_client fixture
+    profile = RestaurantProfile.objects.get(client=restaurant_with_menu["client"])
+    profile.ordering_enabled = True
+    profile.pickup_enabled = True
+    profile.delivery_enabled = True
+    profile.delivery_fee = Decimal("5.00")
+    profile.tax_rate = Decimal("0.0825")
+    profile.save()
+
+    return {
+        **restaurant_with_menu,
+        "profile": profile,
+    }
+
+
+@pytest.fixture
+def valid_order_payload(restaurant_with_menu):
+    """A valid order creation payload."""
+    # Get the first modifier from the required modifier group
+    modifier_group = restaurant_with_menu["modifier_group"]
+    first_modifier = modifier_group.modifiers.first()
+
+    return {
+        "customer": {
+            "name": "John Doe",
+            "email": "john@example.com",
+            "phone": "+15555555555",
+        },
+        "order_type": "pickup",
+        "items": [
+            {
+                "menu_item_id": restaurant_with_menu["item"].pk,
+                "quantity": 2,
+                "modifiers": [
+                    {
+                        "group_id": modifier_group.pk,
+                        "selections": [first_modifier.pk],
+                    }
+                ],
+                "special_instructions": "Extra crispy",
+            }
+        ],
+        "special_instructions": "Ring doorbell",
+        "tip": "5.00",
+    }
+
+
+@pytest.mark.django_db
+class TestCreateOrderView:
+    """Tests for POST /api/clients/{slug}/orders."""
+
+    def test_create_order_success(
+        self, api_client: DjangoClient, restaurant_with_ordering, valid_order_payload
+    ):
+        """Successful order creation returns order details and Stripe secret."""
+        slug = restaurant_with_ordering["client"].slug
+
+        response = api_client.post(
+            f"/api/clients/{slug}/orders",
+            data=valid_order_payload,
+            content_type="application/json",
+            HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+
+        assert response.status_code == 201
+        data = response.json()
+
+        assert "order_id" in data
+        assert "confirmation_code" in data
+        assert data["confirmation_code"].startswith("ORD-")
+        assert data["status"] == "pending"
+        assert "stripe_client_secret" in data
+        assert data["stripe_client_secret"] is not None
+
+        # Check pricing
+        item_price = Decimal("12.99")  # From fixture
+        quantity = 2
+        expected_subtotal = item_price * quantity
+        assert Decimal(data["subtotal"]) == expected_subtotal
+
+    def test_create_order_requires_idempotency_key(
+        self, api_client: DjangoClient, restaurant_with_ordering, valid_order_payload
+    ):
+        """Order creation requires Idempotency-Key header."""
+        slug = restaurant_with_ordering["client"].slug
+
+        response = api_client.post(
+            f"/api/clients/{slug}/orders",
+            data=valid_order_payload,
+            content_type="application/json",
+            # No Idempotency-Key header
+        )
+
+        assert response.status_code == 400
+        data = response.json()
+        assert "Idempotency-Key" in data["error"]
+
+    def test_create_order_idempotency(
+        self, api_client: DjangoClient, restaurant_with_ordering, valid_order_payload
+    ):
+        """Same idempotency key returns cached response."""
+        slug = restaurant_with_ordering["client"].slug
+
+        idempotency_key = str(uuid.uuid4())
+
+        # First request
+        response1 = api_client.post(
+            f"/api/clients/{slug}/orders",
+            data=valid_order_payload,
+            content_type="application/json",
+            HTTP_IDEMPOTENCY_KEY=idempotency_key,
+        )
+
+        # Second request with same key
+        response2 = api_client.post(
+            f"/api/clients/{slug}/orders",
+            data=valid_order_payload,
+            content_type="application/json",
+            HTTP_IDEMPOTENCY_KEY=idempotency_key,
+        )
+
+        assert response1.status_code == 201
+        assert response2.status_code == 201
+        assert response1.json()["order_id"] == response2.json()["order_id"]
+
+    def test_create_order_validates_unavailable_item(
+        self, api_client: DjangoClient, restaurant_with_ordering, valid_order_payload
+    ):
+        """Order creation fails if item is 86'd."""
+        slug = restaurant_with_ordering["client"].slug
+        item = restaurant_with_ordering["item"]
+
+        # 86 the item
+        item.is_available = False
+        item.save()
+
+        response = api_client.post(
+            f"/api/clients/{slug}/orders",
+            data=valid_order_payload,
+            content_type="application/json",
+            HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+
+        assert response.status_code == 400
+        data = response.json()
+        assert data["error"] == "validation_error"
+        assert any("unavailable" in d["message"] for d in data["details"])
+
+    def test_create_order_validates_item_exists(
+        self, api_client: DjangoClient, restaurant_with_ordering
+    ):
+        """Order creation fails for non-existent item."""
+        slug = restaurant_with_ordering["client"].slug
+
+        payload = {
+            "customer": {
+                "name": "John Doe",
+                "email": "john@example.com",
+            },
+            "order_type": "pickup",
+            "items": [
+                {
+                    "menu_item_id": 99999,  # Non-existent
+                    "quantity": 1,
+                }
+            ],
+        }
+
+        response = api_client.post(
+            f"/api/clients/{slug}/orders",
+            data=payload,
+            content_type="application/json",
+            HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+
+        assert response.status_code == 400
+        data = response.json()
+        assert data["error"] == "validation_error"
+        assert any("not found" in d["message"] for d in data["details"])
+
+    def test_create_order_validates_modifiers(
+        self, api_client: DjangoClient, restaurant_with_ordering
+    ):
+        """Order creation validates required modifier groups."""
+        slug = restaurant_with_ordering["client"].slug
+        item = restaurant_with_ordering["item"]
+        # Note: modifier_group from fixture has min_selections=1, so it's required
+        payload = {
+            "customer": {
+                "name": "John Doe",
+                "email": "john@example.com",
+            },
+            "order_type": "pickup",
+            "items": [
+                {
+                    "menu_item_id": item.pk,
+                    "quantity": 1,
+                    "modifiers": [],  # No modifiers - should fail
+                }
+            ],
+        }
+
+        response = api_client.post(
+            f"/api/clients/{slug}/orders",
+            data=payload,
+            content_type="application/json",
+            HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+
+        assert response.status_code == 400
+        data = response.json()
+        assert data["error"] == "validation_error"
+        assert any("required" in d["message"].lower() for d in data["details"])
+
+    def test_create_order_delivery_requires_address(
+        self, api_client: DjangoClient, restaurant_with_ordering, valid_order_payload
+    ):
+        """Delivery orders require delivery_address."""
+        slug = restaurant_with_ordering["client"].slug
+
+        valid_order_payload["order_type"] = "delivery"
+        # No delivery_address
+
+        response = api_client.post(
+            f"/api/clients/{slug}/orders",
+            data=valid_order_payload,
+            content_type="application/json",
+            HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+
+        assert response.status_code == 400
+        data = response.json()
+        assert data["error"] == "validation_error"
+        assert any("delivery_address" in d["field"] for d in data["details"])
+
+    def test_create_order_has_cors_headers(
+        self, api_client: DjangoClient, restaurant_with_ordering, valid_order_payload
+    ):
+        """Order creation response includes CORS headers."""
+        slug = restaurant_with_ordering["client"].slug
+
+        response = api_client.post(
+            f"/api/clients/{slug}/orders",
+            data=valid_order_payload,
+            content_type="application/json",
+            HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+
+        assert response["Access-Control-Allow-Origin"] == "*"
+        assert "POST" in response["Access-Control-Allow-Methods"]
+
+    def test_create_order_404_for_unknown_client(
+        self, api_client: DjangoClient, valid_order_payload
+    ):
+        """Order creation returns 404 for unknown client."""
+
+        response = api_client.post(
+            "/api/clients/nonexistent/orders",
+            data=valid_order_payload,
+            content_type="application/json",
+            HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+
+        assert response.status_code == 404
+
+
+@pytest.mark.django_db
+class TestGetOrderView:
+    """Tests for GET /api/clients/{slug}/orders/{order_id}."""
+
+    def test_get_order_success(
+        self, api_client: DjangoClient, restaurant_with_ordering, valid_order_payload
+    ):
+        """Get order returns full order details."""
+        slug = restaurant_with_ordering["client"].slug
+
+        # Create order first
+        create_response = api_client.post(
+            f"/api/clients/{slug}/orders",
+            data=valid_order_payload,
+            content_type="application/json",
+            HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+        order_id = create_response.json()["order_id"]
+
+        # Get order
+        response = api_client.get(f"/api/clients/{slug}/orders/{order_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["order_id"] == order_id
+        assert data["customer"]["name"] == "John Doe"
+        assert data["customer"]["email"] == "john@example.com"
+        assert data["order_type"] == "pickup"
+        assert len(data["items"]) == 1
+        assert data["items"][0]["quantity"] == 2
+
+    def test_get_order_404_for_unknown_order(
+        self, api_client: DjangoClient, restaurant_with_ordering
+    ):
+        """Get order returns 404 for non-existent order."""
+        slug = restaurant_with_ordering["client"].slug
+
+        response = api_client.get(f"/api/clients/{slug}/orders/99999")
+
+        assert response.status_code == 404
+
+    def test_get_order_isolation(self, api_client: DjangoClient):
+        """Cannot get another client's order."""
+        client1 = ClientFactory(slug="order-client-1")
+        client2 = ClientFactory(slug="order-client-2")
+        RestaurantProfileFactory(client=client1, ordering_enabled=True)
+
+        # Create order for client1
+        menu = MenuFactory(client=client1)
+        category = MenuCategoryFactory(client=client1, menu=menu)
+        item = MenuItemFactory(client=client1, category=category)
+
+        payload = {
+            "customer": {"name": "Test", "email": "test@test.com"},
+            "order_type": "pickup",
+            "items": [{"menu_item_id": item.pk, "quantity": 1}],
+        }
+
+        response = api_client.post(
+            f"/api/clients/{client1.slug}/orders",
+            data=payload,
+            content_type="application/json",
+            HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+        order_id = response.json()["order_id"]
+
+        # Try to access from client2
+        response = api_client.get(f"/api/clients/{client2.slug}/orders/{order_id}")
+
+        assert response.status_code == 404
+
+
+@pytest.mark.django_db
+class TestConfirmOrderView:
+    """Tests for POST /api/clients/{slug}/orders/{order_id}/confirm."""
+
+    def test_confirm_order_success(
+        self, api_client: DjangoClient, restaurant_with_ordering, valid_order_payload
+    ):
+        """Confirm order updates status to confirmed."""
+        slug = restaurant_with_ordering["client"].slug
+
+        # Create order
+        create_response = api_client.post(
+            f"/api/clients/{slug}/orders",
+            data=valid_order_payload,
+            content_type="application/json",
+            HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+        order_data = create_response.json()
+        order_id = order_data["order_id"]
+        payment_intent_id = order_data["stripe_client_secret"].split("_secret_")[0]
+
+        # Confirm order
+        response = api_client.post(
+            f"/api/clients/{slug}/orders/{order_id}/confirm",
+            data={"payment_intent_id": payment_intent_id},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "confirmed"
+        assert data["estimated_ready_time"] is not None
+
+    def test_confirm_order_wrong_payment_intent(
+        self, api_client: DjangoClient, restaurant_with_ordering, valid_order_payload
+    ):
+        """Confirm order fails with wrong payment intent."""
+        slug = restaurant_with_ordering["client"].slug
+
+        # Create order
+        create_response = api_client.post(
+            f"/api/clients/{slug}/orders",
+            data=valid_order_payload,
+            content_type="application/json",
+            HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+        order_id = create_response.json()["order_id"]
+
+        # Confirm with wrong payment intent
+        response = api_client.post(
+            f"/api/clients/{slug}/orders/{order_id}/confirm",
+            data={"payment_intent_id": "pi_wrong_intent"},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+        assert "does not match" in response.json()["error"]
+
+    def test_confirm_order_already_confirmed(
+        self, api_client: DjangoClient, restaurant_with_ordering, valid_order_payload
+    ):
+        """Cannot confirm an already confirmed order."""
+        slug = restaurant_with_ordering["client"].slug
+
+        # Create and confirm order
+        create_response = api_client.post(
+            f"/api/clients/{slug}/orders",
+            data=valid_order_payload,
+            content_type="application/json",
+            HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+        order_data = create_response.json()
+        order_id = order_data["order_id"]
+        payment_intent_id = order_data["stripe_client_secret"].split("_secret_")[0]
+
+        # First confirm
+        api_client.post(
+            f"/api/clients/{slug}/orders/{order_id}/confirm",
+            data={"payment_intent_id": payment_intent_id},
+            content_type="application/json",
+        )
+
+        # Second confirm should fail
+        response = api_client.post(
+            f"/api/clients/{slug}/orders/{order_id}/confirm",
+            data={"payment_intent_id": payment_intent_id},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+        assert "already" in response.json()["error"].lower()
+
+
+@pytest.mark.django_db
+class TestOrderStatusView:
+    """Tests for GET /api/clients/{slug}/orders/{order_id}/status."""
+
+    def test_order_status_success(
+        self, api_client: DjangoClient, restaurant_with_ordering, valid_order_payload
+    ):
+        """Order status returns current status."""
+        slug = restaurant_with_ordering["client"].slug
+
+        # Create order
+        create_response = api_client.post(
+            f"/api/clients/{slug}/orders",
+            data=valid_order_payload,
+            content_type="application/json",
+            HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+        order_id = create_response.json()["order_id"]
+
+        # Get status
+        response = api_client.get(f"/api/clients/{slug}/orders/{order_id}/status")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "pending"
+        assert "updated_at" in data
+
+    def test_order_status_has_short_cache(
+        self, api_client: DjangoClient, restaurant_with_ordering, valid_order_payload
+    ):
+        """Order status has short cache for polling."""
+        slug = restaurant_with_ordering["client"].slug
+
+        # Create order
+        create_response = api_client.post(
+            f"/api/clients/{slug}/orders",
+            data=valid_order_payload,
+            content_type="application/json",
+            HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+        order_id = create_response.json()["order_id"]
+
+        # Get status
+        response = api_client.get(f"/api/clients/{slug}/orders/{order_id}/status")
+
+        assert "max-age=5" in response["Cache-Control"]
+
+    def test_order_status_404_for_unknown_order(
+        self, api_client: DjangoClient, restaurant_with_ordering
+    ):
+        """Order status returns 404 for non-existent order."""
+        slug = restaurant_with_ordering["client"].slug
+
+        response = api_client.get(f"/api/clients/{slug}/orders/99999/status")
+
+        assert response.status_code == 404

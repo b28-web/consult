@@ -31,7 +31,7 @@ Add restaurants as a first-class client type with POS integration.
 | Ticket | Title | Status |
 |--------|-------|--------|
 | 008-I | Cart and checkout frontend components | ✓ |
-| 008-J | Order API endpoints | pending |
+| 008-J | Order API endpoints | ✓ |
 | 008-K | Stripe payment integration | pending |
 | 008-L | Order submission to POS | pending |
 

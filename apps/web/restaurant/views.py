@@ -1,39 +1,63 @@
 """
-Menu API views - Public endpoints for restaurant menu data.
+Menu and Order API views - Public endpoints for restaurant data.
 
 These endpoints are used by Astro frontends:
 - At build time: Full menu fetch for SSG
 - At runtime: Availability polling for 86'd items
+- At checkout: Order creation and status tracking
 """
 
-from datetime import UTC, datetime
+import json
+import secrets
+from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from typing import Any
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.http import Http404, HttpRequest, JsonResponse
 from django.views.decorators.cache import cache_control
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
+from pydantic import ValidationError as PydanticValidationError
+
+from apps.web.core.decorators import idempotency_key_required
 from apps.web.core.models import Client
+from apps.web.payments.services import create_payment_intent, verify_payment_intent
 from apps.web.restaurant.models import (
     Menu,
     MenuCategory,
     MenuItem,
     Modifier,
     ModifierGroup,
+    Order,
+    OrderItem,
+    OrderStatus,
+    OrderType,
+    PaymentStatus,
     RestaurantProfile,
 )
 from apps.web.restaurant.serializers import (
     AvailabilityResponse,
+    CustomerSchema,
     MenuCategorySchema,
     MenuItemSchema,
     MenuListResponse,
     MenuSchema,
     ModifierGroupSchema,
     ModifierSchema,
+    OrderConfirmRequest,
+    OrderConfirmResponse,
+    OrderCreateRequest,
+    OrderCreateResponse,
+    OrderDetailResponse,
+    OrderItemResponseSchema,
+    OrderStatusResponse,
     SingleMenuResponse,
+    ValidationErrorDetail,
+    ValidationErrorResponse,
 )
 
 
@@ -41,8 +65,8 @@ def _cors_headers() -> dict[str, str]:
     """CORS headers for Astro site access."""
     return {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Idempotency-Key",
     }
 
 
@@ -332,3 +356,564 @@ def sync_availability(request: HttpRequest, slug: str) -> JsonResponse:
             "errors": errors[:5] if errors else [],  # Limit error messages
         }
     )
+
+
+# =============================================================================
+# Order API Endpoints
+# =============================================================================
+
+
+def _generate_confirmation_code() -> str:
+    """Generate a unique customer-facing confirmation code."""
+    # Format: ORD-XXXX where X is alphanumeric
+    return f"ORD-{secrets.token_hex(2).upper()}"
+
+
+def _validate_order_items(
+    client: Client, items: list[dict[str, Any]]
+) -> tuple[list[ValidationErrorDetail], list[tuple[MenuItem, dict[str, Any]]]]:
+    """
+    Validate all order items exist, are available, and modifiers are valid.
+
+    Returns:
+        Tuple of (errors, validated_items)
+        where validated_items is a list of (MenuItem, item_data) tuples
+    """
+    errors: list[ValidationErrorDetail] = []
+    validated_items: list[tuple[MenuItem, dict[str, Any]]] = []
+
+    for i, item_data in enumerate(items):
+        field_prefix = f"items[{i}]"
+
+        # Check item exists
+        try:
+            menu_item = MenuItem.objects.select_related("category__menu").get(
+                client=client,
+                pk=item_data["menu_item_id"],
+            )
+        except MenuItem.DoesNotExist:
+            errors.append(
+                ValidationErrorDetail(
+                    field=f"{field_prefix}.menu_item_id",
+                    message="Item not found",
+                )
+            )
+            continue
+
+        # Check item is from an active menu
+        if not menu_item.category.menu.is_active:
+            errors.append(
+                ValidationErrorDetail(
+                    field=f"{field_prefix}.menu_item_id",
+                    message=f"'{menu_item.name}' is not currently on the menu",
+                )
+            )
+            continue
+
+        # Check item is available (not 86'd)
+        if not menu_item.is_available:
+            errors.append(
+                ValidationErrorDetail(
+                    field=f"{field_prefix}.menu_item_id",
+                    message=f"'{menu_item.name}' is currently unavailable",
+                )
+            )
+            continue
+
+        # Validate modifiers
+        modifier_errors = _validate_modifiers(menu_item, item_data.get("modifiers", []))
+        for error in modifier_errors:
+            errors.append(
+                ValidationErrorDetail(
+                    field=f"{field_prefix}.modifiers",
+                    message=error,
+                )
+            )
+
+        validated_items.append((menu_item, item_data))
+
+    return errors, validated_items
+
+
+def _validate_modifiers(
+    menu_item: MenuItem, modifier_selections: list[dict[str, Any]]
+) -> list[str]:
+    """
+    Validate modifier selections for a menu item.
+
+    Returns list of error messages.
+    """
+    errors: list[str] = []
+
+    # Get all modifier groups for this item
+    modifier_groups = {
+        mg.pk: mg
+        for mg in menu_item.modifier_groups.prefetch_related("modifiers").all()
+    }
+
+    # Track which groups have been selected
+    selected_groups: dict[int, list[int]] = {}
+
+    for selection in modifier_selections:
+        group_id = selection.get("group_id")
+        selections = selection.get("selections", [])
+
+        if group_id not in modifier_groups:
+            errors.append(f"Modifier group {group_id} not found for '{menu_item.name}'")
+            continue
+
+        group = modifier_groups[group_id]
+        selected_groups[group_id] = selections
+
+        # Validate selection count
+        if len(selections) < group.min_selections:
+            errors.append(
+                f"'{group.name}' requires at least {group.min_selections} selection(s)"
+            )
+        if len(selections) > group.max_selections:
+            errors.append(
+                f"'{group.name}' allows at most {group.max_selections} selection(s)"
+            )
+
+        # Validate modifier IDs exist and are available
+        valid_modifier_ids = {m.pk for m in group.modifiers.all()}
+        for mod_id in selections:
+            if mod_id not in valid_modifier_ids:
+                errors.append(f"Modifier {mod_id} not found in '{group.name}'")
+            else:
+                # Check availability
+                modifier = group.modifiers.get(pk=mod_id)
+                if not modifier.is_available:
+                    errors.append(f"'{modifier.name}' is currently unavailable")
+
+    # Check required groups have selections
+    for group_id, group in modifier_groups.items():
+        if group.min_selections > 0 and group_id not in selected_groups:
+            errors.append(f"'{group.name}' is required")
+
+    return errors
+
+
+def _calculate_item_price(
+    menu_item: MenuItem, modifier_selections: list[dict[str, Any]]
+) -> tuple[Decimal, list[dict[str, Any]]]:
+    """
+    Calculate the price for a single item including modifiers.
+
+    Returns:
+        Tuple of (unit_price, modifier_snapshot)
+    """
+    price = menu_item.price
+    modifier_snapshot: list[dict[str, Any]] = []
+
+    for selection in modifier_selections:
+        group_id = selection.get("group_id")
+        selections = selection.get("selections", [])
+
+        if group_id is None:
+            continue
+
+        try:
+            group = menu_item.modifier_groups.get(pk=int(group_id))
+        except (ModifierGroup.DoesNotExist, ValueError, TypeError):
+            continue
+
+        for mod_id in selections:
+            try:
+                modifier = group.modifiers.get(pk=mod_id)
+                price += modifier.price_adjustment
+                modifier_snapshot.append(
+                    {
+                        "group_id": group_id,
+                        "group_name": group.name,
+                        "modifier_id": mod_id,
+                        "modifier_name": modifier.name,
+                        "price_adjustment": str(modifier.price_adjustment),
+                    }
+                )
+            except Modifier.DoesNotExist:
+                continue
+
+    return price, modifier_snapshot
+
+
+def _calculate_order_totals(
+    items: list[tuple[MenuItem, dict[str, Any], Decimal, list[dict[str, Any]]]],
+    tip: Decimal,
+    order_type: str,
+    profile: RestaurantProfile | None,
+) -> tuple[Decimal, Decimal, Decimal, Decimal]:
+    """
+    Calculate order totals.
+
+    Args:
+        items: List of (menu_item, item_data, unit_price, modifier_snapshot)
+        tip: Tip amount
+        order_type: 'pickup' or 'delivery'
+        profile: Restaurant profile for tax rate and delivery fee
+
+    Returns:
+        Tuple of (subtotal, tax, delivery_fee, total)
+    """
+    # Calculate subtotal
+    subtotal = Decimal("0")
+    for _menu_item, item_data, unit_price, _modifier_snapshot in items:
+        quantity = item_data.get("quantity", 1)
+        subtotal += unit_price * quantity
+
+    # Calculate tax
+    tax_rate = profile.tax_rate if profile else Decimal("0.08")
+    tax = (subtotal * tax_rate).quantize(Decimal("0.01"))
+
+    # Calculate delivery fee
+    delivery_fee = Decimal("0")
+    if order_type == OrderType.DELIVERY and profile and profile.delivery_fee:
+        delivery_fee = profile.delivery_fee
+
+    # Calculate total
+    total = subtotal + tax + delivery_fee + tip
+
+    return subtotal, tax, delivery_fee, total
+
+
+@csrf_exempt
+@require_POST
+@idempotency_key_required
+def create_order(request: HttpRequest, slug: str) -> JsonResponse:  # noqa: PLR0911
+    """
+    POST /api/clients/{slug}/orders
+
+    Create a new order and return Stripe client secret for payment.
+
+    Request body: OrderCreateRequest schema
+    Response: OrderCreateResponse schema (201) or ValidationErrorResponse (400)
+    """
+    client = _get_client_or_404(slug)
+    profile = _get_restaurant_profile(client)
+
+    # Check ordering is enabled
+    if profile and not profile.ordering_enabled:
+        return _json_response(
+            {"error": "Online ordering is not enabled for this restaurant"},
+            status=400,
+        )
+
+    # Parse and validate request body
+    try:
+        body = json.loads(request.body)
+        order_request = OrderCreateRequest.model_validate(body)
+    except json.JSONDecodeError:
+        return _json_response(
+            {"error": "Invalid JSON in request body"},
+            status=400,
+        )
+    except PydanticValidationError as e:
+        errors = [
+            ValidationErrorDetail(
+                field=".".join(str(loc) for loc in err["loc"]),
+                message=err["msg"],
+            )
+            for err in e.errors()
+        ]
+        response = ValidationErrorResponse(error="validation_error", details=errors)
+        return _json_response(response.model_dump(), status=400)
+
+    # Validate order type
+    if order_request.order_type == "delivery":
+        if profile and not profile.delivery_enabled:
+            return _json_response(
+                {"error": "Delivery is not available for this restaurant"},
+                status=400,
+            )
+        if not order_request.delivery_address:
+            response = ValidationErrorResponse(
+                error="validation_error",
+                details=[
+                    ValidationErrorDetail(
+                        field="delivery_address",
+                        message="Delivery address is required for delivery orders",
+                    )
+                ],
+            )
+            return _json_response(response.model_dump(), status=400)
+
+    # Validate all items
+    items_data = [item.model_dump() for item in order_request.items]
+    errors, validated_items = _validate_order_items(client, items_data)
+
+    if errors:
+        response = ValidationErrorResponse(error="validation_error", details=errors)
+        return _json_response(response.model_dump(), status=400)
+
+    # Calculate prices for each item
+    priced_items: list[
+        tuple[MenuItem, dict[str, Any], Decimal, list[dict[str, Any]]]
+    ] = []
+    for menu_item, item_data in validated_items:
+        unit_price, modifier_snapshot = _calculate_item_price(
+            menu_item, item_data.get("modifiers", [])
+        )
+        priced_items.append((menu_item, item_data, unit_price, modifier_snapshot))
+
+    # Calculate totals
+    subtotal, tax, delivery_fee, total = _calculate_order_totals(
+        priced_items,
+        order_request.tip,
+        order_request.order_type,
+        profile,
+    )
+
+    # Create order and items in a transaction
+    with transaction.atomic():
+        confirmation_code = _generate_confirmation_code()
+
+        order = Order.objects.create(
+            client=client,
+            customer_name=order_request.customer.name,
+            customer_email=order_request.customer.email,
+            customer_phone=order_request.customer.phone,
+            order_type=order_request.order_type,
+            scheduled_time=order_request.scheduled_time,
+            special_instructions=order_request.special_instructions,
+            delivery_address=order_request.delivery_address,
+            subtotal=subtotal,
+            tax=tax,
+            delivery_fee=delivery_fee,
+            tip=order_request.tip,
+            total=total,
+            status=OrderStatus.PENDING,
+            payment_status=PaymentStatus.PENDING,
+            confirmation_code=confirmation_code,
+        )
+
+        # Create order items
+        for menu_item, item_data, unit_price, modifier_snapshot in priced_items:
+            quantity = item_data.get("quantity", 1)
+            line_total = unit_price * quantity
+
+            OrderItem.objects.create(
+                client=client,
+                order=order,
+                menu_item=menu_item,
+                item_name=menu_item.name,
+                quantity=quantity,
+                unit_price=unit_price,
+                modifiers=modifier_snapshot,
+                special_instructions=item_data.get("special_instructions", ""),
+                line_total=line_total,
+            )
+
+        # Create Stripe PaymentIntent
+        payment_intent = create_payment_intent(
+            amount=total,
+            metadata={
+                "order_id": str(order.pk),
+                "client_slug": slug,
+                "confirmation_code": confirmation_code,
+            },
+        )
+
+        # Save payment intent ID
+        order.stripe_payment_intent_id = payment_intent.id
+        order.save(update_fields=["stripe_payment_intent_id"])
+
+    # Build response
+    order_response = OrderCreateResponse(
+        order_id=order.pk,
+        confirmation_code=order.confirmation_code,
+        status=order.status,
+        subtotal=subtotal,
+        tax=tax,
+        delivery_fee=delivery_fee,
+        tip=order_request.tip,
+        total=total,
+        stripe_client_secret=payment_intent.client_secret,
+        created_at=order.created_at,
+    )
+
+    return _json_response(order_response.model_dump(mode="json"), status=201)
+
+
+@require_GET
+def get_order(_request: HttpRequest, slug: str, order_id: int) -> JsonResponse:
+    """
+    GET /api/clients/{slug}/orders/{order_id}
+
+    Get order details by ID.
+
+    Response: OrderDetailResponse schema (200) or 404
+    """
+    client = _get_client_or_404(slug)
+
+    try:
+        order = Order.objects.prefetch_related("items").get(
+            client=client,
+            pk=order_id,
+        )
+    except Order.DoesNotExist as exc:
+        raise Http404(f"Order {order_id} not found") from exc
+
+    # Build items response
+    items = [
+        OrderItemResponseSchema(
+            id=item.pk,
+            item_name=item.item_name,
+            quantity=item.quantity,
+            unit_price=item.unit_price,
+            modifiers=item.modifiers,
+            special_instructions=item.special_instructions,
+            line_total=item.line_total,
+        )
+        for item in order.items.all()
+    ]
+
+    response = OrderDetailResponse(
+        order_id=order.pk,
+        confirmation_code=order.confirmation_code,
+        status=order.status,
+        customer=CustomerSchema(
+            name=order.customer_name,
+            email=order.customer_email,
+            phone=order.customer_phone,
+        ),
+        items=items,
+        order_type=order.order_type,
+        scheduled_time=order.scheduled_time,
+        special_instructions=order.special_instructions,
+        delivery_address=order.delivery_address,
+        subtotal=order.subtotal,
+        tax=order.tax,
+        delivery_fee=order.delivery_fee,
+        tip=order.tip,
+        total=order.total,
+        created_at=order.created_at,
+        confirmed_at=order.confirmed_at,
+        estimated_ready_time=order.estimated_ready_time,
+    )
+
+    return _json_response(response.model_dump(mode="json"))
+
+
+@csrf_exempt
+@require_POST
+def confirm_order(request: HttpRequest, slug: str, order_id: int) -> JsonResponse:
+    """
+    POST /api/clients/{slug}/orders/{order_id}/confirm
+
+    Confirm order after successful payment.
+
+    Request body: OrderConfirmRequest schema
+    Response: OrderConfirmResponse schema (200) or error
+    """
+    client = _get_client_or_404(slug)
+
+    try:
+        order = Order.objects.get(
+            client=client,
+            pk=order_id,
+        )
+    except Order.DoesNotExist as exc:
+        raise Http404(f"Order {order_id} not found") from exc
+
+    # Check order is in correct state
+    if order.status != OrderStatus.PENDING:
+        return _json_response(
+            {"error": f"Order is already {order.status}"},
+            status=400,
+        )
+
+    # Parse request
+    try:
+        body = json.loads(request.body)
+        confirm_request = OrderConfirmRequest.model_validate(body)
+    except json.JSONDecodeError:
+        return _json_response(
+            {"error": "Invalid JSON in request body"},
+            status=400,
+        )
+    except PydanticValidationError as e:
+        return _json_response(
+            {"error": "Invalid request", "details": e.errors()},
+            status=400,
+        )
+
+    # Verify payment
+    if not verify_payment_intent(confirm_request.payment_intent_id):
+        return _json_response(
+            {"error": "Payment verification failed"},
+            status=400,
+        )
+
+    # Verify payment intent matches order
+    if order.stripe_payment_intent_id != confirm_request.payment_intent_id:
+        return _json_response(
+            {"error": "Payment intent does not match order"},
+            status=400,
+        )
+
+    # Update order status
+    now = datetime.now(UTC)
+    estimated_ready = now + timedelta(minutes=30)  # Default 30 min estimate
+
+    order.status = OrderStatus.CONFIRMED
+    order.payment_status = PaymentStatus.CAPTURED
+    order.confirmed_at = now
+    order.estimated_ready_time = estimated_ready
+    order.save(
+        update_fields=[
+            "status",
+            "payment_status",
+            "confirmed_at",
+            "estimated_ready_time",
+        ]
+    )
+
+    response = OrderConfirmResponse(
+        order_id=order.pk,
+        confirmation_code=order.confirmation_code,
+        status=order.status,
+        estimated_ready_time=order.estimated_ready_time,
+    )
+
+    return _json_response(response.model_dump(mode="json"))
+
+
+@require_GET
+@cache_control(max_age=5, public=True)  # 5 seconds
+def order_status(_request: HttpRequest, slug: str, order_id: int) -> JsonResponse:
+    """
+    GET /api/clients/{slug}/orders/{order_id}/status
+
+    Get current order status for polling.
+
+    Response: OrderStatusResponse schema (200) or 404
+    """
+    client = _get_client_or_404(slug)
+
+    try:
+        order = Order.objects.get(
+            client=client,
+            pk=order_id,
+        )
+    except Order.DoesNotExist as exc:
+        raise Http404(f"Order {order_id} not found") from exc
+
+    response = OrderStatusResponse(
+        status=order.status,
+        updated_at=order.updated_at,
+        estimated_ready_time=order.estimated_ready_time,
+    )
+
+    return _json_response(response.model_dump(mode="json"))
+
+
+def order_options_handler(
+    _request: HttpRequest, _slug: str, _order_id: int | None = None
+) -> JsonResponse:
+    """
+    OPTIONS handler for CORS preflight requests on order endpoints.
+    """
+    response = JsonResponse({})
+    for key, value in _cors_headers().items():
+        response[key] = value
+    return response

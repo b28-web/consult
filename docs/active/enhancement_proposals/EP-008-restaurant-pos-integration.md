@@ -461,7 +461,7 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
 | [008-G](../tickets/008-G-clover-adapter.md) | Clover adapter implementation | 3 | complete |
 | [008-H](../tickets/008-H-square-adapter.md) | Square adapter implementation | 3 | complete |
 | [008-I](../tickets/008-I-cart-checkout-components.md) | Cart and checkout frontend components | 4 | complete |
-| [008-J](../tickets/008-J-order-api-endpoints.md) | Order API endpoints | 4 | pending |
+| [008-J](../tickets/008-J-order-api-endpoints.md) | Order API endpoints | 4 | complete |
 | [008-K](../tickets/008-K-stripe-payment-integration.md) | Stripe payment integration | 4 | pending |
 | [008-L](../tickets/008-L-order-submission-pos.md) | Order submission to POS | 4 | pending |
 | [008-M](../tickets/008-M-first-restaurant-deployment.md) | First restaurant client deployment | 5 | pending |
@@ -669,9 +669,20 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
   - 38 unit tests, all passing
   - Build verified: 4 pages built successfully
 
+- **008-J complete**: Order API endpoints
+  - Pydantic schemas for order requests/responses in `serializers.py`
+  - Idempotency key decorator in `apps/web/core/decorators.py`
+  - Four API endpoints in `views.py`:
+    - `POST /api/clients/{slug}/orders` - Create order
+    - `GET /api/clients/{slug}/orders/{id}` - Get order details
+    - `POST /api/clients/{slug}/orders/{id}/confirm` - Confirm payment
+    - `GET /api/clients/{slug}/orders/{id}/status` - Poll status
+  - Stub payments module in `apps/web/payments/` (full Stripe impl in 008-K)
+  - Item/modifier validation, price calculation, tax calculation
+  - 18 integration tests, all passing
+
 **Next steps:**
-- Phase 4: Online ordering (008-J through 008-L)
-  - Order API endpoints
+- Phase 4: Online ordering (008-K and 008-L)
   - Stripe payment integration
   - Order submission to POS
 

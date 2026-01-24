@@ -1,7 +1,7 @@
 """
 URL routing for restaurant API endpoints.
 
-All endpoints are public (no auth required) and CORS-enabled.
+Most endpoints are public (no auth required) and CORS-enabled.
 """
 
 from django.urls import path
@@ -18,4 +18,9 @@ urlpatterns = [
     path("availability", views.availability, name="availability"),
     # Manual sync endpoint (authenticated)
     path("sync-availability", views.sync_availability, name="sync_availability"),
+    # Order endpoints
+    path("orders", views.create_order, name="order_create"),
+    path("orders/<int:order_id>", views.get_order, name="order_detail"),
+    path("orders/<int:order_id>/confirm", views.confirm_order, name="order_confirm"),
+    path("orders/<int:order_id>/status", views.order_status, name="order_status"),
 ]

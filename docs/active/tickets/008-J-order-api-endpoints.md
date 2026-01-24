@@ -1,7 +1,7 @@
 # 008-J: Order API Endpoints
 
 **EP:** [EP-008-restaurant-pos-integration](../enhancement_proposals/EP-008-restaurant-pos-integration.md)
-**Status:** pending
+**Status:** complete
 **Phase:** 4 (Online Ordering)
 
 ## Summary
@@ -345,4 +345,24 @@ urlpatterns = [
 
 ## Progress
 
-*To be updated during implementation*
+### 2026-01-24
+- **Completed** all acceptance criteria
+- Added Pydantic schemas for order requests and responses in `apps/web/restaurant/serializers.py`
+- Created idempotency key decorator in `apps/web/core/decorators.py`
+- Implemented order API views in `apps/web/restaurant/views.py`:
+  - `POST /api/clients/{slug}/orders` - Create order with validation, pricing, PaymentIntent
+  - `GET /api/clients/{slug}/orders/{order_id}` - Get order details
+  - `POST /api/clients/{slug}/orders/{order_id}/confirm` - Confirm after payment
+  - `GET /api/clients/{slug}/orders/{order_id}/status` - Poll order status
+- Created stub payments module in `apps/web/payments/` (full Stripe impl in 008-K)
+- Added URL routes in `apps/web/restaurant/urls.py`
+- Wrote 18 integration tests, all passing
+- Features implemented:
+  - Item validation (exists, available, from active menu)
+  - Modifier validation (required groups, selection counts)
+  - Price calculation with modifiers
+  - Tax calculation using RestaurantProfile.tax_rate
+  - Delivery fee calculation for delivery orders
+  - Idempotency key support for duplicate prevention
+  - CORS headers for Astro frontend access
+  - Multi-tenant isolation verified
