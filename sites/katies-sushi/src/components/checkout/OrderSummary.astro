@@ -1,0 +1,145 @@
+---
+/**
+ * OrderSummary - Summary of cart items and totals for checkout
+ *
+ * Shows all items, modifiers, and pricing breakdown.
+ */
+---
+
+<div class="card bg-base-100 shadow-sm">
+  <div class="card-body">
+    <h2 class="card-title text-lg">Order Summary</h2>
+
+    <!-- Cart Items -->
+    <div id="summary-items" class="space-y-3 max-h-64 overflow-y-auto">
+      <!-- Populated by JavaScript -->
+    </div>
+
+    <!-- Special Instructions -->
+    <div class="form-control mt-4">
+      <label class="label" for="order-instructions">
+        <span class="label-text">Special Instructions</span>
+        <span class="label-text-alt text-base-content/50">Optional</span>
+      </label>
+      <textarea
+        id="order-instructions"
+        class="textarea textarea-bordered h-16 text-sm"
+        placeholder="Any special requests for your entire order?"
+      ></textarea>
+    </div>
+
+    <!-- Totals -->
+    <div class="divider my-2"></div>
+
+    <div class="space-y-2 text-sm">
+      <div class="flex justify-between">
+        <span class="text-base-content/70">Subtotal</span>
+        <span id="summary-subtotal">$0.00</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-base-content/70">Tax</span>
+        <span id="summary-tax">$0.00</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-base-content/70">Tip</span>
+        <span id="summary-tip">$0.00</span>
+      </div>
+      <div class="divider my-1"></div>
+      <div class="flex justify-between text-lg font-bold">
+        <span>Total</span>
+        <span id="summary-total">$0.00</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  import {
+    cart,
+    cartSubtotal,
+    cartTax,
+    cartTotal,
+    calculateItemPrice,
+    formatPrice,
+    setOrderInstructions,
+    type CartItem,
+  } from "@/lib/cart";
+
+  const summaryItemsEl = document.getElementById("summary-items") as HTMLElement;
+  const subtotalEl = document.getElementById("summary-subtotal") as HTMLElement;
+  const taxEl = document.getElementById("summary-tax") as HTMLElement;
+  const tipEl = document.getElementById("summary-tip") as HTMLElement;
+  const totalEl = document.getElementById("summary-total") as HTMLElement;
+  const instructionsEl = document.getElementById("order-instructions") as HTMLTextAreaElement;
+
+  function renderSummaryItems(items: CartItem[]) {
+    if (items.length === 0) {
+      summaryItemsEl.innerHTML = `
+        <div class="text-center py-4 text-base-content/60">
+          <p>No items in cart</p>
+          <a href="/menu" class="btn btn-sm btn-outline mt-2">View Menu</a>
+        </div>
+      `;
+      return;
+    }
+
+    summaryItemsEl.innerHTML = items
+      .map(
+        (item) => `
+      <div class="flex justify-between items-start gap-2 py-2 border-b border-base-200 last:border-0">
+        <div class="flex-grow min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="badge badge-sm badge-outline">${item.quantity}</span>
+            <span class="font-medium truncate">${item.name}</span>
+          </div>
+          ${
+            item.modifiers.length > 0
+              ? `<p class="text-xs text-base-content/60 ml-6 truncate">
+              ${item.modifiers
+                .flatMap((g) => g.selections.map((s) => s.name))
+                .join(", ")}
+            </p>`
+              : ""
+          }
+          ${
+            item.specialInstructions
+              ? `<p class="text-xs text-base-content/50 ml-6 italic truncate">"${item.specialInstructions}"</p>`
+              : ""
+          }
+        </div>
+        <span class="text-sm font-medium flex-shrink-0">${formatPrice(calculateItemPrice(item))}</span>
+      </div>
+    `
+      )
+      .join("");
+  }
+
+  function updateTotals() {
+    const state = cart.get();
+    subtotalEl.textContent = formatPrice(cartSubtotal.get());
+    taxEl.textContent = formatPrice(cartTax.get());
+    tipEl.textContent = formatPrice(state.tip);
+    totalEl.textContent = formatPrice(cartTotal.get());
+  }
+
+  // Subscribe to cart changes
+  cart.subscribe((state) => {
+    renderSummaryItems(state.items);
+    updateTotals();
+  });
+
+  // Handle order instructions
+  instructionsEl.addEventListener("input", () => {
+    setOrderInstructions(instructionsEl.value);
+  });
+
+  // Initial render
+  const initialState = cart.get();
+  renderSummaryItems(initialState.items);
+  updateTotals();
+
+  // Export for checkout page
+  export function getOrderInstructions(): string {
+    return instructionsEl.value;
+  }
+</script>

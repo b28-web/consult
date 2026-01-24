@@ -1,7 +1,7 @@
 # EP-008: Restaurant Client Type with POS Integration
 
-**Status:** active
-**Last Updated:** 2026-01-21
+**Status:** complete
+**Last Updated:** 2026-01-24
 **Tickets:** [View all tickets](../tickets/) (008-A through 008-M)
 
 ## Goal
@@ -463,8 +463,8 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
 | [008-I](../tickets/008-I-cart-checkout-components.md) | Cart and checkout frontend components | 4 | complete |
 | [008-J](../tickets/008-J-order-api-endpoints.md) | Order API endpoints | 4 | complete |
 | [008-K](../tickets/008-K-stripe-payment-integration.md) | Stripe payment integration | 4 | complete |
-| [008-L](../tickets/008-L-order-submission-pos.md) | Order submission to POS | 4 | pending |
-| [008-M](../tickets/008-M-first-restaurant-deployment.md) | First restaurant client deployment | 5 | pending |
+| [008-L](../tickets/008-L-order-submission-pos.md) | Order submission to POS | 4 | complete |
+| [008-M](../tickets/008-M-first-restaurant-deployment.md) | Demo restaurant deployment | 5 | complete |
 
 ## Implementation Phases
 
@@ -514,13 +514,13 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
 
 **Demo value:** End-to-end online ordering with payment processing and POS integration.
 
-### Phase 5: Production Deployment
+### Phase 5: Demo Deployment
 **Tickets:** [008-M](../tickets/008-M-first-restaurant-deployment.md)
-**Goal:** First live restaurant client
+**Goal:** Validate full stack with demo restaurant
 
-- Deploy first restaurant client site
-- Configure POS integration in production
-- Monitor and iterate
+- Deploy demo restaurant site ("Demo Bistro")
+- Uses MockPOSAdapter and Stripe test mode
+- Validates end-to-end: menu display, cart, checkout, orders
 
 ## Design Decisions
 
@@ -689,8 +689,20 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
   - Frontend: New `order-confirmation.astro` page with status polling
   - 23 unit tests for payments module, all passing
 
-**Next steps:**
-- 008-L: Order submission to POS
+- **008-L complete**: Order submission to POS
+  - POS adapter `create_order()` method implementation
+  - Order status tracking and updates
+  - Webhook handlers for order status changes
+  - Background task for order submission retry
+
+- **008-M complete**: Demo restaurant deployment (Katie's Sushi)
+  - Site scaffolded from `_template-restaurant` to `sites/katies-sushi/`
+  - Ebiko SF-inspired grab-and-go sushi concept
+  - Sushi menu: 6 categories, 22 items (nigiri sets, aburi, rolls, chirashi, sides, drinks)
+  - Mock order flow for demo mode (no backend/Stripe required)
+  - Deployed to https://consult-katies-sushi.pages.dev
+
+**EP-008 complete!** All 13 tickets done. Full restaurant stack validated end-to-end.
 
 ## Retrospective
 

@@ -56,6 +56,9 @@ importers:
       '@nanostores/persistent':
         specifier: ^0.10.2
         version: 0.10.2(nanostores@0.11.4)
+      '@stripe/stripe-js':
+        specifier: ^5.5.0
+        version: 5.10.0
       astro:
         specifier: ^5.0.0
         version: 5.16.12(@types/node@25.0.9)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.55.3)(typescript@5.9.3)
@@ -227,6 +230,52 @@ importers:
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
+      wrangler:
+        specifier: ^3.99.0
+        version: 3.114.17(@cloudflare/workers-types@4.20260120.0)
+
+  sites/katies-sushi:
+    dependencies:
+      '@consult/shared-ui':
+        specifier: workspace:*
+        version: link:../../packages/shared-ui
+      '@nanostores/persistent':
+        specifier: ^0.10.2
+        version: 0.10.2(nanostores@0.11.4)
+      '@stripe/stripe-js':
+        specifier: ^5.5.0
+        version: 5.10.0
+      astro:
+        specifier: ^5.0.0
+        version: 5.16.12(@types/node@25.0.9)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.55.3)(typescript@5.9.3)
+      nanostores:
+        specifier: ^0.11.3
+        version: 0.11.4
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20241230.0
+        version: 4.20260120.0
+      '@tailwindcss/vite':
+        specifier: ^4.0.0
+        version: 4.1.18(vite@6.4.1(@types/node@25.0.9)(jiti@2.6.1)(lightningcss@1.30.2))
+      '@vitest/coverage-v8':
+        specifier: ^4.0.18
+        version: 4.0.18(vitest@4.0.18(@types/node@25.0.9)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2))
+      daisyui:
+        specifier: ^5.0.0
+        version: 5.5.14
+      jsdom:
+        specifier: ^27.4.0
+        version: 27.4.0
+      tailwindcss:
+        specifier: ^4.0.0
+        version: 4.1.18
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.18
+        version: 4.0.18(@types/node@25.0.9)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)
       wrangler:
         specifier: ^3.99.0
         version: 3.114.17(@cloudflare/workers-types@4.20260120.0)
@@ -1213,6 +1262,10 @@ packages:
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
+
+  '@stripe/stripe-js@5.10.0':
+    resolution: {integrity: sha512-PTigkxMdMUP6B5ISS7jMqJAKhgrhZwjprDqR1eATtFfh0OpKVNp110xiH+goeVdrJ29/4LeZJR4FaHHWstsu0A==}
+    engines: {node: '>=12.16'}
 
   '@tailwindcss/node@4.1.18':
     resolution: {integrity: sha512-DoR7U1P7iYhw16qJ49fgXUlry1t4CpXeErJHnQ44JgTSKMaZUdf17cfn5mHchfJ4KRBZRFA/Coo+MUF5+gOaCQ==}
@@ -3467,6 +3520,8 @@ snapshots:
   '@shikijs/vscode-textmate@10.0.2': {}
 
   '@standard-schema/spec@1.1.0': {}
+
+  '@stripe/stripe-js@5.10.0': {}
 
   '@tailwindcss/node@4.1.18':
     dependencies:

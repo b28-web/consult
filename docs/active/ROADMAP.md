@@ -4,47 +4,30 @@ Current priorities and planned work for Consult.
 
 ## Active Sprints
 
-### EP-008: Restaurant Client Type with POS Integration
-Add restaurants as a first-class client type with POS integration.
-
-**Phase 1: Foundation** (complete)
-| Ticket | Title | Status |
-|--------|-------|--------|
-| 008-A | POS adapter interface and mock implementation | ✓ |
-| 008-B | Restaurant domain models and migrations | ✓ |
-| 008-C | Menu API endpoints | ✓ |
-| 008-D | Restaurant site template (menu display) | ✓ |
-
-**Phase 2: POS Read Integration** (complete)
-| Ticket | Title | Status |
-|--------|-------|--------|
-| 008-E | 86'd item webhook handler and availability polling | ✓ |
-| 008-F | Toast adapter implementation | ✓ |
-
-**Phase 3: Additional POS Providers** (complete)
-| Ticket | Title | Status |
-|--------|-------|--------|
-| 008-G | Clover adapter implementation | ✓ |
-| 008-H | Square adapter implementation | ✓ |
-
-**Phase 4: Online Ordering** (complete)
-| Ticket | Title | Status |
-|--------|-------|--------|
-| 008-I | Cart and checkout frontend components | ✓ |
-| 008-J | Order API endpoints | ✓ |
-| 008-K | Stripe payment integration | ✓ |
-| 008-L | Order submission to POS | ✓ |
-
-**Phase 5: Production Deployment** (ready to start)
-| Ticket | Title | Status |
-|--------|-------|--------|
-| 008-M | First restaurant client deployment | pending |
-
-**Next**: 008-M - First restaurant client deployment
+*No active sprints. See Completed Sprints below.*
 
 ---
 
 ## Completed Sprints
+
+### EP-008: Restaurant Client Type with POS Integration ✓
+Full restaurant stack with POS integration, online ordering, and payments.
+
+| Phase | Tickets | Status |
+|-------|---------|--------|
+| Phase 1: Foundation | 008-A, 008-B, 008-C, 008-D | ✓ |
+| Phase 2: POS Read Integration | 008-E, 008-F | ✓ |
+| Phase 3: Additional POS Providers | 008-G, 008-H | ✓ |
+| Phase 4: Online Ordering | 008-I, 008-J, 008-K, 008-L | ✓ |
+| Phase 5: Demo Deployment | 008-M | ✓ |
+
+**Completed 2026-01-24**: Full restaurant platform with:
+- POS adapter architecture (Toast, Clover, Square + Mock)
+- Restaurant domain models (Menu, MenuItem, ModifierGroup, Modifier, Order)
+- Menu API with availability polling for 86'd items
+- Restaurant site template with cart/checkout
+- Stripe payment integration
+- Demo site deployed: https://consult-katies-sushi.pages.dev
 
 ### EP-010: Doppler CI Configuration ✓
 Fix Doppler configuration so CI/CD workflows can deploy.
@@ -219,60 +202,6 @@ Create agent-driven pre-deploy validation pipeline with Dagger.
 | 006-C | GitHub Actions integration | ✓ |
 
 **Completed 2026-01-21**: Full Dagger pipeline with parallel execution, JSON output, and GitHub Actions integration.
-
-## Planned Sprints
-
-### EP-005: Client Sites at Scale
-Deploy all client sites with automation.
-
-| Ticket | Title | Status |
-|--------|-------|--------|
-| 005-A | Site scaffolding script | pending |
-| 005-B | Deploy coffee-shop site | pending |
-| 005-C | Deploy hauler site (+ Cal.com) | complete |
-| 005-D | Deploy cleaning site | complete |
-| 005-E | Deploy landscaper site | complete |
-| 005-F | Deploy barber site | pending |
-| 005-G | Deploy data-analytics site | pending |
-| 005-H | Deploy web-dev site | pending |
-| 005-I | Deploy local-agency site | pending |
-| 005-J | CI/CD pipeline for sites | pending |
-
-### EP-008: Restaurant Client Type with POS Integration
-Add restaurants as a client type with POS sync (Toast, Clover, Square) and online ordering.
-
-**Phase 1: Foundation** - Menu display with static fallback
-| Ticket | Title | Status |
-|--------|-------|--------|
-| 008-A | POS adapter interface and mock implementation | pending |
-| 008-B | Restaurant domain models and migrations | pending |
-| 008-C | Menu API endpoints | pending |
-| 008-D | Restaurant site template (menu display) | pending |
-
-**Phase 2: POS Read Integration** - Live menu sync with Toast
-| Ticket | Title | Status |
-|--------|-------|--------|
-| 008-E | 86'd item webhook handler and availability polling | ✓ |
-| 008-F | Toast adapter implementation | ✓ |
-
-**Phase 3: Additional POS Providers** - Clover and Square support
-| Ticket | Title | Status |
-|--------|-------|--------|
-| 008-G | Clover adapter implementation | pending |
-| 008-H | Square adapter implementation | pending |
-
-**Phase 4: Online Ordering** - Full cart, checkout, payments
-| Ticket | Title | Status |
-|--------|-------|--------|
-| 008-I | Cart and checkout frontend components | pending |
-| 008-J | Order API endpoints | pending |
-| 008-K | Stripe payment integration | pending |
-| 008-L | Order submission to POS | pending |
-
-**Phase 5: Production Deployment** - First live restaurant
-| Ticket | Title | Status |
-|--------|-------|--------|
-| 008-M | First restaurant client deployment | pending |
 
 ## Icebox
 

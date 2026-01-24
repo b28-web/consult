@@ -1,0 +1,198 @@
+---
+/**
+ * CartDrawer - Slide-out cart panel showing current order
+ *
+ * Displays cart items with quantity controls and totals.
+ * Links to checkout when cart has items.
+ */
+---
+
+<div class="drawer drawer-end z-40">
+  <input id="cart-drawer-toggle" type="checkbox" class="drawer-toggle" />
+
+  <div class="drawer-side">
+    <label for="cart-drawer-toggle" class="drawer-overlay" aria-label="Close cart"></label>
+
+    <div class="bg-base-100 min-h-full w-80 sm:w-96 flex flex-col">
+      <!-- Header -->
+      <div class="flex items-center justify-between p-4 border-b border-base-300">
+        <h2 class="text-xl font-bold">Your Order</h2>
+        <label for="cart-drawer-toggle" class="btn btn-sm btn-circle btn-ghost">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          <span class="sr-only">Close cart</span>
+        </label>
+      </div>
+
+      <!-- Cart Items -->
+      <div id="cart-items" class="flex-grow overflow-y-auto p-4 space-y-4">
+        <!-- Populated by JavaScript -->
+      </div>
+
+      <!-- Empty State -->
+      <div id="cart-empty" class="flex-grow flex flex-col items-center justify-center p-4 text-center hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-base-content/30 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+        <p class="text-base-content/60 mb-4">Your cart is empty</p>
+        <label for="cart-drawer-toggle" class="btn btn-outline btn-sm">
+          Continue Browsing
+        </label>
+      </div>
+
+      <!-- Footer with Totals -->
+      <div id="cart-footer" class="border-t border-base-300 p-4 space-y-3 hidden">
+        <div class="flex justify-between text-sm">
+          <span class="text-base-content/70">Subtotal</span>
+          <span id="cart-subtotal">$0.00</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-base-content/70">Estimated Tax</span>
+          <span id="cart-tax">$0.00</span>
+        </div>
+        <div class="flex justify-between font-semibold text-lg">
+          <span>Total</span>
+          <span id="cart-total">$0.00</span>
+        </div>
+        <a href="/checkout" class="btn btn-primary w-full" id="checkout-btn">
+          Checkout
+        </a>
+        <button id="clear-cart-btn" class="btn btn-ghost btn-sm w-full text-error">
+          Clear Cart
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  import {
+    cart,
+    cartSubtotal,
+    cartTax,
+    cartTotal,
+    calculateItemPrice,
+    incrementQuantity,
+    decrementQuantity,
+    removeFromCart,
+    clearCart,
+    formatPrice,
+    type CartItem,
+  } from "@/lib/cart";
+
+  const cartItemsEl = document.getElementById("cart-items") as HTMLElement;
+  const cartEmptyEl = document.getElementById("cart-empty") as HTMLElement;
+  const cartFooterEl = document.getElementById("cart-footer") as HTMLElement;
+  const subtotalEl = document.getElementById("cart-subtotal") as HTMLElement;
+  const taxEl = document.getElementById("cart-tax") as HTMLElement;
+  const totalEl = document.getElementById("cart-total") as HTMLElement;
+  const clearCartBtn = document.getElementById("clear-cart-btn") as HTMLButtonElement;
+
+  function renderCartItems(items: CartItem[]) {
+    if (items.length === 0) {
+      cartItemsEl.classList.add("hidden");
+      cartEmptyEl.classList.remove("hidden");
+      cartFooterEl.classList.add("hidden");
+      return;
+    }
+
+    cartItemsEl.classList.remove("hidden");
+    cartEmptyEl.classList.add("hidden");
+    cartFooterEl.classList.remove("hidden");
+
+    cartItemsEl.innerHTML = items
+      .map(
+        (item) => `
+      <div class="cart-item bg-base-200 rounded-lg p-3" data-cart-item-id="${item.id}">
+        <div class="flex justify-between items-start gap-2 mb-2">
+          <div class="flex-grow min-w-0">
+            <h4 class="font-semibold truncate">${item.name}</h4>
+            ${
+              item.modifiers.length > 0
+                ? `<p class="text-xs text-base-content/60 truncate">
+                ${item.modifiers
+                  .flatMap((g) => g.selections.map((s) => s.name))
+                  .join(", ")}
+              </p>`
+                : ""
+            }
+            ${
+              item.specialInstructions
+                ? `<p class="text-xs text-base-content/50 truncate italic">"${item.specialInstructions}"</p>`
+                : ""
+            }
+          </div>
+          <button class="btn btn-ghost btn-xs text-error remove-item-btn" data-item-id="${item.id}" aria-label="Remove ${item.name}">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <button class="btn btn-circle btn-xs btn-outline qty-minus-btn" data-item-id="${item.id}" aria-label="Decrease quantity">-</button>
+            <span class="w-6 text-center font-medium">${item.quantity}</span>
+            <button class="btn btn-circle btn-xs btn-outline qty-plus-btn" data-item-id="${item.id}" aria-label="Increase quantity">+</button>
+          </div>
+          <span class="font-semibold">${formatPrice(calculateItemPrice(item))}</span>
+        </div>
+      </div>
+    `
+      )
+      .join("");
+
+    // Attach event listeners to buttons
+    cartItemsEl.querySelectorAll<HTMLButtonElement>(".qty-minus-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const itemId = btn.dataset.itemId!;
+        decrementQuantity(itemId);
+      });
+    });
+
+    cartItemsEl.querySelectorAll<HTMLButtonElement>(".qty-plus-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const itemId = btn.dataset.itemId!;
+        incrementQuantity(itemId);
+      });
+    });
+
+    cartItemsEl.querySelectorAll<HTMLButtonElement>(".remove-item-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const itemId = btn.dataset.itemId!;
+        removeFromCart(itemId);
+      });
+    });
+  }
+
+  function updateTotals() {
+    subtotalEl.textContent = formatPrice(cartSubtotal.get());
+    taxEl.textContent = formatPrice(cartTax.get());
+    totalEl.textContent = formatPrice(cartTotal.get());
+  }
+
+  // Subscribe to cart changes
+  cart.subscribe((state) => {
+    renderCartItems(state.items);
+    updateTotals();
+  });
+
+  // Clear cart button
+  clearCartBtn.addEventListener("click", () => {
+    if (confirm("Are you sure you want to clear your cart?")) {
+      clearCart();
+    }
+  });
+
+  // Listen for cart-updated events to potentially open drawer
+  window.addEventListener("cart-updated", () => {
+    // Optionally auto-open drawer when item added
+    // const toggle = document.getElementById("cart-drawer-toggle") as HTMLInputElement;
+    // toggle.checked = true;
+  });
+
+  // Initial render
+  const initialState = cart.get();
+  renderCartItems(initialState.items);
+  updateTotals();
+</script>

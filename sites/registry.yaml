@@ -85,3 +85,8 @@ sites:
     dev: {}
     # prod:
     #   domain: local-agency.example.com
+
+  katies-sushi:
+    ready: true
+    dev: {}
+    # Restaurant demo site - validates EP-008 restaurant stack

@@ -1,0 +1,518 @@
+---
+/**
+ * Checkout Page - Complete your order
+ *
+ * Collects customer info, order type, pickup time, and tip.
+ * Integrates with Stripe Elements for payment processing.
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+import CustomerForm from "@/components/checkout/CustomerForm.astro";
+import OrderTypeSelector from "@/components/checkout/OrderTypeSelector.astro";
+import PickupTimeSelector from "@/components/checkout/PickupTimeSelector.astro";
+import TipSelector from "@/components/checkout/TipSelector.astro";
+import OrderSummary from "@/components/checkout/OrderSummary.astro";
+import PaymentForm from "@/components/checkout/PaymentForm.astro";
+import { config } from "@/config";
+---
+
+<PageLayout title="Checkout" description="Complete your order">
+  <div class="container mx-auto px-4 py-8 max-w-4xl">
+    <!-- Back Link -->
+    <a href="/menu" class="btn btn-ghost btn-sm mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+      Back to Menu
+    </a>
+
+    <h1 class="text-3xl font-bold mb-6">Checkout</h1>
+
+    <!-- Demo Mode Banner -->
+    <div id="demo-mode-banner" class="alert alert-info mb-6 hidden">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+      </svg>
+      <div>
+        <p class="font-semibold">Demo Mode</p>
+        <p class="text-sm">No payment required. Orders are simulated for testing.</p>
+      </div>
+    </div>
+
+    <!-- Empty Cart Warning -->
+    <div id="empty-cart-warning" class="alert alert-warning mb-6 hidden">
+      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <span>Your cart is empty. <a href="/menu" class="link link-primary">Add some items</a> to continue.</span>
+    </div>
+
+    <!-- Order Error Alert -->
+    <div id="order-error" class="alert alert-error mb-6 hidden">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+      </svg>
+      <span id="order-error-message"></span>
+    </div>
+
+    <!-- Main Content -->
+    <div id="checkout-content" class="grid lg:grid-cols-5 gap-6">
+      <!-- Left Column: Forms -->
+      <div class="lg:col-span-3 space-y-6">
+        <CustomerForm />
+        <OrderTypeSelector />
+        <PickupTimeSelector />
+        <TipSelector />
+      </div>
+
+      <!-- Right Column: Summary & Payment -->
+      <div class="lg:col-span-2">
+        <div class="lg:sticky lg:top-4 space-y-4">
+          <OrderSummary />
+
+          <!-- Payment Section -->
+          <div id="payment-section" class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+              <h2 class="card-title text-lg">Payment</h2>
+
+              <!-- Payment Form (initially hidden until order created) -->
+              <div id="payment-container" class="hidden">
+                <PaymentForm />
+              </div>
+
+              <!-- Pre-order state: shows message before payment is initialized -->
+              <div id="pre-payment-state" class="py-4">
+                <p class="text-sm text-base-content/70 text-center">
+                  Fill out your information above, then click "Continue to Payment" to enter your payment details.
+                </p>
+              </div>
+
+              <!-- Continue to Payment button (shown before order is created) -->
+              <button
+                id="continue-to-payment-btn"
+                class="btn btn-primary w-full"
+              >
+                <span id="continue-btn-text">Continue to Payment</span>
+                <span id="continue-btn-loading" class="loading loading-spinner hidden"></span>
+              </button>
+
+              <!-- Place Order button (shown after Stripe is initialized) -->
+              <button
+                id="submit-order-btn"
+                class="btn btn-primary w-full hidden"
+                disabled
+              >
+                <span id="submit-btn-text">Place Order</span>
+                <span id="submit-btn-loading" class="loading loading-spinner hidden"></span>
+              </button>
+
+              <p class="text-xs text-center text-base-content/50 mt-2">
+                By placing your order, you agree to our terms of service.
+              </p>
+            </div>
+          </div>
+
+          <!-- Pickup Info -->
+          <div class="card bg-base-200">
+            <div class="card-body py-4">
+              <h3 class="font-semibold text-sm">Pickup Location</h3>
+              <p class="text-sm">{config.client.name}</p>
+              {config.client.address && (
+                <p class="text-xs text-base-content/60">{config.client.address}</p>
+              )}
+              {config.client.phone && (
+                <p class="text-xs text-base-content/60">{config.client.phone}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</PageLayout>
+
+<script define:vars={{ clientSlug: config.client.slug }}>
+  // Client slug passed from Astro
+  window.__CLIENT_SLUG__ = clientSlug;
+</script>
+
+<script>
+  import { cart, isCartEmpty, formatPrice, cartTotal, clearCart } from "@/lib/cart";
+  import { prepareOrderSubmission, isValidEmail, isValidPhone } from "@/lib/checkout";
+
+  // Get elements
+  const emptyWarning = document.getElementById("empty-cart-warning") as HTMLElement;
+  const orderError = document.getElementById("order-error") as HTMLElement;
+  const orderErrorMessage = document.getElementById("order-error-message") as HTMLElement;
+  const paymentContainer = document.getElementById("payment-container") as HTMLElement;
+  const prePaymentState = document.getElementById("pre-payment-state") as HTMLElement;
+
+  // Buttons
+  const continueBtn = document.getElementById("continue-to-payment-btn") as HTMLButtonElement;
+  const continueBtnText = document.getElementById("continue-btn-text") as HTMLElement;
+  const continueBtnLoading = document.getElementById("continue-btn-loading") as HTMLElement;
+  const submitBtn = document.getElementById("submit-order-btn") as HTMLButtonElement;
+  const submitBtnText = document.getElementById("submit-btn-text") as HTMLElement;
+  const submitBtnLoading = document.getElementById("submit-btn-loading") as HTMLElement;
+
+  // State
+  let orderId: number | null = null;
+  let confirmationCode: string | null = null;
+  let stripeReady = false;
+
+  // Get API URL - if empty, we're in demo/mock mode
+  const apiUrl = import.meta.env.PUBLIC_API_URL || "";
+  const clientSlug = (window as any).__CLIENT_SLUG__;
+  const isMockMode = !apiUrl;
+
+  // Check if cart is empty
+  function checkCartEmpty(): boolean {
+    const empty = isCartEmpty();
+    emptyWarning.classList.toggle("hidden", !empty);
+    continueBtn.disabled = empty;
+    return empty;
+  }
+
+  // Update button with total
+  function updateButtons() {
+    const total = cartTotal.get();
+    if (total > 0) {
+      submitBtnText.textContent = `Place Order - ${formatPrice(total)}`;
+    }
+  }
+
+  // Show error message
+  function showError(message: string) {
+    orderErrorMessage.textContent = message;
+    orderError.classList.remove("hidden");
+    orderError.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  // Hide error message
+  function hideError() {
+    orderError.classList.add("hidden");
+  }
+
+  // Validate form fields
+  function validateForm(): { valid: boolean; customer: { name: string; email: string; phone: string } | null } {
+    const nameInput = document.getElementById("customer-name") as HTMLInputElement;
+    const emailInput = document.getElementById("customer-email") as HTMLInputElement;
+    const phoneInput = document.getElementById("customer-phone") as HTMLInputElement;
+
+    let valid = true;
+
+    // Clear previous errors
+    [nameInput, emailInput, phoneInput].forEach(input => {
+      input.classList.remove("input-error");
+    });
+    document.querySelectorAll("[id$='-error']").forEach(el => {
+      if (el.id.startsWith("customer-")) {
+        el.classList.add("hidden");
+      }
+    });
+
+    // Validate name
+    if (!nameInput.value.trim()) {
+      nameInput.classList.add("input-error");
+      document.getElementById("customer-name-error")?.classList.remove("hidden");
+      valid = false;
+    }
+
+    // Validate email
+    if (!isValidEmail(emailInput.value)) {
+      emailInput.classList.add("input-error");
+      document.getElementById("customer-email-error")?.classList.remove("hidden");
+      valid = false;
+    }
+
+    // Validate phone
+    if (!isValidPhone(phoneInput.value)) {
+      phoneInput.classList.add("input-error");
+      document.getElementById("customer-phone-error")?.classList.remove("hidden");
+      valid = false;
+    }
+
+    if (!valid) {
+      const firstError = document.querySelector(".input-error");
+      firstError?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return { valid: false, customer: null };
+    }
+
+    return {
+      valid: true,
+      customer: {
+        name: nameInput.value.trim(),
+        email: emailInput.value.trim(),
+        phone: phoneInput.value.trim(),
+      },
+    };
+  }
+
+  // Generate mock confirmation code (e.g., "KS-1234")
+  function generateMockConfirmationCode(): string {
+    const num = Math.floor(1000 + Math.random() * 9000);
+    return `KS-${num}`;
+  }
+
+  // Create mock order for demo mode (no backend needed)
+  function createMockOrder(customer: { name: string; email: string; phone: string }): {
+    orderId: number;
+    confirmationCode: string;
+    orderData: any;
+  } {
+    const orderData = prepareOrderSubmission(customer);
+    const mockOrderId = Math.floor(10000 + Math.random() * 90000);
+    const mockConfirmationCode = generateMockConfirmationCode();
+
+    // Calculate estimated ready time (20 minutes from now)
+    const readyTime = new Date();
+    readyTime.setMinutes(readyTime.getMinutes() + 20);
+
+    // Store mock order in localStorage for confirmation page
+    const mockOrder = {
+      order_id: mockOrderId,
+      confirmation_code: mockConfirmationCode,
+      status: "confirmed",
+      customer: {
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+      },
+      order_type: orderData.order_type,
+      items: orderData.items,
+      subtotal: orderData.subtotal,
+      tax: orderData.tax,
+      tip: orderData.tip,
+      total: orderData.total,
+      estimated_ready_time: readyTime.toISOString(),
+      created_at: new Date().toISOString(),
+    };
+
+    localStorage.setItem("mock_order", JSON.stringify(mockOrder));
+
+    return {
+      orderId: mockOrderId,
+      confirmationCode: mockConfirmationCode,
+      orderData: mockOrder,
+    };
+  }
+
+  // Create order and get Stripe client secret
+  async function createOrder(): Promise<{ clientSecret: string; orderId: number; confirmationCode: string } | null> {
+    const { valid, customer } = validateForm();
+    if (!valid || !customer) {
+      return null;
+    }
+
+    // Prepare order data
+    const orderData = prepareOrderSubmission(customer);
+
+    // Build request body matching API schema
+    const requestBody = {
+      customer: {
+        name: orderData.customer_name,
+        email: orderData.customer_email,
+        phone: orderData.customer_phone,
+      },
+      order_type: orderData.order_type,
+      scheduled_time: orderData.scheduled_time,
+      special_instructions: orderData.special_instructions,
+      items: orderData.items.map(item => ({
+        menu_item_id: item.menu_item_id,
+        quantity: item.quantity,
+        modifiers: item.modifiers.map(mod => ({
+          group_id: mod.group_id,
+          selections: mod.selections.map(s => s.id),
+        })),
+        special_instructions: item.special_instructions,
+      })),
+      tip: orderData.tip,
+    };
+
+    try {
+      const response = await fetch(`${apiUrl}/api/clients/${clientSlug}/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": crypto.randomUUID(),
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle validation errors
+        if (data.details && Array.isArray(data.details)) {
+          const messages = data.details.map((d: { message: string }) => d.message).join(", ");
+          throw new Error(messages);
+        }
+        throw new Error(data.error || "Failed to create order");
+      }
+
+      return {
+        clientSecret: data.stripe_client_secret,
+        orderId: data.order_id,
+        confirmationCode: data.confirmation_code,
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to create order";
+      showError(message);
+      return null;
+    }
+  }
+
+  // Handle "Continue to Payment" click
+  async function handleContinueToPayment() {
+    hideError();
+
+    // Show loading state
+    continueBtn.disabled = true;
+    continueBtnText.classList.add("hidden");
+    continueBtnLoading.classList.remove("hidden");
+
+    try {
+      // MOCK MODE: Skip API and Stripe, go directly to confirmation
+      if (isMockMode) {
+        const { valid, customer } = validateForm();
+        if (!valid || !customer) {
+          continueBtn.disabled = false;
+          continueBtnText.classList.remove("hidden");
+          continueBtnLoading.classList.add("hidden");
+          return;
+        }
+
+        // Create mock order
+        const mockResult = createMockOrder(customer);
+
+        // Clear cart
+        clearCart();
+
+        // Simulate brief processing delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // Redirect to confirmation page with mock flag
+        window.location.href = `/order-confirmation?order_id=${mockResult.orderId}&mock=true`;
+        return;
+      }
+
+      // REAL MODE: Create order via API
+      const result = await createOrder();
+      if (!result) {
+        continueBtn.disabled = false;
+        continueBtnText.classList.remove("hidden");
+        continueBtnLoading.classList.add("hidden");
+        return;
+      }
+
+      orderId = result.orderId;
+      confirmationCode = result.confirmationCode;
+
+      // Initialize Stripe with client secret
+      const initializePayment = (window as any).initializePayment;
+      if (!initializePayment) {
+        throw new Error("Payment system not loaded");
+      }
+
+      const success = await initializePayment(result.clientSecret);
+      if (!success) {
+        showError("Failed to initialize payment. Please refresh and try again.");
+        continueBtn.disabled = false;
+        continueBtnText.classList.remove("hidden");
+        continueBtnLoading.classList.add("hidden");
+        return;
+      }
+
+      // Show payment form, hide pre-payment state
+      prePaymentState.classList.add("hidden");
+      paymentContainer.classList.remove("hidden");
+
+      // Switch to submit button
+      continueBtn.classList.add("hidden");
+      submitBtn.classList.remove("hidden");
+
+      // Button will be enabled when Stripe is ready
+
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to process";
+      showError(message);
+      continueBtn.disabled = false;
+      continueBtnText.classList.remove("hidden");
+      continueBtnLoading.classList.add("hidden");
+    }
+  }
+
+  // Handle "Place Order" click
+  async function handlePlaceOrder() {
+    hideError();
+
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtnText.classList.add("hidden");
+    submitBtnLoading.classList.remove("hidden");
+
+    try {
+      const confirmPayment = (window as any).confirmPayment;
+      if (!confirmPayment) {
+        throw new Error("Payment system not loaded");
+      }
+
+      // Build return URL
+      const returnUrl = `${window.location.origin}/order-confirmation?order_id=${orderId}`;
+
+      const result = await confirmPayment(returnUrl);
+
+      if (!result.success) {
+        // Payment failed - show error but keep button enabled
+        if (result.error) {
+          showError(result.error);
+        }
+        submitBtn.disabled = false;
+        submitBtnText.classList.remove("hidden");
+        submitBtnLoading.classList.add("hidden");
+        return;
+      }
+
+      // Success - Stripe will redirect to confirmation page
+      // Clear cart since order is complete
+      clearCart();
+
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Payment failed";
+      showError(message);
+      submitBtn.disabled = false;
+      submitBtnText.classList.remove("hidden");
+      submitBtnLoading.classList.add("hidden");
+    }
+  }
+
+  // Listen for Stripe ready event
+  window.addEventListener("stripe-ready", () => {
+    stripeReady = true;
+    submitBtn.disabled = false;
+    updateButtons();
+  });
+
+  // Subscribe to cart changes
+  cart.subscribe(() => {
+    checkCartEmpty();
+    updateButtons();
+  });
+
+  // Initial setup
+  checkCartEmpty();
+  updateButtons();
+
+  // Show demo mode banner if in mock mode
+  if (isMockMode) {
+    const demoBanner = document.getElementById("demo-mode-banner");
+    if (demoBanner) {
+      demoBanner.classList.remove("hidden");
+    }
+    // Update button text for demo mode
+    continueBtnText.textContent = "Place Demo Order";
+  }
+
+  // Event listeners
+  continueBtn.addEventListener("click", handleContinueToPayment);
+  submitBtn.addEventListener("click", handlePlaceOrder);
+</script>

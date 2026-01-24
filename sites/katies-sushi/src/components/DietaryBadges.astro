@@ -1,0 +1,27 @@
+---
+/**
+ * DietaryBadges - Display V/VG/GF indicators
+ */
+interface Props {
+  isVegetarian?: boolean;
+  isVegan?: boolean;
+  isGlutenFree?: boolean;
+}
+
+const { isVegetarian = false, isVegan = false, isGlutenFree = false } = Astro.props;
+
+const hasBadges = isVegetarian || isVegan || isGlutenFree;
+---
+
+{hasBadges && (
+  <div class="flex gap-1">
+    {isVegan ? (
+      <span class="dietary-badge vegan" title="Vegan">VG</span>
+    ) : isVegetarian ? (
+      <span class="dietary-badge vegetarian" title="Vegetarian">V</span>
+    ) : null}
+    {isGlutenFree && (
+      <span class="dietary-badge gluten-free" title="Gluten Free">GF</span>
+    )}
+  </div>
+)}

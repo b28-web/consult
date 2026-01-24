@@ -1,0 +1,138 @@
+---
+/**
+ * PickupTimeSelector - Select pickup/delivery time
+ *
+ * Shows time slots based on restaurant hours.
+ * Default is ASAP.
+ */
+import { config } from "@/config";
+
+// Generate time slots for today based on hours
+function generateTimeSlots(): string[] {
+  const slots: string[] = [];
+  const now = new Date();
+  // Get day name (e.g., "monday") for looking up hours
+  const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const;
+  const dayName = days[now.getDay()] as keyof typeof config.restaurant.hours;
+  const hours = config.restaurant.hours[dayName];
+
+  if (hours === "closed") return slots;
+
+  // Round up to next 15-minute interval
+  const startMinutes = Math.ceil((now.getHours() * 60 + now.getMinutes() + 30) / 15) * 15;
+
+  hours.forEach(({ open, close }) => {
+    const [openHour, openMin] = open.split(":").map(Number);
+    const [closeHour, closeMin] = close.split(":").map(Number);
+
+    const openMinutes = openHour * 60 + openMin;
+    const closeMinutes = closeHour * 60 + closeMin;
+
+    // Start from either open time or current time + 30 min
+    const effectiveStart = Math.max(openMinutes, startMinutes);
+
+    for (let minutes = effectiveStart; minutes < closeMinutes - 15; minutes += 15) {
+      const hour = Math.floor(minutes / 60);
+      const min = minutes % 60;
+      const time = new Date();
+      time.setHours(hour, min, 0, 0);
+      slots.push(
+        time.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        })
+      );
+    }
+  });
+
+  return slots.slice(0, 20); // Limit to 20 slots
+}
+
+const timeSlots = generateTimeSlots();
+---
+
+<div class="card bg-base-100 shadow-sm">
+  <div class="card-body">
+    <h2 class="card-title text-lg">Pickup Time</h2>
+
+    <div class="form-control">
+      <label class="label cursor-pointer justify-start gap-3">
+        <input
+          type="radio"
+          name="pickupTime"
+          value="asap"
+          class="radio radio-primary"
+          checked
+        />
+        <div>
+          <span class="font-semibold">ASAP</span>
+          <p class="text-xs text-base-content/60">Ready in 15-25 minutes</p>
+        </div>
+      </label>
+    </div>
+
+    <div class="form-control">
+      <label class="label cursor-pointer justify-start gap-3">
+        <input
+          type="radio"
+          name="pickupTime"
+          value="scheduled"
+          class="radio radio-primary"
+        />
+        <span class="font-semibold">Schedule for Later</span>
+      </label>
+    </div>
+
+    <div id="time-slot-container" class="hidden ml-8 mt-2">
+      <select id="time-slot-select" class="select select-bordered w-full">
+        {timeSlots.length > 0 ? (
+          timeSlots.map((slot) => <option value={slot}>{slot}</option>)
+        ) : (
+          <option disabled>No available times today</option>
+        )}
+      </select>
+      <p class="text-xs text-base-content/60 mt-1">Today</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { setScheduledTime } from "@/lib/cart";
+
+  const asapRadio = document.querySelector<HTMLInputElement>('input[name="pickupTime"][value="asap"]');
+  const scheduledRadio = document.querySelector<HTMLInputElement>('input[name="pickupTime"][value="scheduled"]');
+  const timeSlotContainer = document.getElementById("time-slot-container") as HTMLElement;
+  const timeSlotSelect = document.getElementById("time-slot-select") as HTMLSelectElement;
+
+  function updateScheduledTime() {
+    if (asapRadio?.checked) {
+      setScheduledTime(null);
+      timeSlotContainer.classList.add("hidden");
+    } else if (scheduledRadio?.checked) {
+      timeSlotContainer.classList.remove("hidden");
+      // Convert display time to ISO format
+      const timeStr = timeSlotSelect.value;
+      if (timeStr) {
+        const today = new Date();
+        const [time, period] = timeStr.split(" ");
+        const [hour, minute] = time.split(":").map(Number);
+        let hour24 = hour;
+        if (period === "PM" && hour !== 12) hour24 += 12;
+        if (period === "AM" && hour === 12) hour24 = 0;
+        today.setHours(hour24, minute, 0, 0);
+        setScheduledTime(today.toISOString());
+      }
+    }
+  }
+
+  asapRadio?.addEventListener("change", updateScheduledTime);
+  scheduledRadio?.addEventListener("change", updateScheduledTime);
+  timeSlotSelect?.addEventListener("change", updateScheduledTime);
+
+  // Export for checkout page
+  export function getScheduledTime(): string | null {
+    if (asapRadio?.checked) return null;
+    return timeSlotSelect.value || null;
+  }
+</script>

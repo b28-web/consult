@@ -1,0 +1,150 @@
+---
+/**
+ * Restaurant Homepage
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+import Hours from "@/components/Hours.astro";
+import { config } from "@/config";
+
+// Feature icons
+const featureIcons = {
+  dineIn: "M3 3h18v18H3V3zm2 2v14h14V5H5zm7 2a3 3 0 100 6 3 3 0 000-6z",
+  takeout: "M16 11V3H8v8H2v10h20V11h-6zm-6-6h4v6h-4V5zm8 14H6v-6h12v6z",
+  delivery: "M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z",
+  reservations: "M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z",
+};
+
+const enabledFeatures = Object.entries(config.restaurant.features)
+  .filter(([_, enabled]) => enabled)
+  .map(([feature]) => feature);
+---
+
+<PageLayout title="Home">
+  <!-- Hero Section -->
+  <section class="hero min-h-[60vh] bg-neutral text-neutral-content">
+    <div class="hero-content text-center px-4">
+      <div class="max-w-2xl">
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4">
+          {config.client.name}
+        </h1>
+        <p class="text-xl sm:text-2xl mb-2 opacity-90">
+          {config.client.tagline}
+        </p>
+        <p class="text-lg opacity-75 mb-8">
+          {config.restaurant.cuisine.join(" \u2022 ")} \u2022 {config.restaurant.priceRange}
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href="/menu" class="btn btn-primary btn-lg">View Menu</a>
+          {config.client.phone && (
+            <a
+              href={`tel:${config.client.phone.replace(/\D/g, "")}`}
+              class="btn btn-outline btn-lg border-neutral-content text-neutral-content hover:bg-neutral-content hover:text-neutral"
+            >
+              Call to Order
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="py-12 bg-base-200">
+    <div class="max-w-4xl mx-auto px-4">
+      <div class="flex flex-wrap justify-center gap-6">
+        {config.restaurant.features.dineIn && (
+          <div class="flex items-center gap-2">
+            <svg class="w-6 h-6 text-primary" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z" />
+            </svg>
+            <span class="font-medium">Dine In</span>
+          </div>
+        )}
+        {config.restaurant.features.takeout && (
+          <div class="flex items-center gap-2">
+            <svg class="w-6 h-6 text-primary" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M22 9h-4.79l-4.38-6.56a.997.997 0 00-1.66 0L6.79 9H2c-.55 0-1 .45-1 1 0 .09.01.18.04.27l2.54 9.27c.23.84 1 1.46 1.92 1.46h13c.92 0 1.69-.62 1.93-1.46l2.54-9.27L23 10c0-.55-.45-1-1-1zM12 4.8L14.8 9H9.2L12 4.8zM18.5 19l-13 .01L3.31 11H20.7l-2.2 8z" />
+            </svg>
+            <span class="font-medium">Takeout</span>
+          </div>
+        )}
+        {config.restaurant.features.delivery && (
+          <div class="flex items-center gap-2">
+            <svg class="w-6 h-6 text-primary" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
+            </svg>
+            <span class="font-medium">Delivery</span>
+          </div>
+        )}
+        {config.restaurant.features.reservations && (
+          <div class="flex items-center gap-2">
+            <svg class="w-6 h-6 text-primary" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" />
+            </svg>
+            <span class="font-medium">Reservations</span>
+          </div>
+        )}
+      </div>
+    </div>
+  </section>
+
+  <!-- Hours & Location -->
+  <section class="py-16 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid md:grid-cols-2 gap-12">
+        <!-- Hours -->
+        <div>
+          <h2 class="text-3xl font-bold mb-6">Hours</h2>
+          <div class="card bg-base-100 shadow-lg">
+            <div class="card-body">
+              <Hours />
+            </div>
+          </div>
+        </div>
+
+        <!-- Location -->
+        <div>
+          <h2 class="text-3xl font-bold mb-6">Location</h2>
+          <div class="card bg-base-100 shadow-lg">
+            <div class="card-body">
+              {config.client.address && (
+                <div class="mb-4">
+                  <h3 class="font-semibold mb-2">Address</h3>
+                  <p class="text-base-content/80">{config.client.address}</p>
+                </div>
+              )}
+              {config.client.phone && (
+                <div class="mb-4">
+                  <h3 class="font-semibold mb-2">Phone</h3>
+                  <a
+                    href={`tel:${config.client.phone.replace(/\D/g, "")}`}
+                    class="link link-primary"
+                  >
+                    {config.client.phone}
+                  </a>
+                </div>
+              )}
+              <div>
+                <h3 class="font-semibold mb-2">Email</h3>
+                <a href={`mailto:${config.client.email}`} class="link link-primary">
+                  {config.client.email}
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-16 bg-primary text-primary-content">
+    <div class="max-w-4xl mx-auto text-center px-4">
+      <h2 class="text-3xl font-bold mb-4">Hungry?</h2>
+      <p class="text-lg mb-8 opacity-90">
+        Check out our menu and place your order today.
+      </p>
+      <a href="/menu" class="btn btn-secondary btn-lg">View Full Menu</a>
+    </div>
+  </section>
+</PageLayout>

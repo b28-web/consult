@@ -1,0 +1,156 @@
+---
+/**
+ * PageLayout - Standard restaurant page with nav and footer
+ */
+import BaseLayout from "./BaseLayout.astro";
+import { config } from "@/config";
+import Hours from "@/components/Hours.astro";
+import CartBadge from "@/components/cart/CartBadge.astro";
+import CartDrawer from "@/components/cart/CartDrawer.astro";
+import ModifierModal from "@/components/cart/ModifierModal.astro";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description } = Astro.props;
+const currentPath = Astro.url.pathname;
+const showCart = config.restaurant.features.onlineOrdering;
+---
+
+<BaseLayout title={title} description={description}>
+  <!-- Navbar -->
+  <div class="navbar bg-base-100 shadow-sm sticky top-0 z-50 px-2 sm:px-4">
+    <div class="navbar-start">
+      <div class="dropdown">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-square lg:hidden">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
+          </svg>
+        </div>
+        <ul
+          tabindex="0"
+          class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
+        >
+          {config.nav.map((item) => (
+            <li>
+              <a href={item.href} class:list={{ active: currentPath === item.href }}>
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <a href="/" class="btn btn-ghost text-base sm:text-xl truncate max-w-[160px] sm:max-w-none">
+        {config.client.name}
+      </a>
+    </div>
+    <div class="navbar-center hidden lg:flex">
+      <ul class="menu menu-horizontal px-1">
+        {config.nav.map((item) => (
+          <li>
+            <a href={item.href} class:list={{ active: currentPath === item.href }}>
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+    <div class="navbar-end gap-2">
+      {config.client.phone && (
+        <a href={`tel:${config.client.phone.replace(/\D/g, "")}`} class="btn btn-ghost btn-sm sm:btn-md">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+          </svg>
+          <span class="hidden sm:inline">Call</span>
+        </a>
+      )}
+      {showCart && <CartBadge />}
+      <a href="/menu" class="btn btn-primary btn-sm sm:btn-md">
+        {showCart ? "Order" : "Menu"}
+      </a>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <main class="flex-grow">
+    <slot />
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-neutral text-neutral-content">
+    <div class="max-w-6xl mx-auto py-12 px-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Info -->
+        <div>
+          <h3 class="text-xl font-bold mb-4">{config.client.name}</h3>
+          <p class="mb-2">{config.client.tagline}</p>
+          {config.client.address && (
+            <p class="text-sm opacity-80">{config.client.address}</p>
+          )}
+        </div>
+
+        <!-- Hours -->
+        <div>
+          <h3 class="text-xl font-bold mb-4">Hours</h3>
+          <Hours compact />
+        </div>
+
+        <!-- Contact -->
+        <div>
+          <h3 class="text-xl font-bold mb-4">Contact</h3>
+          {config.client.phone && (
+            <p class="mb-2">
+              <a href={`tel:${config.client.phone.replace(/\D/g, "")}`} class="link link-hover">
+                {config.client.phone}
+              </a>
+            </p>
+          )}
+          <p class="mb-4">
+            <a href={`mailto:${config.client.email}`} class="link link-hover">
+              {config.client.email}
+            </a>
+          </p>
+
+          <!-- Social links -->
+          <div class="flex gap-4">
+            {config.social.facebook && (
+              <a href={config.social.facebook} target="_blank" rel="noopener" aria-label="Facebook">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                </svg>
+              </a>
+            )}
+            {config.social.instagram && (
+              <a href={config.social.instagram} target="_blank" rel="noopener" aria-label="Instagram">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                </svg>
+              </a>
+            )}
+            {config.social.yelp && (
+              <a href={config.social.yelp} target="_blank" rel="noopener" aria-label="Yelp">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20.16 12.594l-4.995 1.433c-.96.276-1.626-.267-1.626-1.107v-9.8c0-.84.525-1.12 1.312-.7l4.56 2.42c.79.42.79 1.12.79 1.68v5.376c0 .35-.07.56-.04.697zm-9.28-3.8l2.27-4.67c.42-.84 1.05-.98 1.68-.42l3.78 3.5c.63.56.49 1.19-.28 1.54l-4.9 2.24c-.77.35-1.4.14-1.68-.56l-1.26-2.8c-.28-.56-.14-1.12.42-1.54l-.03.7zm-1.4 8.4l-1.68 4.9c-.28.84-.91 1.05-1.54.56l-3.92-2.94c-.63-.49-.63-1.19.14-1.68l4.48-2.8c.77-.49 1.4-.28 1.68.56l1.12 2.38c.14.42.07.77-.28 1.02zm-5.6-7l-1.26-4.76c-.28-.84.07-1.4.77-1.54l4.76-.98c.84-.14 1.26.35 1.26 1.19l-.14 5.04c0 .77-.49 1.19-1.26 1.19l-3.08.14c-.56 0-.91-.28-1.05-.28z"/>
+                </svg>
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div class="border-t border-neutral-content/20 mt-8 pt-8 text-center text-sm opacity-70">
+        <p>&copy; {new Date().getFullYear()} {config.client.name}. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Cart components (only rendered when online ordering is enabled) -->
+  {showCart && (
+    <>
+      <CartDrawer />
+      <ModifierModal />
+    </>
+  )}
+</BaseLayout>

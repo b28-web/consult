@@ -1,0 +1,146 @@
+---
+/**
+ * TipSelector - Tip amount selection
+ *
+ * Preset percentages plus custom amount option.
+ */
+import { TIP_PRESETS } from "@/lib/cart";
+---
+
+<div class="card bg-base-100 shadow-sm">
+  <div class="card-body">
+    <h2 class="card-title text-lg">Add a Tip</h2>
+    <p class="text-sm text-base-content/60 mb-2">Show appreciation for the team</p>
+
+    <div class="grid grid-cols-4 gap-2 mb-3">
+      {TIP_PRESETS.map((percent, i) => (
+        <label>
+          <input
+            type="radio"
+            name="tipPreset"
+            value={percent}
+            class="peer hidden"
+            checked={i === 1}
+            data-tip-percent={percent}
+          />
+          <div class="card bg-base-200 cursor-pointer border-2 border-transparent peer-checked:border-primary peer-checked:bg-primary/10 transition-colors text-center py-3">
+            <span class="font-semibold">{percent}%</span>
+            <span class="block text-xs text-base-content/60 tip-amount" data-percent={percent}>
+              $0.00
+            </span>
+          </div>
+        </label>
+      ))}
+    </div>
+
+    <div class="form-control">
+      <label class="label cursor-pointer justify-start gap-3">
+        <input
+          type="radio"
+          name="tipPreset"
+          value="custom"
+          class="radio radio-primary"
+        />
+        <span>Custom amount</span>
+      </label>
+    </div>
+
+    <div id="custom-tip-container" class="hidden ml-8 mt-2">
+      <div class="join">
+        <span class="join-item btn btn-disabled">$</span>
+        <input
+          type="number"
+          id="custom-tip-input"
+          class="input input-bordered join-item w-24"
+          min="0"
+          step="0.01"
+          placeholder="0.00"
+        />
+      </div>
+    </div>
+
+    <label class="label cursor-pointer justify-start gap-3 mt-2">
+      <input
+        type="radio"
+        name="tipPreset"
+        value="none"
+        class="radio radio-primary"
+      />
+      <span>No tip</span>
+    </label>
+  </div>
+</div>
+
+<script>
+  import { setTip, setTipPercentage, cartSubtotal, formatPrice } from "@/lib/cart";
+
+  const tipRadios = document.querySelectorAll<HTMLInputElement>('input[name="tipPreset"]');
+  const customTipContainer = document.getElementById("custom-tip-container") as HTMLElement;
+  const customTipInput = document.getElementById("custom-tip-input") as HTMLInputElement;
+  const tipAmountElements = document.querySelectorAll<HTMLElement>(".tip-amount");
+
+  // Update tip amount displays based on subtotal
+  function updateTipAmounts() {
+    const subtotal = cartSubtotal.get();
+    tipAmountElements.forEach((el) => {
+      const percent = parseInt(el.dataset.percent || "0", 10);
+      const amount = Math.round(subtotal * (percent / 100) * 100) / 100;
+      el.textContent = formatPrice(amount);
+    });
+  }
+
+  // Subscribe to subtotal changes
+  cartSubtotal.subscribe(updateTipAmounts);
+
+  // Initial update
+  updateTipAmounts();
+
+  // Handle tip selection changes
+  tipRadios.forEach((radio) => {
+    radio.addEventListener("change", () => {
+      if (!radio.checked) return;
+
+      const value = radio.value;
+
+      if (value === "custom") {
+        customTipContainer.classList.remove("hidden");
+        const customValue = parseFloat(customTipInput.value) || 0;
+        setTip(customValue);
+      } else if (value === "none") {
+        customTipContainer.classList.add("hidden");
+        setTip(0);
+      } else {
+        customTipContainer.classList.add("hidden");
+        const percent = parseInt(value, 10);
+        setTipPercentage(percent);
+      }
+    });
+  });
+
+  // Handle custom tip input
+  customTipInput.addEventListener("input", () => {
+    const customRadio = document.querySelector<HTMLInputElement>('input[name="tipPreset"][value="custom"]');
+    if (customRadio?.checked) {
+      const value = parseFloat(customTipInput.value) || 0;
+      setTip(value);
+    }
+  });
+
+  // Set initial tip (18% is checked by default in HTML)
+  setTipPercentage(18);
+
+  // Export for checkout page
+  export function getSelectedTip(): number {
+    const checked = document.querySelector<HTMLInputElement>('input[name="tipPreset"]:checked');
+    if (!checked) return 0;
+
+    if (checked.value === "custom") {
+      return parseFloat(customTipInput.value) || 0;
+    } else if (checked.value === "none") {
+      return 0;
+    } else {
+      const percent = parseInt(checked.value, 10);
+      return Math.round(cartSubtotal.get() * (percent / 100) * 100) / 100;
+    }
+  }
+</script>

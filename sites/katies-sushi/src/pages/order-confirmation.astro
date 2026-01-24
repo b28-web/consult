@@ -1,0 +1,302 @@
+---
+/**
+ * Order Confirmation Page
+ *
+ * Displays order confirmation after successful payment.
+ * Fetches order status from API and shows relevant information.
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+import { config } from "@/config";
+---
+
+<PageLayout title="Order Confirmed" description="Your order has been placed">
+  <div class="container mx-auto px-4 py-16 max-w-lg text-center">
+    <!-- Loading State -->
+    <div id="loading-state" class="animate-pulse">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-base-300"></div>
+      <div class="h-8 w-48 mx-auto mb-2 rounded bg-base-300"></div>
+      <div class="h-4 w-64 mx-auto rounded bg-base-300"></div>
+    </div>
+
+    <!-- Success State -->
+    <div id="success-state" class="hidden">
+      <!-- Demo Mode Badge -->
+      <div id="demo-badge" class="badge badge-info badge-lg mb-4 hidden">Demo Order</div>
+
+      <div class="text-success text-6xl mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h1 class="text-3xl font-bold mb-2">Order Confirmed!</h1>
+      <p class="text-lg text-base-content/70 mb-6">
+        Order #<span id="confirmation-code" class="font-semibold"></span>
+      </p>
+
+      <!-- Order Details Card -->
+      <div class="card bg-base-100 shadow-sm mb-6 text-left">
+        <div class="card-body">
+          <div class="flex justify-between items-center pb-3 border-b border-base-200">
+            <span class="text-sm text-base-content/70">Order Status</span>
+            <span id="order-status" class="badge badge-success">Confirmed</span>
+          </div>
+
+          <div class="py-3 border-b border-base-200" id="ready-time-section">
+            <p class="text-sm text-base-content/70 mb-1">Estimated Ready Time</p>
+            <p id="ready-time" class="text-lg font-semibold"></p>
+          </div>
+
+          <div class="py-3 border-b border-base-200">
+            <p class="text-sm text-base-content/70 mb-1">Confirmation Email</p>
+            <p id="customer-email" class="text-sm"></p>
+          </div>
+
+          <div class="py-3">
+            <p class="text-sm text-base-content/70 mb-1">Total</p>
+            <p id="order-total" class="text-xl font-bold"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pickup Location -->
+      <div class="card bg-base-200 mb-6 text-left">
+        <div class="card-body py-4">
+          <h3 class="font-semibold text-sm mb-2">Pickup Location</h3>
+          <p class="text-sm font-medium">{config.client.name}</p>
+          {config.client.address && (
+            <p class="text-xs text-base-content/60">{config.client.address}</p>
+          )}
+          {config.client.phone && (
+            <a href={`tel:${config.client.phone}`} class="text-xs text-primary hover:underline">
+              {config.client.phone}
+            </a>
+          )}
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="space-y-3">
+        <a href="/menu" class="btn btn-primary w-full">
+          Order More
+        </a>
+        <a href="/" class="btn btn-ghost w-full">
+          Back to Home
+        </a>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-state" class="hidden">
+      <div class="text-error text-6xl mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h1 class="text-2xl font-bold mb-2">Something Went Wrong</h1>
+      <p id="error-message" class="text-base-content/70 mb-6">
+        We couldn't confirm your order. Please try again or contact us.
+      </p>
+
+      <div class="space-y-3">
+        <a href="/checkout" class="btn btn-primary w-full">
+          Try Again
+        </a>
+        {config.client.phone && (
+          <a href={`tel:${config.client.phone}`} class="btn btn-outline w-full">
+            Call {config.client.phone}
+          </a>
+        )}
+      </div>
+    </div>
+
+    <!-- Pending Payment State -->
+    <div id="pending-state" class="hidden">
+      <div class="text-warning text-6xl mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 mx-auto animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h1 class="text-2xl font-bold mb-2">Processing Payment</h1>
+      <p class="text-base-content/70 mb-6">
+        Your payment is being processed. This page will update automatically.
+      </p>
+      <p class="text-sm text-base-content/50">
+        Order #<span id="pending-confirmation-code" class="font-semibold"></span>
+      </p>
+    </div>
+  </div>
+</PageLayout>
+
+<script define:vars={{ clientSlug: config.client.slug }}>
+  window.__CLIENT_SLUG__ = clientSlug;
+</script>
+
+<script>
+  // Get elements
+  const loadingState = document.getElementById("loading-state") as HTMLElement;
+  const successState = document.getElementById("success-state") as HTMLElement;
+  const errorState = document.getElementById("error-state") as HTMLElement;
+  const pendingState = document.getElementById("pending-state") as HTMLElement;
+
+  const confirmationCodeEl = document.getElementById("confirmation-code") as HTMLElement;
+  const orderStatusEl = document.getElementById("order-status") as HTMLElement;
+  const readyTimeSection = document.getElementById("ready-time-section") as HTMLElement;
+  const readyTimeEl = document.getElementById("ready-time") as HTMLElement;
+  const customerEmailEl = document.getElementById("customer-email") as HTMLElement;
+  const orderTotalEl = document.getElementById("order-total") as HTMLElement;
+  const errorMessageEl = document.getElementById("error-message") as HTMLElement;
+  const pendingConfirmationCodeEl = document.getElementById("pending-confirmation-code") as HTMLElement;
+
+  // Get API URL and client slug
+  const apiUrl = import.meta.env.PUBLIC_API_URL || "";
+  const clientSlug = (window as any).__CLIENT_SLUG__;
+
+  // Get order ID and mock flag from URL
+  const params = new URLSearchParams(window.location.search);
+  const orderId = params.get("order_id");
+  const isMockMode = params.get("mock") === "true";
+
+  // Format price
+  function formatPrice(amount: number): string {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
+  }
+
+  // Format time
+  function formatTime(isoString: string): string {
+    const date = new Date(isoString);
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  }
+
+  // Show state
+  function showState(state: "loading" | "success" | "error" | "pending") {
+    loadingState.classList.add("hidden");
+    successState.classList.add("hidden");
+    errorState.classList.add("hidden");
+    pendingState.classList.add("hidden");
+
+    switch (state) {
+      case "loading":
+        loadingState.classList.remove("hidden");
+        break;
+      case "success":
+        successState.classList.remove("hidden");
+        break;
+      case "error":
+        errorState.classList.remove("hidden");
+        break;
+      case "pending":
+        pendingState.classList.remove("hidden");
+        break;
+    }
+  }
+
+  // Display order details (used by both mock and real modes)
+  function displayOrder(order: any) {
+    showState("success");
+    confirmationCodeEl.textContent = order.confirmation_code;
+    customerEmailEl.textContent = order.customer.email;
+    orderTotalEl.textContent = formatPrice(order.total);
+
+    // Update status badge
+    const statusMap: Record<string, { label: string; class: string }> = {
+      confirmed: { label: "Confirmed", class: "badge-success" },
+      preparing: { label: "Preparing", class: "badge-warning" },
+      ready: { label: "Ready for Pickup", class: "badge-info" },
+    };
+
+    const statusInfo = statusMap[order.status] || { label: order.status, class: "" };
+    orderStatusEl.textContent = statusInfo.label;
+    orderStatusEl.className = `badge ${statusInfo.class}`;
+
+    // Show ready time if available
+    if (order.estimated_ready_time) {
+      readyTimeEl.textContent = formatTime(order.estimated_ready_time);
+    } else {
+      readyTimeSection.classList.add("hidden");
+    }
+  }
+
+  // Handle mock order (demo mode - no backend)
+  function handleMockOrder() {
+    const mockOrderJson = localStorage.getItem("mock_order");
+    if (!mockOrderJson) {
+      showState("error");
+      errorMessageEl.textContent = "Mock order not found. Please try again.";
+      return;
+    }
+
+    try {
+      const order = JSON.parse(mockOrderJson);
+      displayOrder(order);
+
+      // Show demo badge
+      const demoBadge = document.getElementById("demo-badge");
+      if (demoBadge) {
+        demoBadge.classList.remove("hidden");
+      }
+
+      // Clear mock order from storage
+      localStorage.removeItem("mock_order");
+    } catch (err) {
+      showState("error");
+      errorMessageEl.textContent = "Failed to load order details.";
+    }
+  }
+
+  // Check order status (real mode - API call)
+  async function checkOrderStatus() {
+    if (!orderId) {
+      showState("error");
+      errorMessageEl.textContent = "No order ID provided.";
+      return;
+    }
+
+    try {
+      const response = await fetch(`${apiUrl}/api/clients/${clientSlug}/orders/${orderId}`);
+
+      if (!response.ok) {
+        throw new Error("Order not found");
+      }
+
+      const order = await response.json();
+
+      // Check payment status
+      if (order.status === "pending") {
+        // Payment still processing
+        showState("pending");
+        pendingConfirmationCodeEl.textContent = order.confirmation_code;
+
+        // Poll again in 3 seconds
+        setTimeout(checkOrderStatus, 3000);
+        return;
+      }
+
+      if (order.status === "confirmed" || order.status === "preparing" || order.status === "ready") {
+        displayOrder(order);
+        return;
+      }
+
+      // Order cancelled or failed
+      showState("error");
+      errorMessageEl.textContent = `Order status: ${order.status}. Please contact us for assistance.`;
+
+    } catch (err) {
+      showState("error");
+      errorMessageEl.textContent = err instanceof Error ? err.message : "Failed to load order details.";
+    }
+  }
+
+  // Start - check if mock or real mode
+  if (isMockMode) {
+    handleMockOrder();
+  } else {
+    checkOrderStatus();
+  }
+</script>

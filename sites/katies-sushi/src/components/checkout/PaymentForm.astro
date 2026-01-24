@@ -1,0 +1,185 @@
+---
+/**
+ * PaymentForm - Stripe Elements payment form
+ *
+ * Renders Stripe Payment Element for card input and payment confirmation.
+ * Requires clientSecret from order creation API response.
+ */
+---
+
+<div id="payment-form" class="space-y-4">
+  <!-- Payment Element container -->
+  <div id="payment-element" class="min-h-[200px]">
+    <!-- Stripe Elements will be mounted here -->
+    <div id="payment-loading" class="flex items-center justify-center py-8">
+      <span class="loading loading-spinner loading-lg text-primary"></span>
+    </div>
+  </div>
+
+  <!-- Payment errors -->
+  <div id="payment-errors" class="alert alert-error hidden">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+    </svg>
+    <span id="payment-error-message"></span>
+  </div>
+</div>
+
+<script>
+  import { loadStripe, type Stripe, type StripeElements, type StripePaymentElement } from "@stripe/stripe-js";
+
+  // Export for use by checkout page
+  interface PaymentState {
+    stripe: Stripe | null;
+    elements: StripeElements | null;
+    paymentElement: StripePaymentElement | null;
+    ready: boolean;
+    error: string | null;
+  }
+
+  // Initialize state
+  const paymentState: PaymentState = {
+    stripe: null,
+    elements: null,
+    paymentElement: null,
+    ready: false,
+    error: null,
+  };
+
+  // Make available globally for checkout page
+  (window as any).paymentState = paymentState;
+
+  /**
+   * Initialize Stripe Elements with the given client secret.
+   * Called by checkout page after order is created.
+   */
+  async function initializePayment(clientSecret: string): Promise<boolean> {
+    const stripeKey = import.meta.env.PUBLIC_STRIPE_KEY;
+    if (!stripeKey) {
+      showError("Stripe is not configured. Please contact support.");
+      return false;
+    }
+
+    // Hide loading, show payment element container
+    const loadingEl = document.getElementById("payment-loading");
+    if (loadingEl) {
+      loadingEl.classList.add("hidden");
+    }
+
+    try {
+      // Load Stripe
+      const stripe = await loadStripe(stripeKey);
+      if (!stripe) {
+        showError("Failed to load Stripe. Please refresh and try again.");
+        return false;
+      }
+
+      paymentState.stripe = stripe;
+
+      // Create Elements instance
+      const elements = stripe.elements({
+        clientSecret,
+        appearance: {
+          theme: "stripe",
+          variables: {
+            colorPrimary: "#f97316", // Orange-500 (restaurant theme)
+            colorBackground: "#ffffff",
+            colorText: "#1f2937",
+            colorDanger: "#ef4444",
+            fontFamily: "system-ui, sans-serif",
+            borderRadius: "8px",
+          },
+        },
+      });
+
+      paymentState.elements = elements;
+
+      // Create and mount Payment Element
+      const paymentElement = elements.create("payment", {
+        layout: "tabs",
+      });
+
+      paymentState.paymentElement = paymentElement;
+
+      paymentElement.mount("#payment-element");
+
+      // Listen for ready event
+      paymentElement.on("ready", () => {
+        paymentState.ready = true;
+        // Dispatch custom event for checkout page
+        window.dispatchEvent(new CustomEvent("stripe-ready"));
+      });
+
+      // Listen for change events to clear errors
+      paymentElement.on("change", (event) => {
+        if (event.complete) {
+          hideError();
+        }
+        if (event.error) {
+          showError(event.error.message);
+        }
+      });
+
+      return true;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to initialize payment";
+      showError(message);
+      return false;
+    }
+  }
+
+  /**
+   * Confirm payment with Stripe.
+   * Returns success boolean and optional error message.
+   */
+  async function confirmPayment(returnUrl: string): Promise<{ success: boolean; error?: string }> {
+    if (!paymentState.stripe || !paymentState.elements) {
+      return { success: false, error: "Payment not initialized" };
+    }
+
+    const { error } = await paymentState.stripe.confirmPayment({
+      elements: paymentState.elements,
+      confirmParams: {
+        return_url: returnUrl,
+      },
+    });
+
+    if (error) {
+      // This will only be reached if there's an immediate error
+      // (e.g., card declined). Successful payments redirect.
+      showError(error.message || "Payment failed");
+      return { success: false, error: error.message };
+    }
+
+    // If we get here, payment is being processed (redirect happens)
+    return { success: true };
+  }
+
+  /**
+   * Show error message
+   */
+  function showError(message: string): void {
+    paymentState.error = message;
+    const errorContainer = document.getElementById("payment-errors");
+    const errorMessage = document.getElementById("payment-error-message");
+    if (errorContainer && errorMessage) {
+      errorMessage.textContent = message;
+      errorContainer.classList.remove("hidden");
+    }
+  }
+
+  /**
+   * Hide error message
+   */
+  function hideError(): void {
+    paymentState.error = null;
+    const errorContainer = document.getElementById("payment-errors");
+    if (errorContainer) {
+      errorContainer.classList.add("hidden");
+    }
+  }
+
+  // Export functions globally for checkout page
+  (window as any).initializePayment = initializePayment;
+  (window as any).confirmPayment = confirmPayment;
+</script>

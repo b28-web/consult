@@ -1,0 +1,123 @@
+---
+/**
+ * AddToCartButton - Button to add menu items to cart
+ *
+ * For items with modifiers, opens the modifier modal.
+ * For items without modifiers, adds directly to cart.
+ */
+import type { MenuItem } from "@/lib/menu";
+
+interface Props {
+  item: MenuItem;
+  class?: string;
+}
+
+const { item, class: className = "" } = Astro.props;
+const hasModifiers = item.modifier_groups && item.modifier_groups.length > 0;
+---
+
+<button
+  class:list={[
+    "btn btn-primary btn-sm add-to-cart-btn",
+    { "btn-disabled": !item.is_available },
+    className,
+  ]}
+  data-item-id={item.id}
+  data-item-name={item.name}
+  data-item-price={item.price}
+  data-has-modifiers={hasModifiers}
+  data-item-json={JSON.stringify(item)}
+  disabled={!item.is_available}
+  aria-label={item.is_available ? `Add ${item.name} to cart` : `${item.name} is unavailable`}
+>
+  {item.is_available ? "Add" : "86'd"}
+</button>
+
+<script>
+  import { addToCart } from "@/lib/cart";
+  import { isItemAvailable } from "@/lib/availability";
+
+  function setupAddToCartButtons() {
+    document.querySelectorAll<HTMLButtonElement>(".add-to-cart-btn").forEach((button) => {
+      // Skip if already initialized
+      if (button.dataset.initialized) return;
+      button.dataset.initialized = "true";
+
+      button.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const hasModifiers = button.dataset.hasModifiers === "true";
+        const itemJson = button.dataset.itemJson;
+
+        if (!itemJson) return;
+
+        const item = JSON.parse(itemJson);
+
+        // Double-check availability before adding
+        if (!isItemAvailable(item.id)) {
+          showUnavailableToast(item.name);
+          return;
+        }
+
+        if (hasModifiers) {
+          // Open modifier modal
+          window.dispatchEvent(
+            new CustomEvent("open-modifier-modal", { detail: item })
+          );
+        } else {
+          // Add directly to cart
+          addToCart({
+            menuItemId: item.id,
+            name: item.name,
+            basePrice: parseFloat(item.price),
+            quantity: 1,
+            modifiers: [],
+            specialInstructions: "",
+          });
+
+          // Show feedback
+          showAddedToast(item.name);
+
+          // Dispatch cart update event
+          window.dispatchEvent(new CustomEvent("cart-updated"));
+        }
+      });
+    });
+  }
+
+  function showUnavailableToast(itemName: string) {
+    const toast = document.createElement("div");
+    toast.className = "toast toast-end toast-bottom z-50";
+    toast.innerHTML = `
+      <div class="alert alert-error">
+        <span>${itemName} is currently unavailable</span>
+      </div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  function showAddedToast(itemName: string) {
+    // Create toast notification
+    const toast = document.createElement("div");
+    toast.className = "toast toast-end toast-bottom z-50";
+    toast.innerHTML = `
+      <div class="alert alert-success">
+        <span>${itemName} added to cart</span>
+      </div>
+    `;
+    document.body.appendChild(toast);
+
+    // Remove after 2 seconds
+    setTimeout(() => {
+      toast.remove();
+    }, 2000);
+  }
+
+  // Initialize on page load
+  setupAddToCartButtons();
+
+  // Re-initialize after Astro page transitions
+  document.addEventListener("astro:page-load", setupAddToCartButtons);
+</script>

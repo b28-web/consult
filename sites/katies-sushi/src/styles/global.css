@@ -1,0 +1,99 @@
+/* Point to JS config for DaisyUI plugin */
+@config "../../tailwind.config.ts";
+
+/* Import Tailwind */
+@import "tailwindcss";
+
+/* Import shared preset */
+@import "@consult/shared-ui/styles";
+
+/*
+ * Restaurant-specific theme overrides
+ *
+ * Using warm, appetizing colors (defined in tailwind.config.ts)
+ */
+
+/*
+ * Restaurant-specific utilities
+ */
+@layer utilities {
+  /* Ensure minimum touch target size for interactive elements */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Safe area padding for notched devices */
+  .safe-area-inset {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Prevent text overflow on mobile */
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/*
+ * Restaurant-specific component styles
+ */
+@layer components {
+  /* Menu item styling */
+  .menu-item {
+    transition: opacity 200ms ease;
+  }
+
+  .menu-item.unavailable {
+    opacity: 0.5;
+  }
+
+  /* Dietary badges */
+  .dietary-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .dietary-badge.vegetarian {
+    background-color: oklch(0.9 0.1 140);
+    color: oklch(0.3 0.1 140);
+  }
+
+  .dietary-badge.vegan {
+    background-color: oklch(0.85 0.15 140);
+    color: oklch(0.25 0.1 140);
+  }
+
+  .dietary-badge.gluten-free {
+    background-color: oklch(0.9 0.1 80);
+    color: oklch(0.35 0.1 80);
+  }
+
+  /* Hours display */
+  .hours-row {
+    display: flex;
+    justify-content: space-between;
+    padding-block: 0.25rem;
+    border-bottom: 1px solid oklch(0.9 0 0);
+  }
+
+  .hours-row:last-child {
+    border-bottom: none;
+  }
+
+  .hours-day {
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+
+  .hours-time {
+    opacity: 0.7;
+  }
+}

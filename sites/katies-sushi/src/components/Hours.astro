@@ -1,0 +1,45 @@
+---
+/**
+ * Hours - Display restaurant business hours
+ */
+import { config, type DayHours } from "@/config";
+
+interface Props {
+  compact?: boolean;
+}
+
+const { compact = false } = Astro.props;
+
+const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
+
+function formatHours(hours: DayHours): string {
+  if (hours === "closed") return "Closed";
+  return hours.map((h) => `${h.open} - ${h.close}`).join(", ");
+}
+
+// Get today's day name
+const today = days[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
+---
+
+{compact ? (
+  <div class="text-sm space-y-1">
+    {days.map((day) => (
+      <div class="flex justify-between gap-4" class:list={{ "font-semibold": day === today }}>
+        <span class="capitalize">{day.slice(0, 3)}</span>
+        <span class="opacity-80">{formatHours(config.restaurant.hours[day])}</span>
+      </div>
+    ))}
+  </div>
+) : (
+  <div class="space-y-2">
+    {days.map((day) => (
+      <div
+        class="hours-row"
+        class:list={{ "bg-primary/10 -mx-2 px-2 rounded": day === today }}
+      >
+        <span class="hours-day">{day}</span>
+        <span class="hours-time">{formatHours(config.restaurant.hours[day])}</span>
+      </div>
+    ))}
+  </div>
+)}

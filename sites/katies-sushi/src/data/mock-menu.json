@@ -1,0 +1,401 @@
+{
+  "menus": [
+    {
+      "id": 1,
+      "name": "Main Menu",
+      "description": "Fresh grab-and-go sushi",
+      "available_start": null,
+      "available_end": null,
+      "categories": [
+        {
+          "id": 1,
+          "name": "Nigiri Sets",
+          "description": "Chef's selection of premium nigiri",
+          "items": [
+            {
+              "id": 1,
+              "name": "7-Piece Omakase",
+              "description": "Chef's daily selection - salmon, tuna, yellowtail, scallop, shrimp, tamago, and ikura",
+              "price": "18.99",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": false,
+              "is_vegan": false,
+              "is_gluten_free": true,
+              "allergens": ["fish", "shellfish", "eggs"],
+              "modifier_groups": []
+            },
+            {
+              "id": 2,
+              "name": "10-Piece Premium",
+              "description": "Bluefin tuna, salmon, yellowtail, uni, scallop, eel, shrimp, ikura, tamago, and chef's special",
+              "price": "28.99",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": false,
+              "is_vegan": false,
+              "is_gluten_free": true,
+              "allergens": ["fish", "shellfish", "eggs"],
+              "modifier_groups": []
+            },
+            {
+              "id": 3,
+              "name": "Salmon Lover (5pc)",
+              "description": "Atlantic salmon, king salmon, salmon belly, aburi salmon, salmon with crispy onion",
+              "price": "14.99",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": false,
+              "is_vegan": false,
+              "is_gluten_free": true,
+              "allergens": ["fish"],
+              "modifier_groups": []
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "name": "Aburi Nigiri",
+          "description": "Torched to perfection",
+          "items": [
+            {
+              "id": 4,
+              "name": "Aburi Salmon (2pc)",
+              "description": "Torched salmon with garlic ponzu and crispy garlic",
+              "price": "7.99",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": false,
+              "is_vegan": false,
+              "is_gluten_free": true,
+              "allergens": ["fish", "soy"],
+              "modifier_groups": []
+            },
+            {
+              "id": 5,
+              "name": "Aburi Toro (2pc)",
+              "description": "Torched fatty tuna with truffle oil",
+              "price": "12.99",
+              "image_url": "",
+              "is_available": false,
+              "is_vegetarian": false,
+              "is_vegan": false,
+              "is_gluten_free": true,
+              "allergens": ["fish"],
+              "modifier_groups": []
+            },
+            {
+              "id": 6,
+              "name": "Aburi Scallop (2pc)",
+              "description": "Torched Hokkaido scallop with yuzu kosho",
+              "price": "9.99",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": false,
+              "is_vegan": false,
+              "is_gluten_free": true,
+              "allergens": ["shellfish"],
+              "modifier_groups": []
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "name": "Rolls",
+          "description": "Classic and signature rolls",
+          "items": [
+            {
+              "id": 7,
+              "name": "Salmon Avocado Roll",
+              "description": "Fresh salmon, avocado, cucumber - 8 pieces",
+              "price": "8.99",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": false,
+              "is_vegan": false,
+              "is_gluten_free": true,
+              "allergens": ["fish"],
+              "modifier_groups": [
+                {
+                  "id": 1,
+                  "name": "Rice Option",
+                  "min_selections": 0,
+                  "max_selections": 1,
+                  "modifiers": [
+                    { "id": 1, "name": "Brown Rice", "price_adjustment": "1.00", "is_available": true },
+                    { "id": 2, "name": "Soy Paper (no seaweed)", "price_adjustment": "1.50", "is_available": true }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 8,
+              "name": "Spicy Tuna Roll",
+              "description": "Spicy tuna, cucumber, sesame seeds - 8 pieces",
+              "price": "9.99",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": false,
+              "is_vegan": false,
+              "is_gluten_free": true,
+              "allergens": ["fish", "sesame"],
+              "modifier_groups": [
+                {
+                  "id": 2,
+                  "name": "Spice Level",
+                  "min_selections": 1,
+                  "max_selections": 1,
+                  "modifiers": [
+                    { "id": 3, "name": "Mild", "price_adjustment": "0.00", "is_available": true },
+                    { "id": 4, "name": "Medium", "price_adjustment": "0.00", "is_available": true },
+                    { "id": 5, "name": "Hot", "price_adjustment": "0.00", "is_available": true }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 9,
+              "name": "Eel Avocado Roll",
+              "description": "Freshwater eel, avocado, sweet eel sauce - 8 pieces",
+              "price": "11.99",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": false,
+              "is_vegan": false,
+              "is_gluten_free": false,
+              "allergens": ["fish", "gluten", "soy"],
+              "modifier_groups": []
+            },
+            {
+              "id": 10,
+              "name": "California Roll",
+              "description": "Crab, avocado, cucumber, tobiko - 8 pieces",
+              "price": "7.99",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": false,
+              "is_vegan": false,
+              "is_gluten_free": true,
+              "allergens": ["shellfish"],
+              "modifier_groups": []
+            },
+            {
+              "id": 11,
+              "name": "Veggie Roll",
+              "description": "Avocado, cucumber, asparagus, pickled radish - 8 pieces",
+              "price": "6.99",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": true,
+              "is_vegan": true,
+              "is_gluten_free": true,
+              "allergens": [],
+              "modifier_groups": []
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "name": "Chirashi Bowls",
+          "description": "Sashimi over seasoned rice",
+          "items": [
+            {
+              "id": 12,
+              "name": "Bara Chirashi",
+              "description": "Diced bluefin tuna, salmon, yellowtail, scallop, ikura, and snow crab over sushi rice",
+              "price": "22.99",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": false,
+              "is_vegan": false,
+              "is_gluten_free": true,
+              "allergens": ["fish", "shellfish"],
+              "modifier_groups": [
+                {
+                  "id": 3,
+                  "name": "Extra Toppings",
+                  "min_selections": 0,
+                  "max_selections": 3,
+                  "modifiers": [
+                    { "id": 6, "name": "Extra Ikura", "price_adjustment": "4.00", "is_available": true },
+                    { "id": 7, "name": "Extra Uni", "price_adjustment": "6.00", "is_available": true },
+                    { "id": 8, "name": "Extra Tuna", "price_adjustment": "4.00", "is_available": true }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 13,
+              "name": "Salmon Don",
+              "description": "Generous slices of salmon sashimi over sushi rice with ikura",
+              "price": "16.99",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": false,
+              "is_vegan": false,
+              "is_gluten_free": true,
+              "allergens": ["fish"],
+              "modifier_groups": []
+            },
+            {
+              "id": 14,
+              "name": "Poke Bowl",
+              "description": "Marinated tuna, avocado, cucumber, edamame, seaweed salad over rice",
+              "price": "15.99",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": false,
+              "is_vegan": false,
+              "is_gluten_free": true,
+              "allergens": ["fish", "soy", "sesame"],
+              "modifier_groups": [
+                {
+                  "id": 4,
+                  "name": "Base",
+                  "min_selections": 1,
+                  "max_selections": 1,
+                  "modifiers": [
+                    { "id": 9, "name": "Sushi Rice", "price_adjustment": "0.00", "is_available": true },
+                    { "id": 10, "name": "Brown Rice", "price_adjustment": "0.00", "is_available": true },
+                    { "id": 11, "name": "Mixed Greens", "price_adjustment": "0.00", "is_available": true }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "name": "Sides",
+          "description": "Perfect additions",
+          "items": [
+            {
+              "id": 15,
+              "name": "Miso Soup",
+              "description": "Traditional miso with tofu, wakame, and green onion",
+              "price": "3.49",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": true,
+              "is_vegan": false,
+              "is_gluten_free": true,
+              "allergens": ["soy"],
+              "modifier_groups": []
+            },
+            {
+              "id": 16,
+              "name": "Edamame",
+              "description": "Steamed soybeans with sea salt",
+              "price": "4.99",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": true,
+              "is_vegan": true,
+              "is_gluten_free": true,
+              "allergens": ["soy"],
+              "modifier_groups": []
+            },
+            {
+              "id": 17,
+              "name": "Seaweed Salad",
+              "description": "Marinated wakame with sesame",
+              "price": "5.99",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": true,
+              "is_vegan": true,
+              "is_gluten_free": true,
+              "allergens": ["sesame", "soy"],
+              "modifier_groups": []
+            },
+            {
+              "id": 18,
+              "name": "Pickled Vegetables",
+              "description": "House-made pickled cucumber, radish, and ginger",
+              "price": "3.99",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": true,
+              "is_vegan": true,
+              "is_gluten_free": true,
+              "allergens": [],
+              "modifier_groups": []
+            },
+            {
+              "id": 19,
+              "name": "Soft Tofu",
+              "description": "Silken tofu with bonito flakes and green onion",
+              "price": "4.49",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": false,
+              "is_vegan": false,
+              "is_gluten_free": true,
+              "allergens": ["soy", "fish"],
+              "modifier_groups": []
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "name": "Drinks",
+          "description": "",
+          "items": [
+            {
+              "id": 20,
+              "name": "Green Tea",
+              "description": "Hot or iced Japanese green tea",
+              "price": "2.49",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": true,
+              "is_vegan": true,
+              "is_gluten_free": true,
+              "allergens": [],
+              "modifier_groups": [
+                {
+                  "id": 5,
+                  "name": "Temperature",
+                  "min_selections": 1,
+                  "max_selections": 1,
+                  "modifiers": [
+                    { "id": 12, "name": "Hot", "price_adjustment": "0.00", "is_available": true },
+                    { "id": 13, "name": "Iced", "price_adjustment": "0.00", "is_available": true }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 21,
+              "name": "Ramune",
+              "description": "Japanese marble soda - Original or Strawberry",
+              "price": "3.49",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": true,
+              "is_vegan": true,
+              "is_gluten_free": true,
+              "allergens": [],
+              "modifier_groups": []
+            },
+            {
+              "id": 22,
+              "name": "Calpico",
+              "description": "Japanese yogurt drink",
+              "price": "2.99",
+              "image_url": "",
+              "is_available": true,
+              "is_vegetarian": true,
+              "is_vegan": false,
+              "is_gluten_free": true,
+              "allergens": ["dairy"],
+              "modifier_groups": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "source": "static",
+  "last_synced_at": null
+}
