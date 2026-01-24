@@ -1,0 +1,145 @@
+---
+/**
+ * CustomerForm - Customer contact information form
+ *
+ * Collects name, email, and phone for order.
+ */
+---
+
+<div class="card bg-base-100 shadow-sm">
+  <div class="card-body">
+    <h2 class="card-title text-lg">Contact Information</h2>
+
+    <div class="form-control">
+      <label class="label" for="customer-name">
+        <span class="label-text">Name <span class="text-error">*</span></span>
+      </label>
+      <input
+        type="text"
+        id="customer-name"
+        name="customerName"
+        class="input input-bordered"
+        placeholder="John Doe"
+        required
+        autocomplete="name"
+      />
+      <label class="label hidden" id="customer-name-error">
+        <span class="label-text-alt text-error">Please enter your name</span>
+      </label>
+    </div>
+
+    <div class="form-control">
+      <label class="label" for="customer-email">
+        <span class="label-text">Email <span class="text-error">*</span></span>
+      </label>
+      <input
+        type="email"
+        id="customer-email"
+        name="customerEmail"
+        class="input input-bordered"
+        placeholder="john@example.com"
+        required
+        autocomplete="email"
+      />
+      <label class="label hidden" id="customer-email-error">
+        <span class="label-text-alt text-error">Please enter a valid email</span>
+      </label>
+    </div>
+
+    <div class="form-control">
+      <label class="label" for="customer-phone">
+        <span class="label-text">Phone <span class="text-error">*</span></span>
+      </label>
+      <input
+        type="tel"
+        id="customer-phone"
+        name="customerPhone"
+        class="input input-bordered"
+        placeholder="(555) 123-4567"
+        required
+        autocomplete="tel"
+      />
+      <label class="label hidden" id="customer-phone-error">
+        <span class="label-text-alt text-error">Please enter a valid phone number</span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Form validation helpers
+  export function validateCustomerForm(): { valid: boolean; data: CustomerData | null } {
+    const nameInput = document.getElementById("customer-name") as HTMLInputElement;
+    const emailInput = document.getElementById("customer-email") as HTMLInputElement;
+    const phoneInput = document.getElementById("customer-phone") as HTMLInputElement;
+
+    const nameError = document.getElementById("customer-name-error") as HTMLElement;
+    const emailError = document.getElementById("customer-email-error") as HTMLElement;
+    const phoneError = document.getElementById("customer-phone-error") as HTMLElement;
+
+    let valid = true;
+
+    // Validate name
+    if (!nameInput.value.trim()) {
+      nameError.classList.remove("hidden");
+      nameInput.classList.add("input-error");
+      valid = false;
+    } else {
+      nameError.classList.add("hidden");
+      nameInput.classList.remove("input-error");
+    }
+
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailInput.value)) {
+      emailError.classList.remove("hidden");
+      emailInput.classList.add("input-error");
+      valid = false;
+    } else {
+      emailError.classList.add("hidden");
+      emailInput.classList.remove("input-error");
+    }
+
+    // Validate phone
+    const phoneRegex = /^[\d\s\-\(\)\+]{10,}$/;
+    if (!phoneRegex.test(phoneInput.value)) {
+      phoneError.classList.remove("hidden");
+      phoneInput.classList.add("input-error");
+      valid = false;
+    } else {
+      phoneError.classList.add("hidden");
+      phoneInput.classList.remove("input-error");
+    }
+
+    if (!valid) {
+      return { valid: false, data: null };
+    }
+
+    return {
+      valid: true,
+      data: {
+        name: nameInput.value.trim(),
+        email: emailInput.value.trim(),
+        phone: phoneInput.value.trim(),
+      },
+    };
+  }
+
+  export interface CustomerData {
+    name: string;
+    email: string;
+    phone: string;
+  }
+
+  // Clear validation errors on input
+  const inputs = document.querySelectorAll("#customer-name, #customer-email, #customer-phone");
+  inputs.forEach((input) => {
+    input.addEventListener("input", () => {
+      const errorEl = document.getElementById(`${input.id}-error`);
+      if (errorEl) {
+        errorEl.classList.add("hidden");
+      }
+      input.classList.remove("input-error");
+    });
+  });
+</script>

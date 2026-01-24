@@ -1,7 +1,7 @@
 # 008-I: Cart and Checkout Frontend Components
 
 **EP:** [EP-008-restaurant-pos-integration](../enhancement_proposals/EP-008-restaurant-pos-integration.md)
-**Status:** pending
+**Status:** complete
 **Phase:** 4 (Online Ordering)
 
 ## Summary
@@ -10,23 +10,23 @@ Build the client-side cart and checkout UI components for the restaurant site te
 
 ## Acceptance Criteria
 
-- [ ] Cart state management in localStorage
-- [ ] "Add to Cart" buttons on menu items
-- [ ] Modifier selection modal/drawer
-- [ ] Cart drawer/sidebar showing items and totals
-- [ ] Quantity adjustment (+/-)
-- [ ] Item removal from cart
-- [ ] Special instructions per item
-- [ ] Cart badge showing item count
-- [ ] Checkout page with customer info form
-- [ ] Order type selection (pickup/delivery if enabled)
-- [ ] Pickup time selection
-- [ ] Tip selection (preset amounts + custom)
-- [ ] Order summary before payment
-- [ ] 86'd items blocked from cart
-- [ ] Mobile-responsive design
-- [ ] Cart persists across page navigation
-- [ ] Unit tests for cart logic
+- [x] Cart state management in localStorage
+- [x] "Add to Cart" buttons on menu items
+- [x] Modifier selection modal/drawer
+- [x] Cart drawer/sidebar showing items and totals
+- [x] Quantity adjustment (+/-)
+- [x] Item removal from cart
+- [x] Special instructions per item
+- [x] Cart badge showing item count
+- [x] Checkout page with customer info form
+- [x] Order type selection (pickup/delivery if enabled)
+- [x] Pickup time selection
+- [x] Tip selection (preset amounts + custom)
+- [x] Order summary before payment
+- [x] 86'd items blocked from cart
+- [x] Mobile-responsive design
+- [x] Cart persists across page navigation
+- [x] Unit tests for cart logic
 
 ## Implementation Notes
 
@@ -380,4 +380,51 @@ Also periodically validate cart against availability and notify user of any item
 
 ## Progress
 
-*To be updated during implementation*
+### 2026-01-24
+
+**Cart State Management** (`src/lib/cart.ts`):
+- Implemented using nanostores + @nanostores/persistent
+- CartItem type with modifiers, special instructions, quantity
+- CartState with order type, scheduled time, tip
+- Computed values: cartItemCount, cartSubtotal, cartTax, cartTotal
+- Actions: addToCart, updateQuantity, incrementQuantity, decrementQuantity, removeFromCart, clearCart
+- Tip functions: setTip, setTipPercentage
+- Order settings: setOrderType, setScheduledTime, setOrderInstructions
+- Availability checking: canAddToCart, getUnavailableCartItems, removeUnavailableItems
+
+**Cart Components** (`src/components/cart/`):
+- `AddToCartButton.astro` - Adds items directly or opens modifier modal
+- `ModifierModal.astro` - Full modifier selection with min/max validation, price calculation
+- `CartDrawer.astro` - Slide-out cart panel with quantity controls
+- `CartBadge.astro` - Item count indicator in navbar
+
+**Checkout Components** (`src/components/checkout/`):
+- `CustomerForm.astro` - Name, email, phone with validation
+- `OrderTypeSelector.astro` - Pickup/delivery radio cards
+- `PickupTimeSelector.astro` - ASAP or scheduled time slots
+- `TipSelector.astro` - Preset percentages (15/18/20/25%) + custom
+- `OrderSummary.astro` - Line items and totals breakdown
+
+**Checkout Page** (`src/pages/checkout.astro`):
+- Two-column responsive layout
+- Empty cart warning
+- Payment placeholder for 008-K (Stripe integration)
+- Form validation before submission
+
+**Availability Integration** (`src/lib/availability.ts`):
+- Added currentAvailability tracking
+- isItemAvailable/isModifierAvailable helpers
+- Auto-notification when cart items become unavailable
+- Integrated with AddToCartButton and ModifierModal
+
+**Layout Updates** (`src/layouts/PageLayout.astro`):
+- CartBadge in navbar when online ordering enabled
+- CartDrawer and ModifierModal included in layout
+- Nav button changes to "Order" when ordering enabled
+
+**Tests** (`src/lib/cart.test.ts`):
+- 38 unit tests covering all cart functionality
+- Test setup with localStorage/crypto mocks
+- Added vitest + jsdom to devDependencies
+
+**Build**: 4 pages built successfully (index, menu, contact, checkout)

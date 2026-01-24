@@ -1,0 +1,184 @@
+---
+/**
+ * Checkout Page - Complete your order
+ *
+ * Collects customer info, order type, pickup time, and tip.
+ * Payment handled in 008-K with Stripe Elements.
+ */
+import PageLayout from "@/layouts/PageLayout.astro";
+import CustomerForm from "@/components/checkout/CustomerForm.astro";
+import OrderTypeSelector from "@/components/checkout/OrderTypeSelector.astro";
+import PickupTimeSelector from "@/components/checkout/PickupTimeSelector.astro";
+import TipSelector from "@/components/checkout/TipSelector.astro";
+import OrderSummary from "@/components/checkout/OrderSummary.astro";
+import { config } from "@/config";
+---
+
+<PageLayout title="Checkout" description="Complete your order">
+  <div class="container mx-auto px-4 py-8 max-w-4xl">
+    <!-- Back Link -->
+    <a href="/menu" class="btn btn-ghost btn-sm mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+      Back to Menu
+    </a>
+
+    <h1 class="text-3xl font-bold mb-6">Checkout</h1>
+
+    <!-- Empty Cart Warning -->
+    <div id="empty-cart-warning" class="alert alert-warning mb-6 hidden">
+      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <span>Your cart is empty. <a href="/menu" class="link link-primary">Add some items</a> to continue.</span>
+    </div>
+
+    <!-- Main Content -->
+    <div id="checkout-content" class="grid lg:grid-cols-5 gap-6">
+      <!-- Left Column: Forms -->
+      <div class="lg:col-span-3 space-y-6">
+        <CustomerForm />
+        <OrderTypeSelector />
+        <PickupTimeSelector />
+        <TipSelector />
+      </div>
+
+      <!-- Right Column: Summary -->
+      <div class="lg:col-span-2">
+        <div class="lg:sticky lg:top-4 space-y-4">
+          <OrderSummary />
+
+          <!-- Payment Placeholder - Will be replaced in 008-K -->
+          <div id="payment-section" class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+              <h2 class="card-title text-lg">Payment</h2>
+              <div id="payment-element" class="py-4">
+                <!-- Stripe Elements will be mounted here in 008-K -->
+                <div class="text-center text-base-content/60 py-8">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                  <p class="text-sm">Payment integration coming soon</p>
+                </div>
+              </div>
+
+              <button
+                id="submit-order-btn"
+                class="btn btn-primary w-full"
+                disabled
+              >
+                <span id="submit-btn-text">Place Order</span>
+                <span id="submit-btn-loading" class="loading loading-spinner hidden"></span>
+              </button>
+
+              <p class="text-xs text-center text-base-content/50 mt-2">
+                By placing your order, you agree to our terms of service.
+              </p>
+            </div>
+          </div>
+
+          <!-- Pickup Info -->
+          <div class="card bg-base-200">
+            <div class="card-body py-4">
+              <h3 class="font-semibold text-sm">Pickup Location</h3>
+              <p class="text-sm">{config.client.name}</p>
+              {config.client.address && (
+                <p class="text-xs text-base-content/60">{config.client.address}</p>
+              )}
+              {config.client.phone && (
+                <p class="text-xs text-base-content/60">{config.client.phone}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</PageLayout>
+
+<script>
+  import { cart, isCartEmpty, formatPrice, cartTotal } from "@/lib/cart";
+
+  const emptyWarning = document.getElementById("empty-cart-warning") as HTMLElement;
+  const checkoutContent = document.getElementById("checkout-content") as HTMLElement;
+  const submitBtn = document.getElementById("submit-order-btn") as HTMLButtonElement;
+  const submitBtnText = document.getElementById("submit-btn-text") as HTMLElement;
+  const submitBtnLoading = document.getElementById("submit-btn-loading") as HTMLElement;
+
+  // Check if cart is empty
+  function checkCartEmpty() {
+    const empty = isCartEmpty();
+    emptyWarning.classList.toggle("hidden", !empty);
+
+    // Disable submit if empty
+    if (empty) {
+      submitBtn.disabled = true;
+    }
+  }
+
+  // Update submit button with total
+  function updateSubmitButton() {
+    const total = cartTotal.get();
+    if (total > 0) {
+      submitBtnText.textContent = `Place Order - ${formatPrice(total)}`;
+      // Enable button only when payment is ready (handled in 008-K)
+      // For now, show as disabled with "coming soon" payment
+    }
+  }
+
+  // Subscribe to cart changes
+  cart.subscribe(() => {
+    checkCartEmpty();
+    updateSubmitButton();
+  });
+
+  // Initial checks
+  checkCartEmpty();
+  updateSubmitButton();
+
+  // Form validation - will be connected to Stripe in 008-K
+  submitBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+
+    // This will be replaced with actual payment flow in 008-K
+    // For now, just show validation
+
+    // Validate customer form
+    const nameInput = document.getElementById("customer-name") as HTMLInputElement;
+    const emailInput = document.getElementById("customer-email") as HTMLInputElement;
+    const phoneInput = document.getElementById("customer-phone") as HTMLInputElement;
+
+    let valid = true;
+
+    if (!nameInput.value.trim()) {
+      nameInput.classList.add("input-error");
+      document.getElementById("customer-name-error")?.classList.remove("hidden");
+      valid = false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailInput.value)) {
+      emailInput.classList.add("input-error");
+      document.getElementById("customer-email-error")?.classList.remove("hidden");
+      valid = false;
+    }
+
+    const phoneRegex = /^[\d\s\-\(\)\+]{10,}$/;
+    if (!phoneRegex.test(phoneInput.value)) {
+      phoneInput.classList.add("input-error");
+      document.getElementById("customer-phone-error")?.classList.remove("hidden");
+      valid = false;
+    }
+
+    if (!valid) {
+      // Scroll to first error
+      const firstError = document.querySelector(".input-error");
+      firstError?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    // Show alert that payment is coming soon
+    alert("Payment integration will be added in ticket 008-K. Form validation passed!");
+  });
+</script>

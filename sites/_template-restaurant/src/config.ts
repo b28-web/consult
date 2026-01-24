@@ -114,7 +114,7 @@ export const config: RestaurantConfig = {
       takeout: true,
       delivery: false,
       reservations: false,
-      onlineOrdering: false, // Enabled in Phase 4
+      onlineOrdering: true, // Enabled for cart/checkout development
     },
     // Uncomment when POS is connected
     // pos: {

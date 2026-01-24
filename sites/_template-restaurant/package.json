@@ -8,18 +8,26 @@
     "build": "astro build",
     "preview": "wrangler pages dev ./dist",
     "deploy": "doppler run -- wrangler pages deploy ./dist",
-    "deploy:preview": "doppler run -- wrangler pages deploy ./dist --branch preview"
+    "deploy:preview": "doppler run -- wrangler pages deploy ./dist --branch preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@consult/shared-ui": "workspace:*",
-    "astro": "^5.0.0"
+    "@nanostores/persistent": "^0.10.2",
+    "astro": "^5.0.0",
+    "nanostores": "^0.11.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241230.0",
     "@tailwindcss/vite": "^4.0.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "daisyui": "^5.0.0",
+    "jsdom": "^27.4.0",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.0",
+    "vitest": "^4.0.18",
     "wrangler": "^3.99.0"
   }
 }

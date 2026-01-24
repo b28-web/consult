@@ -1,0 +1,79 @@
+---
+/**
+ * OrderTypeSelector - Pickup or delivery selection
+ *
+ * Shows available order types based on restaurant config.
+ */
+import { config } from "@/config";
+
+const { features } = config.restaurant;
+const showDelivery = features.delivery;
+---
+
+<div class="card bg-base-100 shadow-sm">
+  <div class="card-body">
+    <h2 class="card-title text-lg">Order Type</h2>
+
+    <div class="flex gap-4">
+      <label class="flex-1">
+        <input
+          type="radio"
+          name="orderType"
+          value="pickup"
+          class="peer hidden"
+          checked
+        />
+        <div class="card bg-base-200 cursor-pointer border-2 border-transparent peer-checked:border-primary peer-checked:bg-primary/10 transition-colors">
+          <div class="card-body items-center py-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="font-semibold">Pickup</span>
+            <span class="text-xs text-base-content/60">Pick up at restaurant</span>
+          </div>
+        </div>
+      </label>
+
+      {showDelivery && (
+        <label class="flex-1">
+          <input
+            type="radio"
+            name="orderType"
+            value="delivery"
+            class="peer hidden"
+          />
+          <div class="card bg-base-200 cursor-pointer border-2 border-transparent peer-checked:border-primary peer-checked:bg-primary/10 transition-colors">
+            <div class="card-body items-center py-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+              </svg>
+              <span class="font-semibold">Delivery</span>
+              <span class="text-xs text-base-content/60">Delivered to you</span>
+            </div>
+          </div>
+        </label>
+      )}
+    </div>
+  </div>
+</div>
+
+<script>
+  import { setOrderType, type OrderType } from "@/lib/cart";
+
+  const orderTypeInputs = document.querySelectorAll<HTMLInputElement>('input[name="orderType"]');
+
+  orderTypeInputs.forEach((input) => {
+    input.addEventListener("change", () => {
+      if (input.checked) {
+        setOrderType(input.value as OrderType);
+      }
+    });
+  });
+
+  // Export for checkout page
+  export function getSelectedOrderType(): OrderType {
+    const checked = document.querySelector<HTMLInputElement>('input[name="orderType"]:checked');
+    return (checked?.value as OrderType) || "pickup";
+  }
+</script>

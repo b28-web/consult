@@ -460,7 +460,7 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
 | [008-F](../tickets/008-F-toast-adapter.md) | Toast adapter implementation | 2 | complete |
 | [008-G](../tickets/008-G-clover-adapter.md) | Clover adapter implementation | 3 | complete |
 | [008-H](../tickets/008-H-square-adapter.md) | Square adapter implementation | 3 | complete |
-| [008-I](../tickets/008-I-cart-checkout-components.md) | Cart and checkout frontend components | 4 | pending |
+| [008-I](../tickets/008-I-cart-checkout-components.md) | Cart and checkout frontend components | 4 | complete |
 | [008-J](../tickets/008-J-order-api-endpoints.md) | Order API endpoints | 4 | pending |
 | [008-K](../tickets/008-K-stripe-payment-integration.md) | Stripe payment integration | 4 | pending |
 | [008-L](../tickets/008-L-order-submission-pos.md) | Order submission to POS | 4 | pending |
@@ -659,9 +659,18 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
 
 **Phase 3 complete!** All POS adapter tickets done (008-G and 008-H).
 
+### 2026-01-24
+- **008-I complete**: Cart and checkout frontend components
+  - Cart state management with nanostores + @nanostores/persistent
+  - Components: AddToCartButton, ModifierModal, CartDrawer, CartBadge
+  - Checkout components: CustomerForm, OrderTypeSelector, PickupTimeSelector, TipSelector, OrderSummary
+  - Checkout page with form validation
+  - 86'd item blocking integrated with availability polling
+  - 38 unit tests, all passing
+  - Build verified: 4 pages built successfully
+
 **Next steps:**
-- Phase 4: Online ordering (008-I through 008-L)
-  - Cart and checkout frontend components
+- Phase 4: Online ordering (008-J through 008-L)
   - Order API endpoints
   - Stripe payment integration
   - Order submission to POS

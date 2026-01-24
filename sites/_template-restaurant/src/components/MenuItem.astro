@@ -4,13 +4,16 @@
  */
 import DietaryBadges from "./DietaryBadges.astro";
 import AllergenInfo from "./AllergenInfo.astro";
+import AddToCartButton from "./cart/AddToCartButton.astro";
 import type { MenuItem } from "@/lib/menu";
+import { config } from "@/config";
 
 interface Props {
   item: MenuItem;
 }
 
 const { item } = Astro.props;
+const showAddToCart = config.restaurant.features.onlineOrdering;
 
 const priceDisplay = typeof item.price === "number"
   ? `$${item.price.toFixed(2)}`
@@ -65,6 +68,12 @@ const priceDisplay = typeof item.price === "number"
               {group.min_selections > 0 ? "Choose" : "Add"}: {group.name}
             </span>
           ))}
+        </div>
+      )}
+
+      {showAddToCart && (
+        <div class="mt-3">
+          <AddToCartButton item={item} />
         </div>
       )}
     </div>
