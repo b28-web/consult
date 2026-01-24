@@ -19,7 +19,7 @@ from consult_schemas import (
     POSSession,
 )
 
-from apps.web.pos.adapters import MockPOSAdapter, get_adapter
+from apps.web.pos.adapters import MockPOSAdapter, SquareAdapter, get_adapter
 from apps.web.pos.adapters.base import POSAdapter
 from apps.web.pos.adapters.toast import RateLimiter, ToastAdapter
 from apps.web.pos.exceptions import (
@@ -707,10 +707,9 @@ class TestAdapterRegistry:
         assert isinstance(adapter, MockPOSAdapter)
         assert adapter.provider == POSProvider.MOCK
 
-    def test_unsupported_provider_raises_error(self):
-        """Test that unsupported provider raises ValueError."""
-        with pytest.raises(ValueError) as exc_info:
-            get_adapter(POSProvider.SQUARE)
+    def test_get_square_adapter(self):
+        """Test getting Square adapter from registry."""
+        adapter = get_adapter(POSProvider.SQUARE)
 
-        assert "Unsupported POS provider" in str(exc_info.value)
-        assert "SQUARE" in str(exc_info.value)
+        assert isinstance(adapter, SquareAdapter)
+        assert adapter.provider == POSProvider.SQUARE

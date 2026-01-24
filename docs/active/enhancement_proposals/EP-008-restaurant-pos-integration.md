@@ -456,10 +456,10 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
 | [008-B](../tickets/008-B-restaurant-domain-models.md) | Restaurant domain models and migrations | 1 | complete |
 | [008-C](../tickets/008-C-menu-api-endpoints.md) | Menu API endpoints | 1 | complete |
 | [008-D](../tickets/008-D-restaurant-site-template.md) | Restaurant site template (menu display) | 1 | complete |
-| [008-E](../tickets/008-E-availability-webhook-polling.md) | 86'd item webhook handler and availability polling | 2 | pending |
-| [008-F](../tickets/008-F-toast-adapter.md) | Toast adapter implementation | 2 | pending |
+| [008-E](../tickets/008-E-availability-webhook-polling.md) | 86'd item webhook handler and availability polling | 2 | complete |
+| [008-F](../tickets/008-F-toast-adapter.md) | Toast adapter implementation | 2 | complete |
 | [008-G](../tickets/008-G-clover-adapter.md) | Clover adapter implementation | 3 | complete |
-| [008-H](../tickets/008-H-square-adapter.md) | Square adapter implementation | 3 | pending |
+| [008-H](../tickets/008-H-square-adapter.md) | Square adapter implementation | 3 | complete |
 | [008-I](../tickets/008-I-cart-checkout-components.md) | Cart and checkout frontend components | 4 | pending |
 | [008-J](../tickets/008-J-order-api-endpoints.md) | Order API endpoints | 4 | pending |
 | [008-K](../tickets/008-K-stripe-payment-integration.md) | Stripe payment integration | 4 | pending |
@@ -644,11 +644,27 @@ pos-clover = ["clover-sdk"]           # If official SDK exists
   - 38 unit tests, all passing
   - Adapter registry updated
 
-**Phase 3 in progress**: 008-G complete, 008-H (Square) pending
+- **008-H complete**: Square adapter implementation
+  - Full `SquareAdapter` in `apps/web/pos/adapters/square.py`
+  - OAuth 2.0 with actual token refresh (tokens expire, unlike Clover)
+  - Catalog API with pagination handling
+  - Items have variations with prices at variation level
+  - Inventory uses both quantity and state for availability
+  - Webhook signature uses URL + body (unique to Square)
+  - Webhook handling (inventory.count.updated, catalog.version.updated)
+  - Environment switching (sandbox/production)
+  - Rate limiting (10 req/sec) with exponential backoff
+  - 39 unit tests, all passing
+  - Adapter registry updated
+
+**Phase 3 complete!** All POS adapter tickets done (008-G and 008-H).
 
 **Next steps:**
-- Complete Phase 3: 008-H (Square adapter)
-- Continue to Phase 4: Online ordering (cart, checkout, payments)
+- Phase 4: Online ordering (008-I through 008-L)
+  - Cart and checkout frontend components
+  - Order API endpoints
+  - Stripe payment integration
+  - Order submission to POS
 
 ## Retrospective
 

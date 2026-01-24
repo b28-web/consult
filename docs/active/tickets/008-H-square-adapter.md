@@ -1,7 +1,7 @@
 # 008-H: Square Adapter Implementation
 
 **EP:** [EP-008-restaurant-pos-integration](../enhancement_proposals/EP-008-restaurant-pos-integration.md)
-**Status:** pending
+**Status:** complete
 **Phase:** 3 (Additional POS Providers)
 
 ## Summary
@@ -10,19 +10,19 @@ Implement the Square POS adapter following the `POSAdapter` protocol. Square use
 
 ## Acceptance Criteria
 
-- [ ] `SquareAdapter` class implementing `POSAdapter` protocol
-- [ ] OAuth 2.0 authentication
-- [ ] Token refresh handling
-- [ ] `get_menus()` - Fetch catalog items and categories
-- [ ] `get_menu()` - Fetch filtered catalog by category
-- [ ] `get_item_availability()` - Fetch inventory counts
-- [ ] `verify_webhook_signature()` - Square signature validation
-- [ ] `parse_webhook()` - Convert Square events to internal format
-- [ ] `create_order()` - Create order via Orders API (stub for Phase 4)
-- [ ] Sandbox vs production environment handling
-- [ ] Pagination handling for large catalogs
-- [ ] Unit tests with mocked HTTP responses
-- [ ] Integration test with Square sandbox
+- [x] `SquareAdapter` class implementing `POSAdapter` protocol
+- [x] OAuth 2.0 authentication
+- [x] Token refresh handling
+- [x] `get_menus()` - Fetch catalog items and categories
+- [x] `get_menu()` - Fetch filtered catalog by category
+- [x] `get_item_availability()` - Fetch inventory counts
+- [x] `verify_webhook_signature()` - Square signature validation (URL + body)
+- [x] `parse_webhook()` - Convert Square events to internal format
+- [x] `create_order()` - Create order via Orders API (stub for Phase 4)
+- [x] Sandbox vs production environment handling
+- [x] Pagination handling for large catalogs
+- [x] Unit tests with mocked HTTP responses
+- [ ] Integration test with Square sandbox (deferred - requires Square developer account)
 
 ## Implementation Notes
 
@@ -359,4 +359,25 @@ result = client.catalog.search_catalog_objects(
 
 ## Progress
 
-*To be updated during implementation*
+### 2026-01-23
+- **Complete**: Full SquareAdapter implementation in `apps/web/pos/adapters/square.py`
+  - OAuth 2.0 authentication with actual token refresh support
+  - Catalog API with pagination handling
+  - `get_menus()` parses categories, items, and modifier lists
+  - `get_item_availability()` via batch inventory API with correct out-of-stock detection
+  - `verify_webhook_signature()` using URL + body (Square's unique signature scheme)
+  - `parse_webhook()` handles inventory.count.updated and catalog.version.updated
+  - Order operations stubbed for Phase 4
+  - Environment switching (sandbox/production)
+  - Rate limiting (10 req/sec) with retry logic (3 attempts with exponential backoff)
+- **Tests**: 39 unit tests in `apps/web/pos/tests/test_square_adapter.py`
+  - Authentication (7 tests - including token refresh)
+  - Menu operations (10 tests - including pagination)
+  - Error handling (4 tests)
+  - Webhooks (7 tests)
+  - Order operations (2 tests)
+  - Protocol compliance (2 tests)
+  - Adapter registry (3 tests)
+  - Environment switching (3 tests)
+- **Registry**: Updated `apps/web/pos/adapters/__init__.py` to include SquareAdapter
+- All quality checks pass (ruff, mypy, 139 adapter tests)
